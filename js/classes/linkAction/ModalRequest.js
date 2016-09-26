@@ -1,7 +1,8 @@
 /**
  * @file js/classes/linkAction/ModalRequest.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ModalRequest
@@ -17,9 +18,11 @@
 	 *
 	 * @extends $.pkp.classes.linkAction.LinkActionRequest
 	 *
-	 * @param {jQuery} $linkActionElement The element the link
+	 * @param {jQueryObject} $linkActionElement The element the link
 	 *  action was attached to.
-	 * @param {Object} options Configuration of the link action
+	 * @param {{
+	 *  modalHandler: Object
+	 *  }} options Configuration of the link action
 	 *  request.
 	 */
 	$.pkp.classes.linkAction.ModalRequest =
@@ -36,11 +39,11 @@
 	// Private properties
 	//
 	/**
-	 * A pointer to the dialog HTML element.
+	 * A pointer to the modal HTML element.
 	 * @private
-	 * @type {jQuery}
+	 * @type {jQueryObject}
 	 */
-	$.pkp.classes.linkAction.ModalRequest.prototype.$dialog_ = null;
+	$.pkp.classes.linkAction.ModalRequest.prototype.$modal_ = null;
 
 
 	//
@@ -55,10 +58,15 @@
 		// If there is no title then try to retrieve a title
 		// from the calling element's text.
 		var modalOptions = this.getOptions(),
-				$handledElement = this.getLinkActionElement();
+				$handledElement = this.getLinkActionElement(),
+				title = $handledElement.text(),
+				uuid,
+				$linkActionElement,
+				linkActionHandler,
+				handlerOptions,
+				modalHandler;
 
 		if (modalOptions.title === undefined) {
-			var title = $handledElement.text();
 			if (title === '') {
 				// Try to retrieve a title from the link action element's
 				// title attribute.
@@ -68,31 +76,34 @@
 		}
 
 		// Generate a unique ID.
-		var uuid = $.pkp.classes.Helper.uuid();
+		uuid = $.pkp.classes.Helper.uuid();
 
 		// Instantiate the modal.
 		if (!modalOptions.modalHandler) {
-			throw Error(['The "modalHandler" setting is required ',
+			throw new Error(['The "modalHandler" setting is required ',
 				'in a ModalRequest'].join(''));
 		}
 
 		// Make sure that all events triggered on the modal will be
 		// forwarded to the link action. This is necessary because the
 		// modal has to be created outside the regular DOM.
-		var $linkActionElement = this.getLinkActionElement();
-		var linkActionHandler = $.pkp.classes.Handler.getHandler($linkActionElement);
-		var handlerOptions = $.extend(true,
-				{$eventBridge: linkActionHandler.getStaticId()}, modalOptions);
-		this.$dialog_ = $('<div id=' + uuid + '></div>').pkpHandler(
-				modalOptions.modalHandler, handlerOptions);
+		$linkActionElement = /** @type {jQueryObject} */ (
+				this.getLinkActionElement());
+		linkActionHandler = $.pkp.classes.Handler.getHandler($linkActionElement);
+		handlerOptions = $.extend(true,
+				{eventBridge: linkActionHandler.getStaticId()}, modalOptions);
+		this.$modal_ = $(
+				'<div id="' + uuid + '" ' +
+				'class="pkp_modal pkpModalWrapper" tabindex="-1"></div>')
+				.pkpHandler(modalOptions.modalHandler, handlerOptions);
 
-		// Subscribe to the dialog handler's 'removed' event so that
+		// Subscribe to the modal handler's 'removed' event so that
 		// we can clean up.
-		var dialogHandler = $.pkp.classes.Handler.getHandler(this.$dialog_);
-		dialogHandler.bind('pkpRemoveHandler',
+		modalHandler = $.pkp.classes.Handler.getHandler(this.$modal_);
+		modalHandler.bind('pkpRemoveHandler',
 				$.pkp.classes.Helper.curry(this.finish, this));
 
-		return this.parent('activate', element, event);
+		return /** @type {boolean} */ (this.parent('activate', element, event));
 	};
 
 
@@ -102,10 +113,13 @@
 	$.pkp.classes.linkAction.ModalRequest.prototype.finish =
 			function() {
 
-		this.$dialog_.remove();
-		return this.parent('finish');
+		// Put the focus back on the linkAction which launched the modal
+		this.$linkActionElement.focus();
+
+		this.$modal_.remove();
+		return /** @type {boolean} */ (this.parent('finish'));
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

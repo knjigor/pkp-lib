@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/listbuilder/MultipleListsListbuilderHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MultipleListsListbuilderHandler
@@ -77,7 +78,7 @@ class MultipleListsListbuilderHandler extends ListbuilderHandler {
 	 * All the data loading for this component is done
 	 * using ListbuilderList objects.
 	 */
-	function loadData($request, $filter) {
+	protected function loadData($request, $filter) {
 		// Give a chance to subclasses set data
 		// on their lists.
 		$this->setListsData($request, $filter);
@@ -106,10 +107,30 @@ class MultipleListsListbuilderHandler extends ListbuilderHandler {
 		$this->setSaveType(LISTBUILDER_SAVE_TYPE_EXTERNAL);
 	}
 
+
+	//
+	// Publicly (remotely) available listbuilder functions
+	//
+	/**
+	 * Fetch the listbuilder.
+	 * @param $args array
+	 * @param $request PKPRequest
+	 */
+	function fetch($args, $request) {
+		$templateMgr = TemplateManager::getManager($request);
+		$templateMgr->assign('lists', $this->getLists());
+
+		return parent::fetch($args, $request);
+	}
+
+
+	//
+	// Extended protected methods.
+	//
 	/**
 	 * @see GridHandler::initFeatures()
 	 */
-	function initFeatures($request, $args) {
+	protected function initFeatures($request, $args) {
 		// Multiple lists listbuilder always have orderable rows.
 		// We don't have any other requirement for it.
 		import('lib.pkp.classes.controllers.grid.feature.OrderMultipleListsItemsFeature');
@@ -119,8 +140,8 @@ class MultipleListsListbuilderHandler extends ListbuilderHandler {
 	/**
 	 * @see ListbuilderHandler::getRowInstance()
 	 */
-	function &getRowInstance() {
-		$row =& parent::getRowInstance();
+	protected function getRowInstance() {
+		$row = parent::getRowInstance();
 
 		// Currently we can't/don't need to delete a row inside multiple
 		// lists listbuilder. If we need, we have to adapt this class
@@ -130,19 +151,19 @@ class MultipleListsListbuilderHandler extends ListbuilderHandler {
 	}
 
 	/**
-	 * @see GridHandler::_renderGridBodyPartsInternally()
+	 * @see GridHandler::renderGridBodyPartsInternally()
 	 */
-	function _renderGridBodyPartsInternally(&$request) {
+	protected function renderGridBodyPartsInternally($request) {
 		// Render the rows.
 		$listsRows = array();
 		$gridData = $this->getGridDataElements($request);
 		foreach ($gridData as $listId => $elements) {
-			$listsRows[$listId] = $this->_renderRowsInternally($request, $elements);
+			$listsRows[$listId] = $this->renderRowsInternally($request, $elements);
 		}
 
-		$templateMgr =& TemplateManager::getManager();
-		$templateMgr->assign_by_ref('grid', $this);
-		$templateMgr->assign_by_ref('listsRows', $listsRows);
+		$templateMgr = TemplateManager::getManager($request);
+		$templateMgr->assign('grid', $this);
+		$templateMgr->assign('listsRows', $listsRows);
 
 		// In listbuilders we don't use the grid body.
 		return false;
@@ -159,24 +180,8 @@ class MultipleListsListbuilderHandler extends ListbuilderHandler {
 	 * @param $request Request
 	 * @param $filter string
 	 */
-	function setListsData(&$request, $filter) {
+	protected function setListsData($request, $filter) {
 		assert(false);
-	}
-
-
-	//
-	// Publicly (remotely) available listbuilder functions
-	//
-	/**
-	 * Fetch the listbuilder.
-	 * @param $args array
-	 * @param $request PKPRequest
-	 */
-	function fetch($args, &$request) {
-		$templateMgr =& TemplateManager::getManager();
-		$templateMgr->assign_by_ref('lists', $this->getLists());
-
-		return parent::fetch($args, $request);
 	}
 
 
@@ -187,7 +192,7 @@ class MultipleListsListbuilderHandler extends ListbuilderHandler {
 	 * Set the array with all listbuilder lists.
 	 * @param $lists Array of ListbuilderList objects.
 	 */
-	function _setLists($lists) {
+	private function _setLists($lists) {
 		$this->_lists = $lists;
 	}
 }

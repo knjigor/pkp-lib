@@ -3,7 +3,8 @@
 /**
  * @file classes/validation/ValidatorUri.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ValidatorUri
@@ -60,7 +61,7 @@ class ValidatorUri extends ValidatorRegExp {
 	 * @param $allowedSchemes
 	 * @return string
 	 */
-	function getRegexp($allowedSchemes = null) {
+	static function getRegexp($allowedSchemes = null) {
 		if (is_array($allowedSchemes)) {
 			$schemesRegEx = '(?:(' . implode('|', $allowedSchemes) . '):)';
 			$regEx = $schemesRegEx . substr(PCRE_URI, 24);

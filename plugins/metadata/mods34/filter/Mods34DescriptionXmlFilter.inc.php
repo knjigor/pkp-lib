@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_metadata_mods34_filter
+ * @defgroup plugins_metadata_mods34_filter MODS 3.4 Filter Plugin
  */
 
 /**
- * @file classes/plugins/metadata/mods34/filter/Mods34DescriptionXmlFilter.inc.php
+ * @file plugins/metadata/mods34/filter/Mods34DescriptionXmlFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Mods34DescriptionXmlFilter
@@ -23,9 +23,9 @@ import('lib.pkp.classes.xml.XMLCustomWriter');
 class Mods34DescriptionXmlFilter extends PersistableFilter {
 	/**
 	 * Constructor
-	 * $filterGroup FilterGroup
+	 * @param $filterGroup FilterGroup
 	 */
-	function Mods34DescriptionXmlFilter(&$filterGroup) {
+	function Mods34DescriptionXmlFilter($filterGroup) {
 		$this->setDisplayName('MODS 3.4');
 		parent::PersistableFilter($filterGroup);
 	}
@@ -35,7 +35,7 @@ class Mods34DescriptionXmlFilter extends PersistableFilter {
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.metadata.mods34.filter.Mods34DescriptionXmlFilter';
@@ -46,7 +46,7 @@ class Mods34DescriptionXmlFilter extends PersistableFilter {
 	// Implement template methods from Filter
 	//
 	/**
-	 * @see Filter::process()
+	 * @copydoc Filter::process()
 	 * @param $input MetadataDescription
 	 */
 	function &process(&$input) {

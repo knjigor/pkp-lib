@@ -3,7 +3,8 @@
 /**
  * @file classes/form/validation/FormValidatorLocale.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidatorLocale
@@ -13,7 +14,7 @@
  */
 
 class FormValidatorLocale extends FormValidator {
-	/** @var $_requiredLocale string Symbolic name of the locale to require */
+	/** @var string Symbolic name of the locale to require */
 	var $_requiredLocale;
 
 	/**
@@ -50,7 +51,6 @@ class FormValidatorLocale extends FormValidator {
 	 * @return string
 	 */
 	function getMessage() {
-		$primaryLocale = AppLocale::getPrimaryLocale();
 		$allLocales = AppLocale::getAllLocales();
 		return parent::getMessage() . ' (' . $allLocales[$this->_requiredLocale] . ')';
 	}

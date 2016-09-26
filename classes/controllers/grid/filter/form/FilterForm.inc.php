@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/filter/form/FilterForm.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterForm
@@ -49,6 +50,7 @@ class FilterForm extends Form {
 
 		// Validation check common to all requests.
 		$this->addCheck(new FormValidatorPost($this));
+		$this->addCheck(new FormValidatorCSRF($this));
 
 		// Validation check for template selection.
 		if (!is_null($filter) && !is_numeric($filter->getId())) {
@@ -60,7 +62,7 @@ class FilterForm extends Form {
 			$this->setData('filterSettings', $filter->getSettings());
 			foreach($filter->getSettings() as $filterSetting) {
 				// Add check corresponding to filter setting.
-				$settingCheck =& $filterSetting->getCheck($form);
+				$settingCheck =& $filterSetting->getCheck($this);
 				if (!is_null($settingCheck)) $this->addCheck($settingCheck);
 			}
 		}
@@ -129,7 +131,7 @@ class FilterForm extends Form {
 
 			// Retrieve all compatible filter templates
 			// from the database.
-			$filterDao =& DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
+			$filterDao = DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
 			$filterTemplateObjects =& $filterDao->getObjectsByGroup($this->getFilterGroupSymbolic(), 0, true);
 			$filterTemplates = array();
 
@@ -178,8 +180,8 @@ class FilterForm extends Form {
 	/**
 	 * @see Form::fetch()
 	 */
-	function fetch(&$request) {
-		$templateMgr =& TemplateManager::getManager($request);
+	function fetch($request) {
+		$templateMgr = TemplateManager::getManager($request);
 
 		// The form description depends on the current state
 		// of the selection process: do we select a filter template
@@ -199,7 +201,7 @@ class FilterForm extends Form {
 				// please make sure that you use the en-US key for this
 				// processing. Alternatively we might want to introduce
 				// an alphanumeric "filter key" to the filters table.
-				$filterKey = String::regexp_replace('/[^a-zA-Z0-9]/', '', $displayName);
+				$filterKey = PKPString::regexp_replace('/[^a-zA-Z0-9]/', '', $displayName);
 				$filterKey = strtolower(substr($filterKey, 0, 1)).substr($filterKey, 1);
 				$formDescriptionKey = $this->getDescription().'.'.$filterKey;
 			} else {
@@ -220,8 +222,8 @@ class FilterForm extends Form {
 	 * Save filter
 	 * @param $request PKPRequest
 	 */
-	function execute(&$request) {
-		$filter =& $this->getFilter();
+	function execute($request) {
+		$filter = $this->getFilter();
 		assert(is_a($filter, 'Filter'));
 
 		// Configure the filter
@@ -231,12 +233,12 @@ class FilterForm extends Form {
 		}
 
 		// Persist the filter
-		$filterDao =& DAORegistry::getDAO('FilterDAO');
+		$filterDao = DAORegistry::getDAO('FilterDAO');
 		if (is_numeric($filter->getId())) {
 			$filterDao->updateObject($filter);
 		} else {
-			$router =& $request->getRouter();
-			$context =& $router->getContext($request);
+			$router = $request->getRouter();
+			$context = $router->getContext($request);
 			$contextId = (is_null($context)?CONTEXT_ID_NONE:$context->getId());
 			$filterDao->insertObject($filter, $contextId);
 		}

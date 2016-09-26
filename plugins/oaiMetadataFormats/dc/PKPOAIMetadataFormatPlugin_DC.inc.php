@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file plugins/oaiMetadata/dc/PKPOAIMetadataFormatPlugin_DC.inc.php
+ * @file plugins/oaiMetadataFormats/dc/PKPOAIMetadataFormatPlugin_DC.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPOAIMetadataFormatPlugin_DC
@@ -42,15 +43,15 @@ class PKPOAIMetadataFormatPlugin_DC extends OAIMetadataFormatPlugin {
 		return 'OAIMetadataFormat_DC';
 	}
 
-	function getMetadataPrefix() {
+	static function getMetadataPrefix() {
 		return 'oai_dc';
 	}
 
-	function getSchema() {
+	static function getSchema() {
 		return 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd';
 	}
 
-	function getNamespace() {
+	static function getNamespace() {
 		return 'http://www.openarchives.org/OAI/2.0/oai_dc/';
 	}
 }

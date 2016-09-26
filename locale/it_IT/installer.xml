@@ -4,14 +4,14 @@
 <!--
   * locale/it_IT/installer.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
-  *
   * Localization strings for the it_IT (Italiano) locale.
-  *
+  * Contributed by Andrea Marchitelli - CINECA
   -->
 
-<locale name="it_IT" full_name = "Italiano">
+<locale name="it_IT" full_name="Italiano">
 	<message key="installer.additionalLocales">Localizzazioni aggiuntive</message>
 	<message key="installer.administratorAccount">Account dell'amministratore</message>
 	<message key="installer.administratorAccountInstructions">Questo account utente sarà l'amministratore del sito ed avrà accesso totale al sistema. potrai creare dopo il termine dell'installazione altri account utente.</message>
@@ -21,12 +21,11 @@
 	<message key="installer.clientCharsetInstructions">La codifica da utilizzare per l'invio e ricezione dei dati dai browser.</message>
 	<message key="installer.configFileError"><![CDATA[Il file di configurazione <tt>config.inc.php</tt> non esiste o non &#x00E8; leggibile.]]></message>
 	<message key="installer.connectionCharset">Set di caratteri per la connessione</message>
-	<message key="installer.connectionCharsetInstructions"><![CDATA[La codifica da usare per i dati inviati a e ricevuti daldatabase. Questa dovrebbe essere la stessa del set di caratteri del client. Nota che questa funzionalità è supportata solo da MySQL >= 4.1.1 o PostgreSQL >= 7.1. Seleziona "Non  applicabile" se il server della tua banca dati non riscontra questi requisiti.]]></message>
 	<message key="installer.contentsOfConfigFile">Contenuti del file di configurazione</message>
 	<message key="installer.createDatabase">Crea nuovo database</message>
 	<message key="installer.createDatabaseInstructions">Per utilizzare questa opzione il vostro database deve supportare la creazione remota di database e il vostro account utente deve avere i permessi adeguati. Se con questa opzione selezionata l'installazione dovesse fallire, creare il database manualmente e ripetete il processo d'installazione disabilitando quest'opzione.</message>
 	<message key="installer.databaseCharset">Set di caratteri del database</message>
-	<message key="installer.databaseCharsetInstructions"><![CDATA[La codifica da usare per l'immagazzinamento dei dati in banca dati. Nota che questa funzionalità è supportata solo da MySQL >= 4.1.1 o PostgreSQL >= 7.1. Seleziona "Non  applicabile" se il server della tua banca dati non riscontra questi requisiti.]]></message>
+	<message key="installer.databaseCharsetInstructions"><![CDATA[La codifica da usare per l'immagazzinamento dei dati in banca dati.]]></message>
 	<message key="installer.databaseDriver">Driver del database</message>
 	<message key="installer.databaseDriverInstructions"><![CDATA[<strong>I driver elencati tra parentesi non sembrano avere la necessaria estensione PHP caricata; verosimilmente l'installazione fallirà se li si seleziona.</strong><br />Tutti i database non supportati sono elencati solo per scopi accademici e non è garantito il loro funzionamento.]]></message>
 	<message key="installer.databaseHost">Host</message>
@@ -59,13 +58,13 @@
 	<message key="installer.installParseDBFileError"><![CDATA[Errore nel parsing del file di installazione <tt>{$file}</tt>.]]></message>
 	<message key="installer.locale">Localizzazione</message>
 	<message key="installer.localeSettings">Impostazioni della localizzazione</message>
-	<message key="installer.miscSettings">Impostazioni varie</message>
 	<message key="installer.oaiRepositoryIdInstructions"><![CDATA[Un identificativo univoco utilizzato per i record di metadati provenienti da questo sito indicizzati tramite l&apos;<a href="http://www.openarchives.org/" target="_blank">Open Archives Initiative</a> Protocol for Metadata Harvesting.]]></message>
 	<message key="installer.oaiRepositoryId">Identificativo del repository OAI</message>
 	<message key="installer.publicFilesDirError">La directory di file pubblici non esiste o non è scrivibile.</message>
 	<message key="installer.releaseNotes">Note di rilascio</message>
 	<message key="installer.securitySettings">Impostazioni di sicurezza</message>
-	<message key="installer.skipFilesDir">Non creare sottodirectory (utilizzare solo per installazioni manuali)</message>
 	<message key="installer.installParseEmailTemplatesFileError"><![CDATA[Errore nell'analisi del template email <tt>{$file}</tt>.]]></message>
 	<message key="installer.locale.maybeIncomplete">I file contrassegnati  potrebbero essere incompleti.</message>
+	<message key="installer.installParseFilterConfigFileError"><![CDATA[Errore nel parsing del file <tt>{$file}</tt>.]]></message>
+	<message key="installer.oaiSettings">Impostazioni OAI</message>
 </locale>

@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/DataObjectGridCellProvider.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DataObjectGridCellProvider
@@ -61,11 +62,18 @@ class DataObjectGridCellProvider extends GridCellProvider {
 	 * @param $column GridColumn
 	 * @return array
 	 */
-	function getTemplateVarsFromRowColumn(&$row, $column) {
-		$element =& $row->getData();
+	function getTemplateVarsFromRowColumn($row, $column) {
+		$element = $row->getData();
 		$columnId = $column->getId();
 		assert(is_a($element, 'DataObject') && !empty($columnId));
-		return array('label' => $element->getData($columnId, $this->getLocale()));
+
+		$data = $element->getData($columnId);
+		// For localized fields, $data will be an array; otherwise,
+		// it will be a value suitable for conversion to string.
+		// If it's localized, fetch the value in the current locale.
+		if (is_array($data)) $data=$data[$this->getLocale()];
+
+		return array('label' => $data);
 	}
 }
 

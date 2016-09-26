@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/metadata/MetadataDescriptionDAOTest.inc.php
+ * @file tests/classes/metadata/MetadataDescriptionDAOTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataDescriptionDAOTest
@@ -42,7 +43,7 @@ class MetadataDescriptionDAOTest extends DatabaseTestCase {
 		$testDescription = new MetadataDescription('lib.pkp.plugins.metadata.nlm30.schema.Nlm30CitationSchema', ASSOC_TYPE_CITATION);
 		$testDescription->setAssocId(999999);
 		$testDescription->setDisplayName('test meta-data description');
-		$testDescription->setSeq(5);
+		$testDescription->setSequence(5);
 		$testDescription->addStatement('person-group[@person-group-type="author"]', $nameDescription);
 		$testDescription->addStatement('article-title', $value = 'PHPUnit in a nutshell', 'en_US');
 		$testDescription->addStatement('article-title', $value = 'PHPUnit in Kürze', 'de_DE');

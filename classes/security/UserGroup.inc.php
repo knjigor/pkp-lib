@@ -3,7 +3,8 @@
 /**
  * @file classes/security/UserGroup.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class UserGroup
@@ -14,7 +15,7 @@
  */
 
 // Bring in role constants.
-import('classes.security.Role');
+import('lib.pkp.classes.security.Role');
 
 class UserGroup extends DataObject {
 	/**
@@ -24,40 +25,110 @@ class UserGroup extends DataObject {
 		parent::DataObject();
 	}
 
-
+	/**
+	 * Get the role ID
+	 * @return int ROLE_ID_...
+	 */
 	function getRoleId() {
 		return $this->getData('roleId');
 	}
 
+	/**
+	 * Set the role ID
+	 * @param $roleId int ROLE_ID_...
+	 */
 	function setRoleId($roleId) {
 		$this->setData('roleId', $roleId);
 	}
 
+	/**
+	 * Get the role path
+	 * @return string Role path
+	 */
 	function getPath() {
 		return $this->getData('path');
 	}
 
+	/**
+	 * Set the role path
+	 * $param $path string
+	 */
 	function setPath($path) {
 		$this->setData('path', $path);
 	}
 
+	/**
+	 * Get the context ID
+	 * @return int
+	 */
 	function getContextId() {
 		return $this->getData('contextId');
 	}
 
+	/**
+	 * Set the context ID
+	 * @param $contextId int
+	 */
 	function setContextId($contextId) {
 		$this->setData('contextId', $contextId);
 	}
 
-
+	/**
+	 * Get the default flag
+	 * @return boolean
+	 */
 	function getDefault() {
 		return $this->getData('isDefault');
 	}
 
+	/**
+	 * Set the default flag
+	 * @param $isDefault boolean
+	 */
 	function setDefault($isDefault) {
 		$this->setData('isDefault', $isDefault);
 	}
 
+	/**
+	 * Get the "show title" flag (whether or not the title of the role
+	 * should be included in the list of submission contributor names)
+	 * @return boolean
+	 */
+	function getShowTitle() {
+		return $this->getData('showTitle');
+	}
+
+	/**
+	 * Set the "show title" flag
+	 * @param $isDefault boolean
+	 */
+	function setShowTitle($showTitle) {
+		$this->setData('showTitle', $showTitle);
+	}
+
+	/**
+	 * Get the "permit self-registration" flag (whether or not users may
+	 * self-register for this role, i.e. in the case of external
+	 * reviewers, or whether it should be prohibited, in the case of
+	 * internal reviewers).
+	 * @return boolean True IFF user self-registration is permitted
+	 */
+	function getPermitSelfRegistration() {
+		return $this->getData('permitSelfRegistration');
+	}
+
+	/**
+	 * Set the "permit self-registration" flag
+	 * @param $isDefault boolean
+	 */
+	function setPermitSelfRegistration($permitSelfRegistration) {
+		$this->setData('permitSelfRegistration', $permitSelfRegistration);
+	}
+
+	/**
+	 * Get the localized role name
+	 * @return string
+	 */
 	function getLocalizedName() {
 		return $this->getLocalizedData('name');
 	}
@@ -77,9 +148,13 @@ class UserGroup extends DataObject {
 	 * @param $locale string
 	 */
 	function setName($name, $locale) {
-		return $this->setData('name', $name, $locale);
+		$this->setData('name', $name, $locale);
 	}
 
+	/**
+	 * Get the localized abbreviation
+	 * @return string
+	 */
 	function getLocalizedAbbrev() {
 		return $this->getLocalizedData('abbrev');
 	}
@@ -99,7 +174,7 @@ class UserGroup extends DataObject {
 	 * @param $locale string
 	 */
 	function setAbbrev($abbrev, $locale) {
-		return $this->setData('abbrev', $abbrev, $locale);
+		$this->setData('abbrev', $abbrev, $locale);
 	}
 }
 

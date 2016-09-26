@@ -3,7 +3,8 @@
 /**
  * @file classes/site/SiteSettingsDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @package site
@@ -21,10 +22,10 @@ class SiteSettingsDAO extends DAO {
 		parent::DAO();
 	}
 
-	function &_getCache() {
+	function _getCache() {
 		$settingCache =& Registry::get('siteSettingCache', true, null);
 		if ($settingCache === null) {
-			$cacheManager =& CacheManager::getManager();
+			$cacheManager = CacheManager::getManager();
 			$settingCache = $cacheManager->getFileCache(
 				'siteSettings', 'site',
 				array($this, '_cacheMiss')
@@ -40,11 +41,10 @@ class SiteSettingsDAO extends DAO {
 	 * @return mixed
 	 */
 	function &getSetting($name, $locale = null) {
-		$cache =& $this->_getCache();
+		$cache = $this->_getCache();
 		$returner = $cache->get($name);
 		if ($locale !== null) {
 			if (!isset($returner[$locale]) || !is_array($returner)) {
-				unset($returner);
 				$returner = null;
 				return $returner;
 			}
@@ -53,8 +53,8 @@ class SiteSettingsDAO extends DAO {
 		return $returner;
 	}
 
-	function _cacheMiss(&$cache, $id) {
-		$settings =& $this->getSiteSettings();
+	function _cacheMiss($cache, $id) {
+		$settings = $this->getSiteSettings();
 		if (!isset($settings[$id])) {
 			$cache->setCache($id, null);
 			return null;
@@ -69,7 +69,7 @@ class SiteSettingsDAO extends DAO {
 	function &getSiteSettings() {
 		$siteSettings = array();
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT setting_name, setting_value, setting_type, locale FROM site_settings'
 		);
 
@@ -80,16 +80,15 @@ class SiteSettingsDAO extends DAO {
 
 		} else {
 			while (!$result->EOF) {
-				$row =& $result->getRowAssoc(false);
+				$row = $result->getRowAssoc(false);
 				$value = $this->convertFromDB($row['setting_value'], $row['setting_type']);
 				if ($row['locale'] == '') $siteSettings[$row['setting_name']] = $value;
 				else $siteSettings[$row['setting_name']][$row['locale']] = $value;
 				$result->MoveNext();
 			}
 			$result->Close();
-			unset($result);
 
-			$cache =& $this->_getCache();
+			$cache = $this->_getCache();
 			$cache->setEntireCache($siteSettings);
 
 			return $siteSettings;
@@ -106,7 +105,7 @@ class SiteSettingsDAO extends DAO {
 	 */
 	function updateSetting($name, $value, $type = null, $isLocalized = false) {
 		$returner = null;
-		$cache =& $this->_getCache();
+		$cache = $this->_getCache();
 		$cache->setCache($name, $value);
 
 		$keyFields = array('setting_name', 'locale');
@@ -145,7 +144,7 @@ class SiteSettingsDAO extends DAO {
 	 * @param $name string
 	 */
 	function deleteSetting($name, $locale = null) {
-		$cache =& $this->_getCache();
+		$cache = $this->_getCache();
 		$cache->setCache($name, null);
 
 		$params = array($name);
@@ -165,7 +164,7 @@ class SiteSettingsDAO extends DAO {
 	 * @return string
 	 */
 	function _performReplacement($rawInput, $paramArray = array()) {
-		$value = preg_replace_callback('{{translate key="([^"]+)"}}', array(&$this, '_installer_regexp_callback'), $rawInput);
+		$value = preg_replace_callback('{{translate key="([^"]+)"}}', array($this, '_installer_regexp_callback'), $rawInput);
 		foreach ($paramArray as $pKey => $pValue) {
 			$value = str_replace('{$' . $pKey . '}', $pValue, $value);
 		}
@@ -216,7 +215,7 @@ class SiteSettingsDAO extends DAO {
 
 			if (isset($nameNode) && isset($valueNode)) {
 				$type = $setting->getAttribute('type');
-				$isLocalized = $setting->getAttribute('localized') == 'true';
+				$isLocaleField = $setting->getAttribute('locale');
 				$name =& $nameNode->getValue();
 
 				if ($type == 'object') {
@@ -227,8 +226,12 @@ class SiteSettingsDAO extends DAO {
 				}
 
 				// Replace translate calls with translated content
-				if ($isLocalized) $value = array(AppLocale::getLocale() => $value);
-				$this->updateSetting($name, $value, $type, $isLocalized);
+				$this->updateSetting(
+					$name,
+					$isLocaleField?array(AppLocale::getLocale() => $value):$value,
+					$type,
+					$isLocaleField
+				);
 			}
 		}
 

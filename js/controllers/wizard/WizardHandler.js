@@ -1,13 +1,11 @@
 /**
  * @defgroup js_controllers_wizard
  */
-// Create the files namespace
-jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
-
 /**
  * @file js/controllers/wizard/WizardHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class WizardHandler
@@ -17,24 +15,36 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
  */
 (function($) {
 
+	/** @type {Object} */
+	$.pkp.controllers.wizard = $.pkp.controllers.wizard || { };
+
+
 
 	/**
 	 * @constructor
 	 *
 	 * @extends $.pkp.controllers.TabHandler
 	 *
-	 * @param {jQuery} $wizard A wrapped HTML element that
+	 * @param {jQueryObject} $wizard A wrapped HTML element that
 	 *  represents the wizard.
-	 * @param {Object} options Wizard options.
+	 * @param {{
+	 *  enforceLinear: boolean,
+	 *  cancelButtonText: string,
+	 *  continueButtonTest: string,
+	 *  finishButtonText: string
+	 *  }} options options to configure the form handler.
 	 */
 	$.pkp.controllers.wizard.WizardHandler = function($wizard, options) {
 		this.parent($wizard, options);
 
-		// Start the wizard.
-		this.startWizard();
-
 		// Add the wizard buttons
 		this.addWizardButtons_($wizard, options);
+
+		this.enforceLinear_ = options.hasOwnProperty('enforceLinear') ?
+				options.enforceLinear : true;
+
+		// Start the wizard.
+		this.startWizard();
 
 		// Bind the wizard events to handlers.
 		this.bindWizardEvents();
@@ -55,9 +65,17 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	/**
 	 * The continue button.
 	 * @private
-	 * @type {jQuery}
+	 * @type {jQueryObject?}
 	 */
 	$.pkp.controllers.wizard.WizardHandler.prototype.$continueButton_ = null;
+
+
+	/**
+	 * The progress indicator.
+	 * @private
+	 * @type {jQueryObject?}
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.$progressIndicator_ = null;
 
 
 	/**
@@ -74,6 +92,39 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	 * @type {?string}
 	 */
 	$.pkp.controllers.wizard.WizardHandler.prototype.finishButtonText_ = null;
+
+
+	/**
+	 * Whether or not to enforce linear progress through the wizard.
+	 * @private
+	 * @type {?boolean}
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.enforceLinear_ = null;
+
+
+	//
+	// Private methods
+	//
+	/**
+	 * Show the loading spinner
+	 *
+	 * @private
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.showProgressIndicator_ =
+			function() {
+		this.getProgressIndicator().css('opacity', 1);
+	};
+
+
+	/**
+	 * Hide the loading spinner
+	 *
+	 * @private
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.hideProgressIndicator_ =
+			function() {
+		this.getProgressIndicator().css('opacity', 0);
+	};
 
 
 	//
@@ -120,7 +171,7 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 
 		// The default implementation enables the continue button
 		// as soon as the form validates.
-		this.getContinueButton().button('enable');
+		this.enableContinueButton();
 	};
 
 
@@ -136,7 +187,7 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 
 		// The default implementation disables the continue button
 		// as if the form no longer validates.
-		this.getContinueButton().button('disable');
+		this.disableContinueButton();
 	};
 
 
@@ -169,6 +220,9 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	$.pkp.controllers.wizard.WizardHandler.prototype.cancelRequest =
 			function(buttonElement, event) {
 
+		// This is a 'cancel' click, so unregister forms without prompting.
+		this.checkForm_(false);
+
 		// Trigger the "cancel requested" event on the current
 		// tab's children to give it a chance to veto the cancel
 		// request.
@@ -197,12 +251,19 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	 * @param {HTMLElement} wizardElement The wizard's HTMLElement on
 	 *  which the event was triggered.
 	 * @param {Event} event The triggered event.
+	 * @return {boolean} Return false if not overridden and if check form
+	 * returns true.
 	 */
 	$.pkp.controllers.wizard.WizardHandler.prototype.wizardCancelRequested =
 			function(wizardElement, event) {
 
-		// The default implementation does nothing which means that
-		// the wizard will cancel immediately.
+		if (this.checkForm_(true)) {
+			// User doesn't wants to leave. Return false to stop cancel request.
+			return false;
+		}
+
+		// User wants to leave or there is no form inside this wizard.
+		return true;
 	};
 
 
@@ -230,7 +291,8 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 		if ($form) {
 			// Try to submit the form.
 			if ($form.submit()) {
-				this.getContinueButton().button('disable');
+				this.disableContinueButton();
+				this.showProgressIndicator_();
 			}
 
 			// Prevent default event handling so that the form
@@ -261,31 +323,36 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 		// tabs and not less than 1.
 		var currentStep = this.getCurrentStep(),
 				lastStep = this.getNumberOfSteps() - 1,
-				targetStep = currentStep + 1;
+				targetStep = currentStep + 1,
+				$wizard, $continueButton;
 
 		// Do not advance beyond the last step.
 		if (targetStep > lastStep) {
-			throw Error('Trying to set an invalid wizard step!');
+			throw new Error('Trying to set an invalid wizard step!');
 		}
 
 		// Enable the target step.
-		var $wizard = this.getHtmlElement();
+		$wizard = this.getHtmlElement();
 		$wizard.tabs('enable', targetStep);
 
 		// Advance to the target step.
-		$wizard.tabs('select', targetStep);
+		$wizard.tabs('option', 'active', targetStep);
 
-		// Disable the previous step.
-		$wizard.tabs('disable', currentStep);
+		if (this.enforceLinear_) {
+			// Disable the previous step.
+			$wizard.tabs('disable', currentStep);
+		}
 
 		// If this is the last step then change the text on the
 		// continue button to finish.
-		var $continueButton = this.getContinueButton();
+		$continueButton = this.getContinueButton();
 		if (targetStep === lastStep) {
-			$continueButton.button('option', 'label', this.getFinishButtonText());
+			$continueButton.text(
+					/** @type {string} */ (this.getFinishButtonText()));
 		}
 
-		$continueButton.button('enable');
+		this.hideProgressIndicator_();
+		this.enableContinueButton();
 	};
 
 
@@ -299,7 +366,8 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	$.pkp.controllers.wizard.WizardHandler.prototype.startWizard = function() {
 
 		// Retrieve the wizard element.
-		var $wizard = this.getHtmlElement();
+		var $wizard = this.getHtmlElement(),
+				$continueButton, disabledSteps, i;
 
 		// Do we re-start the wizard?
 		if (this.getCurrentStep() !== 0) {
@@ -308,19 +376,22 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 			$wizard.tabs('enable', 0);
 
 			// Go to the first step.
-			$wizard.tabs('select', 0);
+			$wizard.tabs('option', 'active', 0);
 
 			// Reset the continue button label.
-			var $continueButton = this.getContinueButton();
-			$continueButton.button('option', 'label', this.getContinueButtonText());
+			$continueButton = this.getContinueButton();
+			$continueButton.text(
+					/** @type {string} */ (this.getContinueButtonText()));
 		}
 
-		// Disable all but the first step.
-		var disabledSteps = [];
-		for (var i = 1; i < this.getNumberOfSteps(); i++) {
-			disabledSteps.push(i);
+		if (this.enforceLinear_) {
+			// Disable all but the first step.
+			disabledSteps = [];
+			for (i = 1; i < this.getNumberOfSteps(); i++) {
+				disabledSteps.push(i);
+			}
+			$wizard.tabs('option', 'disabled', disabledSteps);
 		}
-		$wizard.tabs('option', 'disabled', disabledSteps);
 	};
 
 
@@ -350,12 +421,24 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	/**
 	 * Get the continue button.
 	 * @protected
-	 * @return {jQuery} The continue button.
+	 * @return {jQueryObject} The continue button.
 	 */
 	$.pkp.controllers.wizard.WizardHandler.prototype.
 			getContinueButton = function() {
 
 		return this.$continueButton_;
+	};
+
+
+	/**
+	 * Get the progress indicator.
+	 * @protected
+	 * @return {jQueryObject} The progress indicator.
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.
+			getProgressIndicator = function() {
+
+		return this.$progressIndicator_;
 	};
 
 
@@ -403,13 +486,18 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 	 * Return the current form (if any).
 	 *
 	 * @private
-	 * @return {?jQuery} The form (if any).
+	 * @return {jQueryObject?} The form (if any).
 	 */
 	$.pkp.controllers.wizard.WizardHandler.prototype.getForm_ = function() {
+		var i, $element, $tabContent;
+
 		// If we find a form in the current tab then return it.
-		var $tabContent = this.getCurrentTab().children().first();
-		if ($tabContent.is('form')) {
-			return $tabContent;
+		$tabContent = this.getCurrentTab().children();
+		for (i = 0; i < $tabContent.length; i++) {
+			$element = $($tabContent[i]);
+			if ($element.is('form')) {
+				return $element;
+			}
 		}
 
 		return null;
@@ -436,10 +524,40 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 
 
 	/**
+	 * Helper method to look for changed forms.
+	 *
+	 * @param {boolean} prompt Whether or not to prompt.
+	 * @return {boolean} Whether or not they wish to cancel. If no form is
+	 * available in wizard, also return false.
+	 * @private
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.checkForm_ =
+			function(prompt) {
+		var $form = this.getForm_(),
+				handler;
+		if ($form !== null) {
+			handler = $.pkp.classes.Handler.getHandler($('#' + $form.attr('id')));
+			if (prompt) {
+				if (handler.formChangesTracked) {
+					if (!confirm($.pkp.locale.form_dataHasChanged)) {
+						return true; // the user has clicked cancel, they wish to stay.
+					} else {
+						handler.unregisterForm();
+					}
+				}
+			} else {
+				handler.unregisterForm();
+			}
+		}
+		return false;
+	};
+
+
+	/**
 	 * Add wizard buttons to the wizard.
 	 *
 	 * @private
-	 * @param {jQuery} $wizard The wizard element.
+	 * @param {jQueryObject} $wizard The wizard element.
 	 * @param {Object} options The wizard options.
 	 */
 	$.pkp.controllers.wizard.WizardHandler.prototype.addWizardButtons_ =
@@ -447,31 +565,26 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 
 		// Add space before wizard buttons.
 		var $wizardButtons =
-				$('<div id="wizardButtons" class="modal-buttons"></div>');
-
-		if (options.cancelButtonText) {
-			// Add cancel button.
-			var $cancelButton = $(['<a id="cancelButton" href="#">',
-				options.cancelButtonText, '</a>'].join(''));
-			$wizardButtons.append($cancelButton);
-
-			// Attach the cancel request handler.
-			$cancelButton.bind('click',
-					this.callbackWrapper(this.cancelRequest));
-		}
+				$('<div id="wizardButtons" class="modal_buttons"></div>'),
+				$cancelButton, $continueButton, $progressIndicator;
 
 		if (options.continueButtonText) {
 			// Add continue/finish button.
-			var $continueButton = $(['<button id="continueButton"',
-				'class="button pkp_helpers_align_right">', options.continueButtonText,
-				'</button>'].join('')).button();
+			$continueButton = $(
+					'<button id="continueButton" class="pkp_button"></button>')
+					.text(options.continueButtonText);
 			$wizardButtons.append($continueButton);
+
+			$progressIndicator = $(
+					'<span class="pkp_spinner"></span>');
+			$wizardButtons.append($progressIndicator);
 
 			$continueButton.
 					// Attach the continue request handler.
 					bind('click',
 							this.callbackWrapper(this.continueRequest));
-			this.$continueButton_ = $continueButton;
+			this.$continueButton_ = /** @type {jQueryObject} */ $continueButton;
+			this.$progressIndicator_ = $progressIndicator;
 
 			// Remember the button labels.
 			this.continueButtonText_ = options.continueButtonText;
@@ -482,10 +595,39 @@ jQuery.pkp.controllers.wizard = jQuery.pkp.controllers.wizard || { };
 			}
 		}
 
+		if (options.cancelButtonText) {
+			// Add cancel button.
+			$cancelButton = $('<a id="cancelButton" class="cancel" href="#"></a>')
+					.text(options.cancelButtonText);
+			$wizardButtons.append($cancelButton);
+
+			// Attach the cancel request handler.
+			$cancelButton.bind('click',
+					this.callbackWrapper(this.cancelRequest));
+		}
+
 		// Insert wizard buttons.
 		$wizard.after($wizardButtons);
 	};
 
 
+	/**
+	 * Disable the continue button
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.disableContinueButton =
+			function() {
+		this.getContinueButton().attr('disabled', 'disabled');
+	};
+
+
+	/**
+	 * Enable the continue button
+	 */
+	$.pkp.controllers.wizard.WizardHandler.prototype.enableContinueButton =
+			function() {
+		this.getContinueButton().removeAttr('disabled');
+	};
+
+
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/DataObjectRequiredPolicy.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DataObjectRequiredPolicy
@@ -53,9 +54,9 @@ class DataObjectRequiredPolicy extends AuthorizationPolicy {
 	 * @param $message string
 	 * @param $operations array Optional list of operations for which this check takes effect. If specified, operations outside this set will not be checked against this policy.
 	 */
-	function DataObjectRequiredPolicy(&$request, &$args, $parameterName, $message = null, $operations = null) {
+	function DataObjectRequiredPolicy($request, &$args, $parameterName, $message = null, $operations = null) {
 		parent::AuthorizationPolicy($message);
-		$this->_request =& $request;
+		$this->_request = $request;
 		assert(is_array($args));
 		$this->_args =& $args;
 		$this->_parameterName = $parameterName;
@@ -95,13 +96,13 @@ class DataObjectRequiredPolicy extends AuthorizationPolicy {
 	 */
 	function getDataObjectId() {
 		// Identify the data object id.
-		$router =& $this->_request->getRouter();
+		$router = $this->_request->getRouter();
 		switch(true) {
 			case is_a($router, 'PKPPageRouter'):
-				if ( is_numeric($this->_request->getUserVar($this->_parameterName)) ) {
+				if ( ctype_digit((string) $this->_request->getUserVar($this->_parameterName)) ) {
 					// We may expect a object id in the user vars
 					return (int) $this->_request->getUserVar($this->_parameterName);
-				} else if (isset($this->_args[0]) && is_numeric($this->_args[0])) {
+				} else if (isset($this->_args[0]) && ctype_digit((string) $this->_args[0])) {
 					// Or the object id can be expected as the first path in the argument list
 					return (int) $this->_args[0];
 				}
@@ -110,7 +111,7 @@ class DataObjectRequiredPolicy extends AuthorizationPolicy {
 			case is_a($router, 'PKPComponentRouter'):
 				// We expect a named object id argument.
 				if (isset($this->_args[$this->_parameterName])
-						&& is_numeric($this->_args[$this->_parameterName])) {
+						&& ctype_digit((string) $this->_args[$this->_parameterName])) {
 					return (int) $this->_args[$this->_parameterName];
 				}
 				break;

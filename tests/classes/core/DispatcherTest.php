@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/core/DispatcherTest.inc.php
+ * @file tests/classes/core/DispatcherTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DispatcherTest
@@ -15,7 +16,7 @@
 
 import('lib.pkp.tests.PKPTestCase');
 import('lib.pkp.classes.core.Registry');
-import('lib.pkp.classes.core.PKPApplication');
+import('classes.core.Application');
 import('lib.pkp.classes.core.Dispatcher');
 import('lib.pkp.classes.core.PKPRequest');
 import('lib.pkp.classes.plugins.HookRegistry');
@@ -43,10 +44,11 @@ class DispatcherTest extends PKPTestCase {
 		parent::setUp();
 		// Mock application object without calling its constructor.
 		$mockApplication =
-				$this->getMock('PKPApplication', array('getContextDepth', 'getContextList'),
+				$this->getMock('Application', array('getContextDepth', 'getContextList'),
 				array(), '', false);
 		Registry::set('application', $mockApplication);
-		Registry::set('dispatcher', $nullVar = null);
+		$nullVar = null;
+		Registry::set('dispatcher', $nullVar);
 
 		// Set up the getContextDepth() method
 		$mockApplication->expects($this->any())
@@ -65,7 +67,7 @@ class DispatcherTest extends PKPTestCase {
 	}
 
 	/**
-	 * @covers Dispatcher::testUrl
+	 * @covers Dispatcher::url
 	 */
 	public function testUrl() {
 		$baseUrl = $this->request->getBaseUrl();

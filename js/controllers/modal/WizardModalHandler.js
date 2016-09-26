@@ -1,7 +1,8 @@
 /**
  * @file js/controllers/modal/WizardModalHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class WizardModalHandler
@@ -17,7 +18,7 @@
 	 *
 	 * @extends $.pkp.controllers.modal.AjaxModalHandler
 	 *
-	 * @param {jQuery} $handledElement The clickable element
+	 * @param {jQueryObject} $handledElement The clickable element
 	 *  the modal will be attached to.
 	 * @param {Object} options non-default Dialog options
 	 *  to be passed into the dialog widget.
@@ -43,27 +44,29 @@
 	 * as a wizard cancel button.
 	 *
 	 * @protected
-	 * @param {HTMLElement} callingElement The close button.
-	 * @param {Event} event The close button click event.
-	 * @param {boolean} closeWithoutCancel Set to true to immediately
+	 * @param {Object=} opt_callingElement The close button.
+	 * @param {Event=} opt_event The close button click event.
+	 * @param {boolean=} opt_closeWithoutCancel Set to true to immediately
 	 *  close the modal.
 	 * @return {boolean} Should return false to stop event processing.
 	 */
 	$.pkp.controllers.modal.WizardModalHandler.prototype.modalClose =
-			function(callingElement, event, closeWithoutCancel) {
+			function(opt_callingElement, opt_event, opt_closeWithoutCancel) {
 
-		if (closeWithoutCancel) {
-			this.parent('modalClose', callingElement, event);
+		if (opt_closeWithoutCancel) {
+			this.parent('modalClose', opt_callingElement, opt_event);
 		} else {
 			// Trigger a cancel event on the wizard.
-			var wizardCancelRequestedEvent = new $.Event('wizardCancelRequested');
+			var wizardCancelRequestedEvent = new $.Event('wizardCancelRequested'),
+					$wizard;
+
 			wizardCancelRequestedEvent.stopPropagation();
-			var $wizard = this.getHtmlElement().children().first();
+			$wizard = this.getHtmlElement().children().first();
 			$wizard.trigger(wizardCancelRequestedEvent);
 
 			// Only close the modal if the wizard didn't prevent this.
 			if (!wizardCancelRequestedEvent.isDefaultPrevented()) {
-				this.parent('modalClose', callingElement, event);
+				this.parent('modalClose', opt_callingElement, opt_event);
 			}
 		}
 
@@ -86,4 +89,4 @@
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

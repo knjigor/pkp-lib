@@ -3,7 +3,8 @@
 /**
  * @file classes/db/XMLDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XMLDAO
@@ -25,6 +26,7 @@ class XMLDAO {
 	/**
 	 * Parse an XML file and return data in an object.
 	 * @see xml.XMLParser::parse()
+	 * @param $file string
 	 */
 	function &parse($file) {
 		$parser = new XMLParser();
@@ -36,6 +38,7 @@ class XMLDAO {
 	/**
 	 * Parse an XML file with the specified handler and return data in an object.
 	 * @see xml.XMLParser::parse()
+	 * @param $file string
 	 * @param $handler reference to the handler to use with the parser.
 	 */
 	function &parseWithHandler($file, &$handler) {
@@ -49,6 +52,8 @@ class XMLDAO {
 	/**
 	 * Parse an XML file and return data in an array.
 	 * @see xml.XMLParser::parseStruct()
+	 * @param $file string
+	 * @param $tagsToMatch array
 	 */
 	function &parseStruct($file, $tagsToMatch = array()) {
 		$parser = new XMLParser();

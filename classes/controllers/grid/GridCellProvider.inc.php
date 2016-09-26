@@ -3,13 +3,17 @@
 /**
  * @file classes/controllers/grid/GridCellProvider.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GridCellProvider
  * @ingroup controllers_grid
  *
- * @brief Base class for a grid column's cell provider
+ * @brief Base class for a grid column's cell provider.
+ *
+ * Grid cell providers provide formatted data to grid columns.
+ * For general information about grids, see GridHandler.
  */
 
 
@@ -32,7 +36,7 @@ class GridCellProvider {
 	 * @param $column GridColumn
 	 * @return string the rendered representation of the element for the given column
 	 */
-	function render(&$request, &$row, &$column) {
+	function render($request, $row, $column) {
 		$columnId = $column->getId();
 		assert(!empty($columnId));
 
@@ -41,15 +45,15 @@ class GridCellProvider {
 		$cellId = isset($rowId)?$rowId.'-'.$columnId:null;
 
 		// Assign values extracted from the element for the cell.
-		$templateMgr =& TemplateManager::getManager();
+		$templateMgr = TemplateManager::getManager($request);
 		$templateVars = $this->getTemplateVarsFromRowColumn($row, $column);
 		foreach ($templateVars as $varName => $varValue) {
 			$templateMgr->assign($varName, $varValue);
 		}
 		$templateMgr->assign('id', $cellId);
-		$templateMgr->assign_by_ref('column', $column);
-		$templateMgr->assign_by_ref('actions', $this->getCellActions($request, $row, $column));
-		$templateMgr->assign_by_ref('flags', $column->getFlags());
+		$templateMgr->assign('column', $column);
+		$templateMgr->assign('actions', $this->getCellActions($request, $row, $column));
+		$templateMgr->assign('flags', $column->getFlags());
 		$templateMgr->assign('formLocales', AppLocale::getSupportedFormLocales());
 		$template = $column->getTemplate();
 		assert(!empty($template));
@@ -67,7 +71,7 @@ class GridCellProvider {
 	 * @param $column GridColumn
 	 * @return array
 	 */
-	function getTemplateVarsFromRowColumn(&$row, $column) {
+	function getTemplateVarsFromRowColumn($row, $column) {
 		return array();
 	}
 
@@ -83,11 +87,11 @@ class GridCellProvider {
 	 * @param $request Request
 	 * @param $row GridRow
 	 * @param $column GridColumn
+	 * @param $position int GRID_ACTION_POSITION_...
 	 * @return array an array of LinkAction instances
 	 */
-	function &getCellActions(&$request, &$row, &$column, $position = GRID_ACTION_POSITION_DEFAULT) {
-		$actions =& $column->getCellActions($request, $row, $position);
-		return $actions;
+	function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT) {
+		return $column->getCellActions($request, $row, $position);
 	}
 }
 

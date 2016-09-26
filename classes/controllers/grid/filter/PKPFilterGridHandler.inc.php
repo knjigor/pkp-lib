@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/filter/PKPFilterGridHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPFilterGridHandler
@@ -110,7 +111,7 @@ class PKPFilterGridHandler extends GridHandler {
 	 * Configure the grid
 	 * @see PKPHandler::initialize()
 	 */
-	function initialize(&$request) {
+	function initialize($request) {
 		parent::initialize($request);
 
 		// Load manager-specific translations
@@ -119,22 +120,26 @@ class PKPFilterGridHandler extends GridHandler {
 		AppLocale::requireComponents(LOCALE_COMPONENT_PKP_MANAGER, LOCALE_COMPONENT_PKP_SUBMISSION);
 
 		// Retrieve the filters to be displayed in the grid
-		$router =& $request->getRouter();
-		$context =& $router->getContext($request);
+		$router = $request->getRouter();
+		$context = $router->getContext($request);
 		$contextId = (is_null($context)?CONTEXT_ID_NONE:$context->getId());
-		$filterDao =& DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
-		$data =& $filterDao->getObjectsByGroup($this->getFilterGroupSymbolic(), $contextId);
+		$filterDao = DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
+		$data = $filterDao->getObjectsByGroup($this->getFilterGroupSymbolic(), $contextId);
 		$this->setGridDataElements($data);
 
 		// Grid action
-		$router =& $request->getRouter();
+		$router = $request->getRouter();
+		import('lib.pkp.classes.linkAction.request.AjaxModal');
 		$this->addAction(
-			new LegacyLinkAction(
+			new LinkAction(
 				'addFilter',
-				LINK_ACTION_MODE_MODAL,
-				LINK_ACTION_TYPE_APPEND,
-				$router->url($request, null, null, 'addFilter'),
-				'grid.action.addItem'
+				new AjaxModal(
+					$router->url($request, null, null, 'addFilter'),
+					__('grid.action.addItem'),
+					'modal_manage'
+				),
+				__('grid.action.addItem'),
+				'add_filter'
 			)
 		);
 
@@ -145,7 +150,7 @@ class PKPFilterGridHandler extends GridHandler {
 				'displayName',
 				'manager.setup.filter.grid.filterDisplayName',
 				false,
-				'controllers/grid/gridCell.tpl',
+				null,
 				$cellProvider
 			)
 		);
@@ -154,7 +159,7 @@ class PKPFilterGridHandler extends GridHandler {
 				'settings',
 				'manager.setup.filter.grid.filterSettings',
 				false,
-				'controllers/grid/gridCell.tpl',
+				null,
 				$cellProvider
 			)
 		);
@@ -165,12 +170,11 @@ class PKPFilterGridHandler extends GridHandler {
 	// Overridden methods from GridHandler
 	//
 	/**
-	 * @see GridHandler::getRowInstance()
+	 * @copydoc GridHandler::getRowInstance()
 	 */
-	function &getRowInstance() {
+	protected function getRowInstance() {
 		// Return a filter row
-		$row = new PKPFilterGridRow();
-		return $row;
+		return new PKPFilterGridRow();
 	}
 
 
@@ -182,7 +186,7 @@ class PKPFilterGridHandler extends GridHandler {
 	 * @param $args array
 	 * @param $request PKPRequest
 	 */
-	function addFilter(&$args, &$request) {
+	function addFilter(&$args, $request) {
 		// Calling editFilter() to edit a new filter.
 		return $this->editFilter($args, $request, true);
 	}
@@ -191,8 +195,9 @@ class PKPFilterGridHandler extends GridHandler {
 	 * Edit a filter
 	 * @param $args array
 	 * @param $request PKPRequest
+	 * @return JSONMessage JSON object
 	 */
-	function editFilter(&$args, &$request, $newFilter = false) {
+	function editFilter(&$args, $request, $newFilter = false) {
 		// Identify the filter to be edited
 		if ($newFilter) {
 			$filter = null;
@@ -207,17 +212,16 @@ class PKPFilterGridHandler extends GridHandler {
 
 		$filterForm->initData($this->getGridDataElements($request));
 
-		$json = new JSONMessage(true, $filterForm->fetch($request));
-		return $json->getString();
+		return new JSONMessage(true, $filterForm->fetch($request));
 	}
 
 	/**
 	 * Update a filter
 	 * @param $args array
 	 * @param $request PKPRequest
-	 * @return string
+	 * @return JSONMessage JSON object
 	 */
-	function updateFilter(&$args, &$request) {
+	function updateFilter(&$args, $request) {
 		if(!$request->isPost()) fatalError('Cannot update filter via GET request!');
 
 		// Identify the citation to be updated
@@ -235,43 +239,30 @@ class PKPFilterGridHandler extends GridHandler {
 			// Persist the filter.
 			$filterForm->execute($request);
 
-			// Render the updated filter row into
-			// a JSON response
-			$row =& $this->getRowInstance();
-			$row->setGridId($this->getId());
-			$row->setId($filter->getId());
-			$row->setData($filter);
-			$row->initialize($request);
-			$json = new JSONMessage(true, $this->_renderRowInternally($request, $row));
+			return DAO::getDataChangedEvent();
 		} else {
 			// Re-display the filter form with error messages
 			// so that the user can fix it.
-			$json = new JSONMessage(false, $filterForm->fetch($request));
+			return new JSONMessage(false, $filterForm->fetch($request));
 		}
-
-		// Return the serialized JSON response
-		return $json->getString();
 	}
 
 	/**
 	 * Delete a filter
 	 * @param $args array
 	 * @param $request PKPRequest
-	 * @return string
+	 * @return JSONMessage JSON object
 	 */
-	function deleteFilter(&$args, &$request) {
+	function deleteFilter(&$args, $request) {
 		// Identify the filter to be deleted
-		$filter =& $this->getFilterFromArgs($request, $args);
+		$filter = $this->getFilterFromArgs($request, $args);
 
 		$filterDao = DAORegistry::getDAO('FilterDAO');
-		$result = $filterDao->deleteObject($filter);
-
-		if ($result) {
-			$json = new JSONMessage(true);
+		if ($request->checkCSRF() && $filterDao->deleteObject($filter)) {
+			return DAO::getDataChangedEvent();
 		} else {
-			$json = new JSONMessage(false, __('manager.setup.filter.grid.errorDeletingFilter'));
+			return new JSONMessage(false, __('manager.setup.filter.grid.errorDeletingFilter'));
 		}
-		return $json->getString();
 	}
 
 
@@ -298,7 +289,7 @@ class PKPFilterGridHandler extends GridHandler {
 			// We need to instantiate a new filter from a
 			// filter template.
 			$filterTemplateId = $args['filterTemplateId'];
-			$filterDao =& DAORegistry::getDAO('FilterDAO');
+			$filterDao = DAORegistry::getDAO('FilterDAO');
 			$filter =& $filterDao->getObjectById($filterTemplateId);
 			if (!is_a($filter, 'Filter')) fatalError('Invalid filter template id!');
 

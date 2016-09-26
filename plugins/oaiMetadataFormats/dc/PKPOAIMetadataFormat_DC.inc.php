@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file plugins/oaiMetadata/dc/PKPOAIMetadataFormat_DC.inc.php
+ * @file plugins/oaiMetadataFormats/dc/PKPOAIMetadataFormat_DC.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPOAIMetadataFormat_DC
@@ -14,11 +15,11 @@
 
 class PKPOAIMetadataFormat_DC extends OAIMetadataFormat {
 	/**
-	 * @see OAIMetadataFormat#toXML
+	 * @copydoc OAIMetadataFormat::toXML
 	 */
 	function toXml(&$dataObject, $format = null) {
 		import('plugins.metadata.dc11.schema.Dc11Schema');
-		$dcDescription =& $dataObject->extractMetadata(new Dc11Schema());
+		$dcDescription = $dataObject->extractMetadata(new Dc11Schema());
 
 		$response = "<oai_dc:dc\n" .
 			"\txmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\"\n" .
@@ -54,7 +55,7 @@ class PKPOAIMetadataFormat_DC extends OAIMetadataFormat {
 
 		// Translate the property name to XML syntax.
 		$openingElement = str_replace(array('[@', ']'), array(' ',''), $propertyName);
-		$closingElement = String::regexp_replace('/\[@.*/', '', $propertyName);
+		$closingElement = PKPString::regexp_replace('/\[@.*/', '', $propertyName);
 
 		// Create the actual XML entry.
 		$response = '';

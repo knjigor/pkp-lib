@@ -2,7 +2,8 @@
 /**
  * @file classes/filter/GenericMultiplexerFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GenericMultiplexerFilter
@@ -85,7 +86,7 @@ class GenericMultiplexerFilter extends CompositeFilter {
 			// Make a copy of the input so that the filters don't interfere
 			// with each other.
 			if (is_object($input)) {
-				$clonedInput =& cloneObject($input);
+				$clonedInput = clone($input);
 			} else {
 				$clonedInput = $input;
 			}

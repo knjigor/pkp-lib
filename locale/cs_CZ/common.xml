@@ -4,21 +4,20 @@
 <!--
   * locale/cs_CZ/common.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the cs_CZ (Czech) locale.
+  * Localization strings for the cs_CZ (Čeština) locale.
   * Translated by František Chmelik, frantisek.chmelik 'at' upol.cz
   * Corrections, migration to the OCS 2.3.x by Ivo Vesely and Petr Petyovsky (petyovsky 'at' feec.vutbr.cz)
   *
-  * $Id: common.xml 225 2011-06-24 12:33:10Z petyovsky $
   -->
 
 <locale name="cs_CZ" full_name = "Čeština">
 	<message key="about.aboutSite">Podrobnosti o těchto stránkách</message>
 	<message key="about.contact">Kontakt</message>
 	<message key="about.contact.email">Email</message>
-	<message key="about.contact.fax">Fax</message>
 	<message key="about.contact.phone">Telefon</message>
 	<message key="about.contact.principalContact">Hlavní kontakt</message>
 	<message key="about.contact.supportContact">Podpůrný kontakt</message>
@@ -56,16 +55,16 @@
 	<message key="common.captchaField.description">Zadejte prosím písmena tak, jak jsou zobrazena v obrázku nahoře.</message>
 	<message key="common.captchaField">Ověření</message>
 	<message key="common.ccLicense"><![CDATA[<br /><br />
-		<a target="_new" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
-			<img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png"/>
+		<a target="_blank" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
+			<img alt="Creative Commons Licence" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png"/>
 		</a>
 		<br/>
-		Tato práce je licencována pod <a rel="license" target="_new" href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0  Licencí</a>.]]></message>
+		Tato práce je licencována pod <a rel="license" target="_blank" href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0  Licencí</a>.]]></message>
 	<message key="common.ccLicense.rt"><![CDATA[<div class="rtBlock">
 		<br />
-		<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a>
+		<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank"><img alt="Creative Commons Licence" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
 		<br />
-		Tato práce je licencována pod <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new">Creative Commons Attribution 3.0 Licencí</a>.
+		Tato práce je licencována pod <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank">Creative Commons Attribution 3.0 Licencí</a>.
 	</div>]]></message>
 	<message key="common.changesSaved">Vaše změny byly uloženy.</message>
 	<message key="common.chooseOne">Vyberte jeden</message>
@@ -104,6 +103,8 @@
 	<message key="common.fileName">Jméno souboru</message>
 	<message key="common.fileSize">Velikost souboru</message>
 	<message key="common.fileType">Typ souboru</message>
+	<message key="common.file.namingPattern">{$username}, {$userGroup}, {$originalFilename}</message>
+	<message key="common.file.anonymousNamingPattern">{$userGroup}, {$originalFilename}</message>
 	<message key="common.height">Výška</message>
 	<message key="common.homePageHeaderLogo.altText">Logo záhlaví domácí stránky</message>
 	<message key="common.hour">Hodina</message>
@@ -295,7 +296,7 @@
 	<message key="notification.unsubscribeError">Při odhlašování se vyskytla chyba. Ujistěte se prosím, že Vaše emailová adresa a heslo jsou správné.</message>
 	<message key="notification.unsubscribeSuccess">Byl jste úspěšně odhlášen.</message>
 	<message key="search.abstract">Abstrakt</message>
-	<message key="search.allFields">Vše</message>
+	<message key="search.author">Autoři</message>
 	<message key="search.coverage">Pokrytí</message>
 	<message key="search.date">Datum</message>
 	<message key="search.dateFrom">Od</message>

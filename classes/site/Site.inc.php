@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup site
+ * @defgroup site Site
+ * Site-related concerns such as the Site object and version management.
  */
 
 /**
  * @file classes/site/Site.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Site
@@ -54,15 +56,18 @@ class Site extends DataObject {
 	//
 
 	/**
+	 * Get site title.
+	 * @param $locale string Locale code to return, if desired.
+	 */
+	function getTitle($locale = null) {
+		return $this->getSetting('title', $locale);
+	}
+
+	/**
 	 * Get localized site title.
 	 */
 	function getLocalizedTitle() {
 		return $this->getLocalizedSetting('title');
-	}
-
-	function getSiteTitle() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedTitle();
 	}
 
 	/**
@@ -86,22 +91,12 @@ class Site extends DataObject {
 		return null;
 	}
 
-	function getSitePageHeaderTitle() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedPageHeaderTitle();
-	}
-
 	/**
 	 * Get localized site logo type.
 	 * @return boolean
 	 */
 	function getLocalizedPageHeaderTitleType() {
 		return $this->getLocalizedData('pageHeaderTitleType');
-	}
-
-	function getSitePageHeaderTitleType() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedPageHeaderTitleType();
 	}
 
 	/**
@@ -117,19 +112,7 @@ class Site extends DataObject {
 	 * @param $originalStyleFilename string
 	 */
 	function setOriginalStyleFilename($originalStyleFilename) {
-		return $this->setData('originalStyleFilename', $originalStyleFilename);
-	}
-
-	/**
-	 * Get localized site intro.
-	 */
-	function getLocalizedIntro() {
-		return $this->getLocalizedSetting('intro');
-	}
-
-	function getSiteIntro() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedIntro();
+		$this->setData('originalStyleFilename', $originalStyleFilename);
 	}
 
 	/**
@@ -145,7 +128,7 @@ class Site extends DataObject {
 	 * @param $redirect int
 	 */
 	function setRedirect($redirect) {
-		return $this->setData('redirect', (int)$redirect);
+		$this->setData('redirect', (int)$redirect);
 	}
 
 	/**
@@ -155,11 +138,6 @@ class Site extends DataObject {
 		return $this->getLocalizedSetting('about');
 	}
 
-	function getSiteAbout() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedAbout();
-	}
-
 	/**
 	 * Get localized site contact name.
 	 */
@@ -167,21 +145,11 @@ class Site extends DataObject {
 		return $this->getLocalizedSetting('contactName');
 	}
 
-	function getSiteContactName() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedContactName();
-	}
-
 	/**
 	 * Get localized site contact email.
 	 */
 	function getLocalizedContactEmail() {
 		return $this->getLocalizedSetting('contactEmail');
-	}
-
-	function getSiteContactEmail() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedContactEmail();
 	}
 
 	/**
@@ -197,7 +165,7 @@ class Site extends DataObject {
 	 * @param $minPasswordLength int
 	 */
 	function setMinPasswordLength($minPasswordLength) {
-		return $this->setData('minPasswordLength', $minPasswordLength);
+		$this->setData('minPasswordLength', $minPasswordLength);
 	}
 
 	/**
@@ -213,7 +181,7 @@ class Site extends DataObject {
 	 * @param $primaryLocale string
 	 */
 	function setPrimaryLocale($primaryLocale) {
-		return $this->setData('primaryLocale', $primaryLocale);
+		$this->setData('primaryLocale', $primaryLocale);
 	}
 
 	/**
@@ -230,7 +198,7 @@ class Site extends DataObject {
 	 * @param $installedLocales array
 	 */
 	function setInstalledLocales($installedLocales) {
-		return $this->setData('installedLocales', $installedLocales);
+		$this->setData('installedLocales', $installedLocales);
 	}
 
 	/**
@@ -247,7 +215,7 @@ class Site extends DataObject {
 	 * @param $supportedLocales array
 	 */
 	function setSupportedLocales($supportedLocales) {
-		return $this->setData('supportedLocales', $supportedLocales);
+		$this->setData('supportedLocales', $supportedLocales);
 	}
 
 	/**
@@ -265,18 +233,22 @@ class Site extends DataObject {
 	 * @return mixed
 	 */
 	function &getSetting($name, $locale = null) {
-		$siteSettingsDao =& DAORegistry::getDAO('SiteSettingsDAO');
+		$siteSettingsDao = DAORegistry::getDAO('SiteSettingsDAO');
 		$setting =& $siteSettingsDao->getSetting($name, $locale);
 		return $setting;
 	}
 
+	/**
+	 * Get a localized setting using the current locale.
+	 * @param $name string Setting name
+	 * @return mixed
+	 */
 	function getLocalizedSetting($name) {
 		$returner = $this->getSetting($name, AppLocale::getLocale());
-		if ($returner === null) {
-			unset($returner);
-			$returner = $this->getSetting($name, AppLocale::getPrimaryLocale());
-		}
-		return $returner;
+		// If setting is defined for current locale, use it.
+		if ($returner !== null) return $returner;
+		// Alternately, fall back on primary locale.
+		return $this->getSetting($name, AppLocale::getPrimaryLocale());
 	}
 
 	/**
@@ -287,7 +259,7 @@ class Site extends DataObject {
 	 * @param $isLocalized boolean optional
 	 */
 	function updateSetting($name, $value, $type = null, $isLocalized = false) {
-		$siteSettingsDao =& DAORegistry::getDAO('SiteSettingsDAO');
+		$siteSettingsDao = DAORegistry::getDAO('SiteSettingsDAO');
 		return $siteSettingsDao->updateSetting($name, $value, $type, $isLocalized);
 	}
 }

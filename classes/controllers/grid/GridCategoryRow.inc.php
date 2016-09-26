@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/GridCategoryRow.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GridCategoryRow
@@ -13,6 +14,7 @@
  *
  */
 import('lib.pkp.classes.controllers.grid.GridRow');
+import('lib.pkp.classes.controllers.grid.GridCategoryRowCellProvider');
 
 class GridCategoryRow extends GridRow {
 	/** @var string empty row locale key */
@@ -23,6 +25,10 @@ class GridCategoryRow extends GridRow {
 	 */
 	function GridCategoryRow() {
 		parent::GridRow();
+
+		// Set a default cell provider that will get the cell template
+		// variables from the category grid row.
+		$this->setCellProvider(new GridCategoryRowCellProvider());
 	}
 
 
@@ -50,14 +56,6 @@ class GridCategoryRow extends GridRow {
 	 */
 	function getCategoryLabel() {
 		return '';
-	}
-
-
-	//
-	// Public methods
-	//
-	function initialize($request, $template = 'controllers/grid/gridCategoryRow.tpl') {
-		parent::initialize($request, $template);
 	}
 }
 

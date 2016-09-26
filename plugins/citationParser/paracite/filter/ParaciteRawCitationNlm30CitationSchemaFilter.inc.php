@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_citationParser_paracite_filter
+ * @defgroup plugins_citationParser_paracite_filter ParaCite Citation Filter
  */
 
 /**
  * @file plugins/citationParser/paracite/filter/ParaciteRawCitationNlm30CitationSchemaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ParaciteRawCitationNlm30CitationSchemaFilter
@@ -42,7 +42,7 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function ParaciteRawCitationNlm30CitationSchemaFilter(&$filterGroup) {
+	function ParaciteRawCitationNlm30CitationSchemaFilter($filterGroup) {
 		$this->setDisplayName('ParaCite');
 
 		// Instantiate the settings of this filter
@@ -71,7 +71,7 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationParser.paracite.filter.ParaciteRawCitationNlm30CitationSchemaFilter';
@@ -82,11 +82,12 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 	// Implement template methods from Filter
 	//
 	/**
-	 * @see Filter::process()
-	 * @param $citationString string
+	 * @copydoc Filter::process()
+	 * @param $input string
 	 * @return MetadataDescription
 	 */
-	function &process($citationString) {
+	function &process(&$input) {
+		$citationString =& $input;
 		$nullVar = null;
 
 		// Check the availability of perl
@@ -94,7 +95,7 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 		if (empty($perlCommand) || !file_exists($perlCommand)) return $nullVar;
 
 		// Convert to ASCII - Paracite doesn't handle UTF-8 well
-		$citationString = String::utf8_to_ascii($citationString);
+		$citationString = PKPString::utf8_to_ascii($citationString);
 
 		// Call the paracite parser
 		$wrapperScript = dirname(__FILE__).DIRECTORY_SEPARATOR.'paracite.pl';
@@ -103,8 +104,8 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 		$xmlResult = shell_exec($paraciteCommand);
 		if (empty($xmlResult)) return $nullVar;
 
-		if ( Config::getVar('i18n', 'charset_normalization') == 'On' && !String::utf8_compliant($xmlResult) ) {
-			$xmlResult = String::utf8_normalize($xmlResult);
+		if ( Config::getVar('i18n', 'charset_normalization') == 'On' && !PKPString::utf8_compliant($xmlResult) ) {
+			$xmlResult = PKPString::utf8_normalize($xmlResult);
 		}
 
 		// Create a temporary DOM document
@@ -125,8 +126,8 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 
 		// Break up the authors field
 		if (isset($metadata['authors'])) {
-			$metadata['authors'] = String::trimPunctuation($metadata['authors']);
-			$metadata['authors'] = String::iterativeExplode(array(':', ';'), $metadata['authors']);
+			$metadata['authors'] = PKPString::trimPunctuation($metadata['authors']);
+			$metadata['authors'] = PKPString::iterativeExplode(array(':', ';'), $metadata['authors']);
 		}
 
 		// Convert pages to integers
@@ -136,7 +137,7 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 
 		// Convert titles to title case
 		foreach(array('title', 'chapter', 'publication') as $titleProperty) {
-			if (isset($metadata[$titleProperty])) $metadata[$titleProperty] = String::titleCase($metadata[$titleProperty]);
+			if (isset($metadata[$titleProperty])) $metadata[$titleProperty] = PKPString::titleCase($metadata[$titleProperty]);
 		}
 
 		// Map ParaCite results to OpenURL - null means
@@ -237,7 +238,7 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 		foreach ($metadata as $paraciteElementName => $paraciteValue) {
 			if (!empty($paraciteValue)) {
 				// Trim punctuation
-				if (is_string($paraciteValue)) $paraciteValue = String::trimPunctuation($paraciteValue);
+				if (is_string($paraciteValue)) $paraciteValue = PKPString::trimPunctuation($paraciteValue);
 
 				// Transfer the value to the OpenURL result array
 				assert(array_key_exists($paraciteElementName, $metadataMapping));
@@ -263,14 +264,14 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 
 		// Add 'rest_text' as NLM comment (if given)
 		if (isset($metadata['rest_text'])) {
-			$nlm30Description->addStatement('comment', String::trimPunctuation($metadata['rest_text']));
+			$nlm30Description->addStatement('comment', PKPString::trimPunctuation($metadata['rest_text']));
 		}
 
 		// Set display name and sequence id in the meta-data description
 		// to the corresponding values from the filter. This is important
 		// so that we later know which result came from which filter.
 		$nlm30Description->setDisplayName($this->getDisplayName());
-		$nlm30Description->setSeq($this->getSeq());
+		$nlm30Description->setSequence($this->getSequence());
 
 		return $nlm30Description;
 	}
@@ -281,10 +282,9 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 	//
 	/**
 	 * Return supported paracite citation parser modules
-	 * NB: PHP4 work-around for a public static class member
 	 * @return array supported citation modules
 	 */
-	function getSupportedCitationModules() {
+	static function getSupportedCitationModules() {
 		static $_supportedCitationModules = array(
 			CITATION_PARSER_PARACITE_STANDARD,
 			CITATION_PARSER_PARACITE_CITEBASE,
@@ -294,4 +294,5 @@ class ParaciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 		return $_supportedCitationModules;
 	}
 }
+
 ?>

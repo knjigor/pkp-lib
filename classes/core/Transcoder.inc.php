@@ -3,7 +3,8 @@
 /**
  * @file classes/core/Transcoder.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Transcoder
@@ -14,13 +15,13 @@
 
 
 class Transcoder {
-	/** @var $fromEncoding string Name of source encoding */
+	/** @var string Name of source encoding */
 	var $fromEncoding;
 
-	/** @var $toEncoding string Name of target encoding */
+	/** @var string Name of target encoding */
 	var $toEncoding;
 
-	/** @var $translit boolean Whether or not to transliterate while transcoding */
+	/** @var boolean Whether or not to transliterate while transcoding */
 	var $translit;
 
 	/**
@@ -61,19 +62,7 @@ class Transcoder {
 			}
 
 		} elseif ($this->fromEncoding == 'HTML-ENTITIES' && !$mbstring) {
-			// NB: old PHP versions may have issues with html_entity_decode()
-			if (checkPhpVersion('4.3.0')) {
-				// multibyte character handling added in PHP 5.0.0
-				return html_entity_decode($string, ENT_COMPAT, $this->toEncoding);
-			} else {
-				// use built-in transcoding to UTF8
-				$string = String::html2utf($string);
-
-				// make another pass to target encoding
-				$this->fromEncoding = 'UTF-8';
-				return $this->trans($string);
-			}
-
+			return html_entity_decode($string, ENT_COMPAT, $this->toEncoding);
 		// Special cases for transliteration ("down-sampling")
 		} elseif ($this->translit && $iconv) {
 			// use the iconv library to transliterate

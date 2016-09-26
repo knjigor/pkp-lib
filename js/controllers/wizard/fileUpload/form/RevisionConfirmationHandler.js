@@ -1,7 +1,8 @@
 /**
  * @file js/controllers/wizard/fileUpload/form/RevisionConfirmationHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class RevisionConfirmationHandler
@@ -17,7 +18,7 @@
 	 *
 	 * @extends $.pkp.controllers.form.AjaxFormHandler
 	 *
-	 * @param {jQuery} $form The wrapped HTML form element.
+	 * @param {jQueryObject} $form The wrapped HTML form element.
 	 * @param {Object} options Form validation options.
 	 */
 	$.pkp.controllers.wizard.fileUpload.form.RevisionConfirmationHandler =
@@ -28,8 +29,15 @@
 		// Show the possible revision message.
 		$form.find('#possibleRevision').show('slide');
 
+		// this actually unregisters the original upload form.
+		this.trigger('unregisterChangedForm');
+
 		// Subscribe to wizard events.
 		this.bind('wizardAdvanceRequested', this.wizardAdvanceRequested);
+
+		// Do not track form changes on this form since it only appears
+		// after the regular file upload form has been validated and submitted.
+		this.trackFormChanges = false;
 	};
 	$.pkp.classes.Helper.inherits(
 			$.pkp.controllers.wizard.fileUpload.form.RevisionConfirmationHandler,
@@ -48,9 +56,9 @@
 	$.pkp.controllers.wizard.fileUpload.form.RevisionConfirmationHandler.
 			prototype.wizardAdvanceRequested = function(wizardElement, event) {
 
-		var $confirmationForm = this.getHtmlElement();
-		var revisedFileId = parseInt(
-				$confirmationForm.find('#revisedFileId').val(), 10);
+		var $confirmationForm = this.getHtmlElement(),
+				revisedFileId = parseInt(
+						$confirmationForm.find('#revisedFileId').val(), 10);
 		if (revisedFileId > 0) {
 			// Submit the form.
 			$confirmationForm.submit();
@@ -70,9 +78,10 @@
 			this.trigger('fileUploaded', jsonData.uploadedFile);
 		}
 
-		this.parent('handleResponse', formElement, jsonData);
+		return /** @type {boolean} */ (
+				this.parent('handleResponse', formElement, jsonData));
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

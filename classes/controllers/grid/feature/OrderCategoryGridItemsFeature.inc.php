@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/feature/OrderCategoryGridItemsFeature.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class OrderCategoryGridItemsFeature
@@ -26,7 +27,7 @@ class OrderCategoryGridItemsFeature extends OrderItemsFeature{
 	 * @param $typeOption int Defines which grid elements will
 	 * be orderable (categories and/or rows).
 	 * @param $overrideRowTemplate boolean This feature uses row
-	 * actions and it will force the usage of the gridRowWithActions.tpl.
+	 * actions and it will force the usage of the gridRow.tpl.
 	 * If you want to use a different grid row template file, set this flag to
 	 * false and make sure to use a template file that adds row actions.
 	 */
@@ -79,7 +80,7 @@ class OrderCategoryGridItemsFeature extends OrderItemsFeature{
 	function getInitializedCategoryRowInstance($args) {
 		if ($this->getType() != ORDER_CATEGORY_GRID_CATEGORIES_ROWS_ONLY) {
 			$row =& $args['row'];
-			$this->addRowOrderAction($row, GRID_ACTION_POSITION_DEFAULT);
+			$this->addRowOrderAction($row);
 		}
 	}
 
@@ -90,9 +91,7 @@ class OrderCategoryGridItemsFeature extends OrderItemsFeature{
 		$request =& $args['request'];
 		$grid =& $args['grid'];
 
-		import('lib.pkp.classes.core.JSONManager');
-		$jsonManager = new JSONManager();
-		$data = $jsonManager->decode($request->getUserVar('data'));
+		$data = json_decode($request->getUserVar('data'));
 		$gridCategoryElements = $grid->getGridDataElements($request);
 
 		if ($this->getType() != ORDER_CATEGORY_GRID_CATEGORIES_ROWS_ONLY) {
@@ -102,19 +101,19 @@ class OrderCategoryGridItemsFeature extends OrderItemsFeature{
 			}
 
 			// Save categories sequence.
-			$firstSeqValue = $grid->getCategoryDataElementSequence(reset($gridCategoryElements));
+			$firstSeqValue = $grid->getDataElementSequence(reset($gridCategoryElements));
 			foreach ($gridCategoryElements as $rowId => $element) {
 				$rowPosition = array_search($rowId, $categoriesData);
 				$newSequence = $firstSeqValue + $rowPosition;
-				$currentSequence = $grid->getCategoryDataElementSequence($element);
+				$currentSequence = $grid->getDataElementSequence($element);
 				if ($newSequence != $currentSequence) {
-					$grid->saveCategoryDataElementSequence($element, $newSequence);
+					$grid->setDataElementSequence($request, $rowId, $element, $newSequence);
 				}
 			}
 		}
 
 		// Save rows sequence, if this grid has also orderable rows inside each category.
-		$this->_saveRowsInCategoriesSequence($grid, $gridCategoryElements, $data);
+		$this->_saveRowsInCategoriesSequence($request, $grid, $gridCategoryElements, $data);
 	}
 
 
@@ -123,14 +122,16 @@ class OrderCategoryGridItemsFeature extends OrderItemsFeature{
 	//
 	/**
 	 * Save row elements sequence inside categories.
+	 * @param $request PKPRequest
 	 * @param $grid GridHandler
 	 * @param $gridCategoryElements array
 	 * @param $data
 	 */
-	function _saveRowsInCategoriesSequence(&$grid, $gridCategoryElements, $data) {
+	function _saveRowsInCategoriesSequence($request, &$grid, $gridCategoryElements, $data) {
 		if ($this->getType() != ORDER_CATEGORY_GRID_CATEGORIES_ONLY) {
 			foreach($gridCategoryElements as $categoryId => $element) {
-				$gridRowElements = $grid->getCategoryData($element);
+				$gridRowElements = $grid->getGridCategoryDataElements($request, $element);
+				if (!$gridRowElements) continue;
 
 				// Get the correct rows sequence data.
 				$rowsData = null;
@@ -141,13 +142,13 @@ class OrderCategoryGridItemsFeature extends OrderItemsFeature{
 					}
 				}
 
-				$firstSeqValue = $grid->getRowDataElementSequence(reset($gridRowElements));
+				$firstSeqValue = $grid->getDataElementInCategorySequence($categoryId, reset($gridRowElements));
 				foreach ($gridRowElements as $rowId => $element) {
 					$rowPosition = array_search($rowId, $rowsData);
 					$newSequence = $firstSeqValue + $rowPosition;
-					$currentSequence = $grid->getRowDataElementSequence($element);
+					$currentSequence = $grid->getDataElementInCategorySequence($categoryId, $element);
 					if ($newSequence != $currentSequence) {
-						$grid->saveRowDataElementSequence($element, $categoryId, $newSequence);
+						$grid->setDataElementInCategorySequence($categoryId, $element, $newSequence);
 					}
 				}
 			}

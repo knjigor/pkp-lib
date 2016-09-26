@@ -1,7 +1,8 @@
 {**
  * templates/controllers/grid/citation/form/citationFormErrorsAndComparison.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * A part of the citation form that will be refreshed
@@ -32,7 +33,7 @@
 		{/foreach}
 	{/foreach}
 {/strip}{/capture}
-<script type="text/javascript">
+<script>
 	<!--
 	$(function() {ldelim}
 		//
@@ -109,7 +110,6 @@
 		{if $rawCitationEditingWarningHide}
 			// Process the citation without asking the user.
 			ajaxAction(
-				'post',
 				'#{$containerId}',
 				'#processRawCitation',
 				'{url op="updateRawCitation"}',
@@ -155,7 +155,6 @@
 		// Register event handler for refresh of the citation
 		// comparison and message part of the form.
 		ajaxAction(
-			'post',
 			'#citationFormErrorsAndComparison',
 			// We bind the wrapper to a custom event. This can
 			// be manually triggered if we want to refresh the

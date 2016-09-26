@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/filter/PKPFilterGridRow.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPFilterGridRow
@@ -26,18 +27,17 @@ class PKPFilterGridRow extends GridRow {
 	// Overridden methods from GridRow
 	//
 	/**
-	 * @see GridRow::initialize()
-	 * @param $request PKPRequest
+	 * @copydoc GridRow::initialize()
 	 */
-	function initialize(&$request) {
+	function initialize($request, $template = null) {
 		// Do the default initialization
-		parent::initialize($request);
+		parent::initialize($request, $template);
 
 		// Is this a new row or an existing row?
 		$rowId = $this->getId();
 		if (!empty($rowId) && is_numeric($rowId)) {
 			// Only add row actions if this is an existing row
-			$router =& $request->getRouter();
+			$router = $request->getRouter();
 			$actionArgs = array(
 				'filterId' => $rowId
 			);
@@ -48,34 +48,36 @@ class PKPFilterGridRow extends GridRow {
 			// settings to be configured.
 			$filter =& $this->getData();
 			assert(is_a($filter, 'Filter'));
+			import('lib.pkp.classes.linkAction.request.AjaxModal');
 			if ($filter->hasSettings()) {
 				$this->addAction(
-					new LegacyLinkAction(
+					new LinkAction(
 						'editFilter',
-						LINK_ACTION_MODE_MODAL,
-						LINK_ACTION_TYPE_REPLACE,
-						$router->url($request, null, null, 'editFilter', null, $actionArgs),
-						'grid.action.edit',
-						null,
+						new AjaxModal(
+							$router->url($request, null, null, 'editFilter', null, $actionArgs),
+							__('grid.action.edit'),
+							'edit'
+						),
+						__('grid.action.edit'),
 						'edit'
 					)
 				);
 			}
+			import('lib.pkp.classes.linkAction.request.RemoteActionConfirmationModal');
 			$this->addAction(
-				new LegacyLinkAction(
+				new LinkAction(
 					'deleteFilter',
-					LINK_ACTION_MODE_CONFIRM,
-					LINK_ACTION_TYPE_REMOVE,
-					$router->url($request, null, null, 'deleteFilter', null, $actionArgs),
-					'grid.action.delete',
-					null,
-					'delete',
-					__('manager.setup.filter.grid.confirmDelete', array('filterName' => $filter->getDisplayName()))
+					new RemoteActionConfirmationModal(
+						$request->getSession(),
+						__('manager.setup.filter.grid.confirmDelete', array('filterName' => $filter->getDisplayName())),
+						__('common.delete'),
+						$router->url($request, null, null, 'deleteFilter', null, $actionArgs),
+						'modal_delete'
+					),
+					__('common.delete'),
+					'delete'
 				)
 			);
-
-			// Set a non-default template that supports row actions
-			$this->setTemplate('controllers/grid/gridRowWithActions.tpl');
 		}
 	}
 }

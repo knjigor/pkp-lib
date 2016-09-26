@@ -1,7 +1,8 @@
 /**
  * @file js/classes/Handler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Handler
@@ -14,14 +15,18 @@
 
 	/**
 	 * @constructor
-	 * @param {jQuery} $element A DOM element to which
+	 *
+	 * @extends $.pkp.classes.ObjectProxy
+	 *
+	 * @param {jQueryObject} $element A DOM element to which
 	 *  this handler is bound.
 	 * @param {Object} options Handler options.
 	 */
 	$.pkp.classes.Handler = function($element, options) {
+
 		// Check whether a single element was passed in.
 		if ($element.length > 1) {
-			throw Error('jQuery selector contained more than one handler!');
+			throw new Error('jQuery selector contained more than one handler!');
 		}
 
 		// Save a pointer to the bound element in the handler.
@@ -30,7 +35,7 @@
 		// Check whether a handler has already been bound
 		// to the element.
 		if (this.data('handler') !== undefined) {
-			throw Error(['The handler "', this.getObjectName(),
+			throw new Error(['The handler "', this.getObjectName(),
 						'" has already been bound to the selected element!'].join(''));
 		}
 
@@ -39,9 +44,22 @@
 		this.dataItems_ = { };
 		this.publishedEvents_ = { };
 
-		if (options.$eventBridge) {
+		if (options.eventBridge) {
 			// Configure the event bridge.
-			this.$eventBridge_ = options.$eventBridge;
+			this.eventBridge_ = options.eventBridge;
+		}
+
+		// The "publishChangeEvents" option can be used to specify
+		// a list of event names that will also be published upon
+		// content change.
+		if (options.publishChangeEvents) {
+			this.publishChangeEvents_ = options.publishChangeEvents;
+			var i;
+			for (i = 0; i < this.publishChangeEvents_.length; i++) {
+				this.publishEvent(this.publishChangeEvents_[i]);
+			}
+		} else {
+			this.publishChangeEvents_ = [];
 		}
 
 		// Bind the handler to the DOM element.
@@ -53,9 +71,17 @@
 	// Private properties
 	//
 	/**
+	 * Optional list of publication events.
+	 * @private
+	 * @type {Array}
+	 */
+	$.pkp.classes.Handler.prototype.publishChangeEvents_ = null;
+
+
+	/**
 	 * The HTML element this handler is bound to.
 	 * @private
-	 * @type {jQuery}
+	 * @type {jQueryObject}
 	 */
 	$.pkp.classes.Handler.prototype.$htmlElement_ = null;
 
@@ -88,9 +114,9 @@
 	/**
 	 * An HTML element id to which we'll forward all handler events.
 	 * @private
-	 * @type {string}
+	 * @type {?string}
 	 */
-	$.pkp.classes.Handler.prototype.$eventBridge_ = null;
+	$.pkp.classes.Handler.prototype.eventBridge_ = null;
 
 
 	//
@@ -98,7 +124,7 @@
 	//
 	/**
 	 * Retrieve the bound handler from the jQuery element.
-	 * @param {jQuery} $element The element to which the
+	 * @param {jQueryObject} $element The element to which the
 	 *  handler was attached.
 	 * @return {Object} The retrieved handler.
 	 */
@@ -113,7 +139,7 @@
 
 		// Check whether the handler exists.
 		if (!(handler instanceof $.pkp.classes.Handler)) {
-			throw Error('There is no handler bound to this element!');
+			throw new Error('There is no handler bound to this element!');
 		}
 
 		return handler;
@@ -124,30 +150,56 @@
 	// Public methods
 	//
 	/**
+	 * Returns the HTML element this handler is bound to.
+	 *
+	 * @return {jQueryObject} The element this handler is bound to.
+	 */
+	$.pkp.classes.Handler.prototype.getHtmlElement = function() {
+		$.pkp.classes.Handler.checkContext_(this);
+
+		// Return the HTML element.
+		return this.$htmlElement_;
+	};
+
+
+	/**
+	 * Publish change events. (See options.publishChangeEvents.)
+	 */
+	$.pkp.classes.Handler.prototype.publishChangeEvents = function() {
+		var i;
+		for (i = 0; i < this.publishChangeEvents_.length; i++) {
+			this.trigger(this.publishChangeEvents_[i]);
+		}
+	};
+
+
+	/**
 	 * A generic event dispatcher that will be bound to
 	 * all handler events. See bind() above.
 	 *
 	 * @this {HTMLElement}
-	 * @param {Event} event The jQuery event object.
+	 * @param {jQuery.Event} event The jQuery event object.
 	 * @return {boolean} Return value to be passed back
 	 *  to jQuery.
 	 */
 	$.pkp.classes.Handler.prototype.handleEvent = function(event) {
+		var $callingElement, handler, boundEvents, args, returnValue, i, l;
+
 		// This handler is always called out of the
 		// handler context.
-		var $callingElement = $(this);
+		$callingElement = $(this);
 
 		// Identify the targeted handler.
-		var handler = $.pkp.classes.Handler.getHandler($callingElement);
+		handler = $.pkp.classes.Handler.getHandler($callingElement);
 
 		// Make sure that we really got the right element.
 		if ($callingElement[0] !== handler.getHtmlElement.call(handler)[0]) {
-			throw Error(['An invalid handler is bound to the calling ',
+			throw new Error(['An invalid handler is bound to the calling ',
 				'element of an event!'].join(''));
 		}
 
 		// Retrieve the event handlers for the given event type.
-		var boundEvents = handler.eventBindings_[event.type];
+		boundEvents = handler.eventBindings_[event.type];
 		if (boundEvents === undefined) {
 			// We have no handler for this event but we also
 			// don't allow bubbling of events outside of the
@@ -156,9 +208,9 @@
 		}
 
 		// Call all event handlers.
-		var args = $.makeArray(arguments), returnValue = true;
+		args = $.makeArray(arguments);
+		returnValue = true;
 		args.unshift(this);
-		var i, l;
 		for (i = 0, l = boundEvents.length; i < l; i++) {
 			// Invoke the event handler in the context
 			// of the handler object.
@@ -182,6 +234,43 @@
 
 
 	/**
+	 * Create a closure that calls the callback in the
+	 * context of the handler object.
+	 *
+	 * NB: Always make sure that the callback is properly
+	 * unbound and freed for garbage collection. Otherwise
+	 * you might create a memory leak. If you want to bind
+	 * an event to the HTMLElement handled by this handler
+	 * then always use the above bind() method instead which
+	 * is safer.
+	 *
+	 * @param {Function} callback The callback to be wrapped.
+	 * @param {Object=} opt_context Specifies the object which
+	 *  |this| should point to when the function is run.
+	 *  If the value is not given, the context will default
+	 *  to the handler object.
+	 * @return {Function} The wrapped callback.
+	 */
+	$.pkp.classes.Handler.prototype.callbackWrapper =
+			function(callback, opt_context) {
+
+		$.pkp.classes.Handler.checkContext_(this);
+
+		// Create a closure that calls the event handler
+		// in the right context.
+		if (!opt_context) {
+			opt_context = this;
+		}
+		return function() {
+			var args;
+			args = $.makeArray(arguments);
+			args.unshift(this);
+			return callback.apply(opt_context, args);
+		};
+	};
+
+
+	/**
 	 * This callback can be used to handle simple remote server requests.
 	 *
 	 * @param {Object} ajaxOptions AJAX options.
@@ -199,21 +288,21 @@
 	/**
 	 * Completely remove all traces of the handler from the
 	 * HTML element to which it is bound and leave the element in
-	 * it's previous state.
+	 * its previous state.
 	 *
 	 * Subclasses should override this method if necessary but
 	 * should always call this implementation.
 	 */
 	$.pkp.classes.Handler.prototype.remove = function() {
 		$.pkp.classes.Handler.checkContext_(this);
+		var $element, key;
 
 		// Remove all event handlers in our namespace.
-		var $element = this.getHtmlElement();
+		$element = this.getHtmlElement();
 		$element.unbind('.pkpHandler');
 
 		// Remove all our data items except for the
 		// handler itself.
-		var key;
 		for (key in this.dataItems_) {
 			if (key !== 'pkp.handler') {
 				$element.removeData(key);
@@ -229,20 +318,57 @@
 	};
 
 
+	/**
+	 * This function should be used to pre-process a JSON response
+	 * from the server.
+	 *
+	 * @param {Object} jsonData The returned server response data.
+	 * @return {Object|boolean} The returned server response data or
+	 *  false if an error occurred.
+	 */
+	$.pkp.classes.Handler.prototype.handleJson = function(jsonData) {
+		if (!jsonData) {
+			throw new Error('Server error: Server returned no or invalid data!');
+		}
+
+		if (jsonData.status === true) {
+			// Did the server respond with an event to be triggered?
+			if (jsonData.event) {
+				if (jsonData.event.data) {
+					this.trigger(jsonData.event.name,
+							jsonData.event.data);
+				} else {
+					this.trigger(jsonData.event.name);
+				}
+			}
+			return jsonData;
+		} else {
+			// If we got an error message then display it.
+			if (jsonData.content) {
+				alert(jsonData.content);
+			}
+			return false;
+		}
+	};
+
+
 	//
 	// Protected methods
 	//
 	/**
-	 * Returns the HTML element this handler is bound to.
+	 * Sets the HTML element this handler is bound to.
 	 *
 	 * @protected
-	 * @return {jQuery} The element this handler is bound to.
+	 * @param {jQueryObject} $htmlElement The element this handler should be bound
+	 *   to.
+	 * @return {jQueryObject} Passes through the supplied parameter.
 	 */
-	$.pkp.classes.Handler.prototype.getHtmlElement = function() {
+	$.pkp.classes.Handler.prototype.setHtmlElement = function($htmlElement) {
 		$.pkp.classes.Handler.checkContext_(this);
 
 		// Return the HTML element.
-		return this.$htmlElement_;
+		this.$htmlElement_ = $htmlElement;
+		return $htmlElement;
 	};
 
 
@@ -268,7 +394,8 @@
 			this.eventBindings_[eventName] = [];
 
 			// Determine the event namespace.
-			var eventNamespace = '.pkpHandler';
+			var eventNamespace;
+			eventNamespace = '.pkpHandler';
 			if (eventName === 'pkpRemoveHandler') {
 				// We have a special namespace for the remove event
 				// because it needs to be triggered when all other
@@ -303,6 +430,7 @@
 		if (!this.eventBindings_[eventName]) {
 			return false;
 		}
+
 		var i, length;
 		for (i = 0, length = this.eventBindings_[eventName].length; i < length; i++) {
 			if (this.eventBindings_[eventName][i] === handler) {
@@ -333,10 +461,10 @@
 	 * @protected
 	 * @param {string} key The name of the item to be stored
 	 *  or retrieved.
-	 * @param {*=} opt_value The data item to be stored. If no item
+	 * @param {Object=} opt_value The data item to be stored. If no item
 	 *  is given then the existing value for the given key
 	 *  will be returned.
-	 * @return {*} The cached data item.
+	 * @return {Object} The cached data item.
 	 */
 	$.pkp.classes.Handler.prototype.data = function(key, opt_value) {
 		$.pkp.classes.Handler.checkContext_(this);
@@ -352,77 +480,10 @@
 
 		// Add/retrieve the data to/from the
 		// element's data cache.
-		return this.getHtmlElement().data(key, opt_value);
-	};
-
-
-	/**
-	 * Create a closure that calls the callback in the
-	 * context of the handler object.
-	 *
-	 * NB: Always make sure that the callback is properly
-	 * unbound and freed for garbage collection. Otherwise
-	 * you might create a memory leak. If you want to bind
-	 * an event to the HTMLElement handled by this handler
-	 * then always use the above bind() method instead which
-	 * is safer.
-	 *
-	 * @protected
-	 * @param {Function} callback The callback to be wrapped.
-	 * @param {Object=} opt_context Specifies the object which
-	 *  |this| should point to when the function is run.
-	 *  If the value is not given, the context will default
-	 *  to the handler object.
-	 * @return {Function} The wrapped callback.
-	 */
-	$.pkp.classes.Handler.prototype.callbackWrapper =
-			function(callback, opt_context) {
-		$.pkp.classes.Handler.checkContext_(this);
-
-		// Create a closure that calls the event handler
-		// in the right context.
-		if (!opt_context) {
-			opt_context = this;
-		}
-		return function() {
-			var args = $.makeArray(arguments);
-			args.unshift(this);
-			return callback.apply(opt_context, args);
-		};
-	};
-
-
-	/**
-	 * This function should be used to pre-process a JSON response
-	 * from the server.
-	 *
-	 * @protected
-	 * @param {Object} jsonData The returned server response data.
-	 * @return {Object|boolean} The returned server response data or
-	 *  false if an error occurred.
-	 */
-	$.pkp.classes.Handler.prototype.handleJson = function(jsonData) {
-		if (!jsonData) {
-			throw Error('Server error: Server returned no or invalid data!');
-		}
-
-		if (jsonData.status === true) {
-			// Did the server respond with an event to be triggered?
-			if (jsonData.event) {
-				if (jsonData.event.data) {
-					this.trigger(jsonData.event.name,
-							jsonData.event.data);
-				} else {
-					this.trigger(jsonData.event.name);
-				}
-			}
-			return jsonData;
+		if (arguments.length > 1) {
+			return this.getHtmlElement().data(key, opt_value);
 		} else {
-			// If we got an error message then display it.
-			if (jsonData.content) {
-				alert(jsonData.content);
-			}
-			return false;
+			return this.getHtmlElement().data(key);
 		}
 	};
 
@@ -434,10 +495,14 @@
 	 *
 	 * @protected
 	 * @param {string} eventName The event to be triggered.
-	 * @param {Object=} opt_data Additional event data.
+	 * @param {Array=} opt_data Additional event data.
 	 */
 	$.pkp.classes.Handler.prototype.trigger =
 			function(eventName, opt_data) {
+
+		if (opt_data === undefined) {
+			opt_data = null;
+		}
 
 		// Trigger the event on the handled element.
 		var $handledElement = this.getHtmlElement();
@@ -480,6 +545,80 @@
 	};
 
 
+	/**
+	 * Handle the "show more" and "show less" clicks triggered by the
+	 * links in longer text items.
+	 *
+	 * @param {Event} event The event.
+	 */
+	$.pkp.classes.Handler.prototype.switchViz = function(event) {
+		var eventElement = event.currentTarget;
+		$(eventElement).parent().parent().find('span').toggle();
+	};
+
+
+	/**
+	 * Initialize TinyMCE instances.
+	 *
+	 * There are instances where TinyMCE is not initialized with the call to
+	 * init(). These occur when content is loaded after the fact (via AJAX).
+	 *
+	 * In these cases, search for richContent fields and initialize them.
+	 */
+	$.pkp.classes.Handler.prototype.initializeTinyMCE =
+			function() {
+
+		if (typeof tinyMCE !== 'undefined') {
+			var $element = this.getHtmlElement(),
+					elementId = $element.attr('id'),
+					settings = tinyMCE.EditorManager.settings;
+
+			settings.defaultToolbar = settings.toolbar;
+
+			$('#' + elementId).find('.richContent').each(function() {
+				var id = /** @type {string} */ ($(this).attr('id')),
+						icon = $('<div></div>'),
+						iconParent = $('<div></div>'),
+						classes, i, editor,
+						settings = tinyMCE.EditorManager.settings;
+
+				// Set the extended toolbar, if requested
+				if ($(this).hasClass('extendedRichContent')) {
+					settings.toolbar = settings.richToolbar;
+				} else {
+					settings.toolbar = settings.defaultToolbar;
+				}
+
+				editor = tinyMCE.EditorManager.createEditor(id, settings).render();
+
+				// For localizable text fields add globe and flag icons
+				if ($(this).hasClass('localizable') || $(this).hasClass('flag')) {
+					icon.addClass('mceLocalizationIcon localizable');
+					icon.attr('id', 'mceLocalizationIcon-' + id);
+					$(this).wrap(iconParent);
+					$(this).parent().append(icon);
+
+					if ($(this).hasClass('localizable')) {
+						// Add a globe icon to localizable TinyMCE textareas
+						icon.addClass('mceGlobe');
+					} else if ($(this).hasClass('flag')) {
+						// Add country flag icon to localizable TinyMCE textareas
+						classes = $(this).attr('class').split(' ');
+						if (classes.length) {
+							for (i = 0; i < classes.length; i++) {
+								if (classes[i].match(/^flag_[a-z]{2}_[A-Z]{2}$/)) {
+									icon.addClass(classes[i]);
+									break;
+								}
+							}
+						}
+					}
+				}
+			});
+		}
+	};
+
+
 	//
 	// Private methods
 	//
@@ -492,7 +631,7 @@
 	 *
 	 * @private
 	 * @param {string} eventName The event to be triggered.
-	 * @param {Object=} opt_data Additional event data.
+	 * @param {Array=} opt_data Additional event data.
 	 */
 	$.pkp.classes.Handler.prototype.triggerPublicEvent_ =
 			function(eventName, opt_data) {
@@ -503,34 +642,8 @@
 
 		// If we have an event bridge configured then re-trigger
 		// the event on the target object.
-		if (this.$eventBridge_) {
-			$('[id^="' + this.$eventBridge_ + '"]').trigger(eventName, opt_data);
-		}
-	};
-
-
-	/**
-	 * Initialize TinyMCE instances.
-	 *
-	 * There are instances where TinyMCE is not initialized with the call to
-	 * init(). These occur when content is loaded after the fact (via AJAX).
-	 *
-	 * In these cases, search for richContent fields and initialize them.
-	 *
-	 * @private
-	 */
-	$.pkp.classes.Handler.prototype.initializeTinyMCE_ =
-			function() {
-		if (typeof tinyMCE !== 'undefined') {
-			var $element = this.getHtmlElement();
-			var elementId = $element.attr('id');
-			setTimeout(function() {
-				// re-select the original element, to prevent closure memory leaks
-				// in (older?) versions of IE.
-				$('#' + elementId).find('.richContent').each(function(index) {
-					tinyMCE.execCommand('mceAddControl', false, $(this).attr('id'));
-				});
-			}, 500);
+		if (this.eventBridge_) {
+			$('[id^="' + this.eventBridge_ + '"]').trigger(eventName, opt_data);
 		}
 	};
 
@@ -547,10 +660,10 @@
 	 */
 	$.pkp.classes.Handler.checkContext_ = function(context) {
 		if (!(context instanceof $.pkp.classes.Handler)) {
-			throw Error('Trying to call handler method in non-handler context!');
+			throw new Error('Trying to call handler method in non-handler context!');
 		}
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

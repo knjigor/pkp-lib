@@ -3,7 +3,8 @@
 /**
  * @file classes/db/DAORegistry.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DAORegistry
@@ -24,7 +25,7 @@ class DAORegistry {
 	 * store all DAOs currently instantiated by the system.
 	 * @return array
 	 */
-	function &getDAOs() {
+	static function &getDAOs() {
 		$daos =& Registry::get('daos', true, array());
 		return $daos;
 	}
@@ -36,14 +37,14 @@ class DAORegistry {
 	 * @return object A reference to previously-registered DAO of the same
 	 *    name, if one was already registered; null otherwise
 	 */
-	function &registerDAO($name, &$dao) {
+	static function registerDAO($name, $dao) {
 		$daos =& DAORegistry::getDAOs();
 		if (isset($daos[$name])) {
-			$returner =& $daos[$name];
+			$returner = $daos[$name];
 		} else {
 			$returner = null;
 		}
-		$daos[$name] =& $dao;
+		$daos[$name] = $dao;
 		return $returner;
 	}
 
@@ -53,12 +54,11 @@ class DAORegistry {
 	 * @param $dbconn ADONewConnection optional
 	 * @return DAO
 	 */
-	function &getDAO($name, $dbconn = null) {
+	static function &getDAO($name, $dbconn = null) {
 		$daos =& DAORegistry::getDAOs();
-
 		if (!isset($daos[$name])) {
 			// Import the required DAO class.
-			$application =& PKPApplication::getApplication();
+			$application = PKPApplication::getApplication();
 			$className = $application->getQualifiedDAOName($name);
 			if (!$className) {
 				fatalError('Unrecognized DAO ' . $name . '!');

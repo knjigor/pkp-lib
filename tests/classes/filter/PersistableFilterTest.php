@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/filter/PersistableFilterTest.inc.php
+ * @file tests/classes/filter/PersistableFilterTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterTest
@@ -53,7 +54,7 @@ class PersistableFilterTest extends PKPTestCase {
 		self::assertEquals($testSetting, $testFilter->getSetting('testEmail'));
 
 		// Test type validation.
-		$typeDescriptionFactory =& TypeDescriptionFactory::getInstance();
+		$typeDescriptionFactory = TypeDescriptionFactory::getInstance();
 		$inputTypeDescription = 'class::lib.pkp.tests.classes.filter.TestClass1';
 		$outputTypeDescription = 'class::lib.pkp.tests.classes.filter.TestClass2';
 		self::assertEquals($inputTypeDescription, $testFilter->getInputType()->getTypeDescription());

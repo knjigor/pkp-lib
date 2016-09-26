@@ -3,7 +3,8 @@
 /**
  * @file classes/log/EventLogDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class EventLogDAO
@@ -31,14 +32,14 @@ class EventLogDAO extends DAO {
 	 * @param $assocType int optional
 	 * @return EventLogEntry
 	 */
-	function &getById($logId, $assocType = null, $assocId = null) {
+	function getById($logId, $assocType = null, $assocId = null) {
 		$params = array((int) $logId);
 		if (isset($assocType)) {
 			$params[] = (int) $assocType;
 			$params[] = (int) $assocId;
 		}
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM event_log WHERE log_id = ?' .
 			(isset($assocType)?' AND assoc_type = ? AND assoc_id = ?':''),
 			$params
@@ -50,8 +51,6 @@ class EventLogDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -62,16 +61,14 @@ class EventLogDAO extends DAO {
 	 * @param $rangeInfo object optional
 	 * @return DAOResultFactory containing matching EventLogEntry ordered by sequence
 	 */
-	function &getByAssoc($assocType, $assocId, $rangeInfo = null) {
-		$params = array((int) $assocType, (int) $assocId);
-
-		$result =& $this->retrieveRange(
+	function getByAssoc($assocType, $assocId, $rangeInfo = null) {
+		$result = $this->retrieveRange(
 			'SELECT * FROM event_log WHERE assoc_type = ? AND assoc_id = ? ORDER BY log_id DESC',
-			$params, $rangeInfo
+			array((int) $assocType, (int) $assocId),
+			$rangeInfo
 		);
 
-		$returner = new DAOResultFactory($result, $this, 'build');
-		return $returner;
+		return new DAOResultFactory($result, $this, 'build');
 	}
 
 	/**
@@ -87,7 +84,7 @@ class EventLogDAO extends DAO {
 	 * @param $row array
 	 * @return EventLogEntry
 	 */
-	function &build(&$row) {
+	function build($row) {
 		$entry = $this->newDataObject();
 		$entry->setId($row['log_id']);
 		$entry->setUserId($row['user_id']);
@@ -99,19 +96,17 @@ class EventLogDAO extends DAO {
 		$entry->setMessage($row['message']);
 		$entry->setIsTranslated($row['is_translated']);
 
-		$result =& $this->retrieve('SELECT * FROM event_log_settings WHERE log_id = ?', array((int) $entry->getId()));
+		$result = $this->retrieve('SELECT * FROM event_log_settings WHERE log_id = ?', array((int) $entry->getId()));
 		$params = array();
 		while (!$result->EOF) {
-			$r =& $result->getRowAssoc(false);
+			$r = $result->getRowAssoc(false);
 			$params[$r['setting_name']] = $this->convertFromDB(
 				$r['setting_value'],
 				$r['setting_type']
 			);
-			unset($r);
 			$result->MoveNext();
 		}
 		$result->Close();
-		unset($result);
 		$entry->setParams($params);
 
 		HookRegistry::call('EventLogDAO::build', array(&$entry, &$row));
@@ -123,7 +118,7 @@ class EventLogDAO extends DAO {
 	 * Insert a new log entry.
 	 * @param $entry EventLogEntry
 	 */
-	function insertObject(&$entry) {
+	function insertObject($entry) {
 		$this->update(
 			sprintf('INSERT INTO event_log
 				(user_id, date_logged, ip_address, event_type, assoc_type, assoc_id, message, is_translated)
@@ -140,7 +135,7 @@ class EventLogDAO extends DAO {
 				(int) $entry->getIsTranslated()
 			)
 		);
-		$entry->setId($this->getInsertLogId());
+		$entry->setId($this->getInsertId());
 
 		// Add name => value entries into the settings table
 		$params = $entry->getParams();
@@ -164,7 +159,7 @@ class EventLogDAO extends DAO {
 	 * Delete a single log entry (and associated settings).
 	 * @param $logId int
 	 */
-	function deleteObject($logId, $assocType = null, $assocId = null) {
+	function deleteById($logId, $assocType = null, $assocId = null) {
 		$params = array((int) $logId);
 		if ($assocType !== null) {
 			$params[] = (int) $assocType;
@@ -184,12 +179,10 @@ class EventLogDAO extends DAO {
 	 * @param $assocId int
 	 */
 	function deleteByAssoc($assocType, $assocId) {
-		$entries =& $this->getByAssoc($assocType, $assocId);
-		while ($entry =& $entries->next()) {
-			$this->deleteObject($entry->getId());
-			unset($entry);
+		$entries = $this->getByAssoc($assocType, $assocId);
+		while ($entry = $entries->next()) {
+			$this->deleteById($entry->getId());
 		}
-		unset($entries);
 	}
 
 	/**
@@ -208,8 +201,8 @@ class EventLogDAO extends DAO {
 	 * Get the ID of the last inserted log entry.
 	 * @return int
 	 */
-	function getInsertLogId() {
-		return $this->getInsertId('event_log', 'log_id');
+	function getInsertId() {
+		return $this->_getInsertId('event_log', 'log_id');
 	}
 }
 

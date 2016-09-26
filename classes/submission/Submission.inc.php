@@ -1,47 +1,147 @@
 <?php
 
 /**
- * @defgroup submission
+ * @defgroup submission Submission
+ * The abstract concept of a submission is implemented here, and extended
+ * in each application with the specifics of that content model, i.e.
+ * Articles in OJS, Papers in OCS, and Monographs in OMP.
  */
 
 /**
  * @file classes/submission/Submission.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Submission
  * @ingroup submission
+ * @see SubmissionDAO
  *
- * @brief Submission class.
+ * @brief The Submission class implements the abstract data model of a
+ * scholarly submission.
  */
 
-class Submission extends DataObject {
+// Submission status constants
+define('STATUS_QUEUED', 1);
+define('STATUS_PUBLISHED', 3);
+define('STATUS_DECLINED', 4);
+
+// License settings (internal use only)
+define ('PERMISSIONS_FIELD_LICENSE_URL', 1);
+define ('PERMISSIONS_FIELD_COPYRIGHT_HOLDER', 2);
+define ('PERMISSIONS_FIELD_COPYRIGHT_YEAR', 3);
+
+abstract class Submission extends DataObject {
 	/**
 	 * Constructor.
 	 */
 	function Submission() {
+		// Switch on meta-data adapter support.
+		$this->setHasLoadableAdapters(true);
+
 		parent::DataObject();
 	}
 
 	/**
-	 * Returns the association type of this submission
-	 * @return integer one of the ASSOC_TYPE_* constants
+	 * Get the localized copyright holder for this submission.
+	 * @param $preferredLocale string Preferred locale code
+	 * @return string Localized copyright holder.
 	 */
-	function getAssocType() {
-		// Must be implemented by sub-classes.
-		assert(false);
+	function getLocalizedCopyrightHolder($preferredLocale = null) {
+		return $this->getLocalizedData('copyrightHolder', $preferredLocale);
+	}
+
+	/**
+	 * Get the license URL for this submission.
+	 * @return string License URL.
+	 */
+	function getDefaultLicenseUrl() {
+		return $this->_getDefaultLicenseFieldValue(null, PERMISSIONS_FIELD_LICENSE_URL);
+	}
+
+	/**
+	 * Get the copyright holder for this submission.
+	 * @param $locale string Locale
+	 * @return string Copyright holder.
+	 */
+	function getDefaultCopyrightHolder($locale) {
+		return $this->_getDefaultLicenseFieldValue($locale, PERMISSIONS_FIELD_COPYRIGHT_HOLDER);
+	}
+
+	/**
+	 * Get the copyright year for this submission.
+	 * @return string Copyright year.
+	 */
+	function getDefaultCopyrightYear() {
+		return $this->_getDefaultLicenseFieldValue(null, PERMISSIONS_FIELD_COPYRIGHT_YEAR);
+	}
+
+	/**
+	 * Get the best guess license field for this submission.
+	 * Return the existing value if the field is already set,
+	 * otherwise calculate a best value based on the context settings.
+	 * @param $locale string Locale
+	 * @param $field int PERMISSIONS_FIELD_... Which to return
+	 * @return string|null Field value.
+	 */
+	function _getDefaultLicenseFieldValue($locale, $field) {
+		// If already set, use the stored permissions info
+		switch ($field) {
+			case PERMISSIONS_FIELD_LICENSE_URL:
+				$fieldValue = $this->getLicenseURL();
+				break;
+			case PERMISSIONS_FIELD_COPYRIGHT_HOLDER:
+				$fieldValue = $this->getCopyrightHolder($locale);
+				break;
+			case PERMISSIONS_FIELD_COPYRIGHT_YEAR:
+				$fieldValue = $this->getCopyrightYear();
+				break;
+			default: assert(false);
+		}
+
+		if (!empty($fieldValue)) {
+			if ($locale === null || !is_array($fieldValue)) return $fieldValue;
+			if (isset($fieldValue[$locale])) return $fieldValue[$locale];
+		}
+
+		// Otherwise, get the permissions info from context settings.
+		return $this->_getContextLicenseFieldValue($locale, $field);
+	}
+
+
+	//
+	// Getters / setters
+	//
+
+	/**
+	 * Get the context ID for this submission.
+	 * @return int
+	 */
+	function getContextId() {
+		return $this->getData('contextId');
+	}
+
+	/**
+	 * Set the context ID for this submission.
+	 * @param $contextId int
+	 */
+	function setContextId($contextId) {
+		$this->setData('contextId', $contextId);
 	}
 
 	/**
 	 * Get a piece of data for this object, localized to the current
 	 * locale if possible.
 	 * @param $key string
+	 * @param $preferredLocale string
 	 * @return mixed
 	 */
-	function &getLocalizedData($key) {
-		$localePrecedence = array(AppLocale::getLocale(), $this->getLocale());
+	function &getLocalizedData($key, $preferredLocale = null) {
+		if (is_null($preferredLocale)) $preferredLocale = AppLocale::getLocale();
+		$localePrecedence = array($preferredLocale, $this->getLocale());
 		foreach ($localePrecedence as $locale) {
+			if (empty($locale)) continue;
 			$value =& $this->getData($key, $locale);
 			if (!empty($value)) return $value;
 			unset($value);
@@ -49,7 +149,10 @@ class Submission extends DataObject {
 
 		// Fallback: Get the first available piece of data.
 		$data =& $this->getData($key, null);
-		if (!empty($data)) return $data[array_shift(array_keys($data))];
+		if (!empty($data)) {
+			$keys = array_keys($data);
+			return $data[array_shift($keys)];
+		}
 
 		// No data available; return null.
 		unset($data);
@@ -57,9 +160,109 @@ class Submission extends DataObject {
 		return $data;
 	}
 
-	//
-	// Get/set methods
-	//
+	/**
+	 * Get stored public ID of the submission.
+	 * @param @literal $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>). @endliteral
+	 * @return int
+	 */
+	function getStoredPubId($pubIdType) {
+		return $this->getData('pub-id::'.$pubIdType);
+	}
+
+	/**
+	 * Set the stored public ID of the submission.
+	 * @param $pubIdType string One of the NLM pub-id-type values or
+	 * 'other::something' if not part of the official NLM list
+	 * (see <http://dtd.nlm.nih.gov/publishing/tag-library/n-4zh0.html>).
+	 * @param $pubId string
+	 */
+	function setStoredPubId($pubIdType, $pubId) {
+		$this->setData('pub-id::'.$pubIdType, $pubId);
+	}
+
+	/**
+	 * Get stored copyright holder for the submission.
+	 * @param $locale string locale
+	 * @return string
+	 */
+	function getCopyrightHolder($locale) {
+		return $this->getData('copyrightHolder', $locale);
+	}
+
+	/**
+	 * Set the stored copyright holder for the submission.
+	 * @param $copyrightHolder string Copyright holder
+	 * @param $locale string locale
+	 */
+	function setCopyrightHolder($copyrightHolder, $locale) {
+		$this->setData('copyrightHolder', $copyrightHolder, $locale);
+	}
+
+	/**
+	 * Get stored copyright year for the submission.
+	 * @return string
+	 */
+	function getCopyrightYear() {
+		return $this->getData('copyrightYear');
+	}
+
+	/**
+	 * Set the stored copyright year for the submission.
+	 * @param $copyrightYear string Copyright holder
+	 */
+	function setCopyrightYear($copyrightYear) {
+		$this->setData('copyrightYear', $copyrightYear);
+	}
+
+	/**
+	 * Get stored license URL for the submission content.
+	 * @return string
+	 */
+	function getLicenseURL() {
+		return $this->getData('licenseURL');
+	}
+
+	/**
+	 * Set the stored license URL for the submission content.
+	 * @param $license string License of submission content
+	 */
+	function setLicenseURL($licenseURL) {
+		$this->setData('licenseURL', $licenseURL);
+	}
+
+	/**
+	 * Get comments to editor.
+	 * @return string
+	 */
+	function getCommentsToEditor() {
+		return $this->getData('commentsToEditor');
+	}
+
+	/**
+	 * Return option selection indicating if author should be hidden in issue ToC.
+	 * @return int AUTHOR_TOC_...
+	 */
+	function getHideAuthor() {
+		return $this->getData('hideAuthor');
+	}
+
+	/**
+	 * Set option selection indicating if author should be hidden in issue ToC.
+	 * @param $hideAuthor int AUTHOR_TOC_...
+	 */
+	function setHideAuthor($hideAuthor) {
+		$this->setData('hideAuthor', $hideAuthor);
+	}
+
+	/**
+	 * Set comments to editor.
+	 * @param $commentsToEditor string
+	 */
+	function setCommentsToEditor($commentsToEditor) {
+		$this->setData('commentsToEditor', $commentsToEditor);
+	}
 
 	/**
 	 * Return first author
@@ -79,20 +282,58 @@ class Submission extends DataObject {
 	/**
 	 * Return string of author names, separated by the specified token
 	 * @param $lastOnly boolean return list of lastnames only (default false)
-	 * @param $separator string separator for names (default comma+space)
+	 * @param $nameSeparator string Separator for names (default comma+space)
+	 * @param $userGroupSeparator string Separator for user groups (default semicolon+space)
 	 * @return string
 	 */
-	function getAuthorString($lastOnly = false, $separator = ', ') {
-		$authors = $this->getAuthors();
+	function getAuthorString($lastOnly = false, $nameSeparator = ', ', $userGroupSeparator = '; ') {
+		$authors = $this->getAuthors(true);
 
 		$str = '';
+		$lastUserGroupId = null;
+		$author = null;
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
 		foreach($authors as $author) {
 			if (!empty($str)) {
-				$str .= $separator;
+				if ($lastUserGroupId != $author->getUserGroupId()) {
+					$userGroup = $userGroupDao->getById($lastUserGroupId);
+					if ($userGroup->getShowTitle()) $str .= ' (' . $userGroup->getLocalizedName() . ')';
+					$str .= $userGroupSeparator;
+				} else {
+					$str .= $nameSeparator;
+				}
 			}
 			$str .= $lastOnly ? $author->getLastName() : $author->getFullName();
+			$lastUserGroupId = $author->getUserGroupId();
 		}
+
+		// If there needs to be a trailing user group title, add it
+		if ($author && $author->getShowTitle()) {
+			$userGroup = $userGroupDao->getById($author->getUserGroupId());
+			$str .= ' (' . $userGroup->getLocalizedName() . ')';
+		}
+
 		return $str;
+	}
+
+	/**
+	 * Return short author names string.
+	 * @return string
+	 */
+	function getShortAuthorString() {
+		$primaryAuthor = $this->getPrimaryAuthor();
+		$authors = $this->getAuthors();
+		if (!isset($primaryAuthor)) {
+			if (sizeof($authors) > 0) {
+				$primaryAuthor = $authors[0];
+			}
+		}
+		if (!$primaryAuthor) return '';
+
+		$authorString = $primaryAuthor->getLastName();
+		AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION);
+		if (count($authors) > 1) $authorString = __('submission.shortAuthor', array('author' => $authorString));
+		return $authorString;
 	}
 
 	/**
@@ -112,45 +353,24 @@ class Submission extends DataObject {
 
 	/**
 	 * Get all authors of this submission.
+	 * @param $onlyIncludeInBrowse boolean whether to limit to include_in_browse authors.
 	 * @return array Authors
 	 */
-	function &getAuthors() {
-		$authorDao =& DAORegistry::getDAO('AuthorDAO');
-		return $authorDao->getAuthorsBySubmissionId($this->getId());
+	function getAuthors($onlyIncludeInBrowse = false) {
+		$authorDao = DAORegistry::getDAO('AuthorDAO');
+		if (!$onlyIncludeInBrowse)
+			return $authorDao->getBySubmissionId($this->getId());
+		else
+			return $authorDao->getBySubmissionId($this->getId(), false, true);
 	}
 
 	/**
 	 * Get the primary author of this submission.
 	 * @return Author
 	 */
-	function &getPrimaryAuthor() {
-		$authorDao =& DAORegistry::getDAO('AuthorDAO');
+	function getPrimaryAuthor() {
+		$authorDao = DAORegistry::getDAO('AuthorDAO');
 		return $authorDao->getPrimaryContact($this->getId());
-	}
-
-	/**
-	 * Get user ID of the submitter.
-	 * @return int
-	 */
-	function getUserId() {
-		return $this->getData('userId');
-	}
-
-	/**
-	 * Set user ID of the submitter.
-	 * @param $userId int
-	 */
-	function setUserId($userId) {
-		return $this->setData('userId', $userId);
-	}
-
-	/**
-	 * Return the user of the submitter.
-	 * @return User
-	 */
-	function getUser() {
-		$userDao =& DAORegistry::getDAO('UserDAO');
-		return $userDao->getUser($this->getUserId(), true);
 	}
 
 	/**
@@ -166,15 +386,16 @@ class Submission extends DataObject {
 	 * @param $locale string
 	 */
 	function setLocale($locale) {
-		return $this->setData('locale', $locale);
+		$this->setData('locale', $locale);
 	}
 
 	/**
 	 * Get "localized" submission title (if applicable).
+	 * @param $preferredLocale string
 	 * @return string
 	 */
-	function getLocalizedTitle() {
-		return $this->getLocalizedData('title');
+	function getLocalizedTitle($preferredLocale = null) {
+		return $this->getLocalizedData('title', $preferredLocale);
 	}
 
 	/**
@@ -193,7 +414,7 @@ class Submission extends DataObject {
 	 */
 	function setTitle($title, $locale) {
 		$this->setCleanTitle($title, $locale);
-		return $this->setData('title', $title, $locale);
+		$this->setData('title', $title, $locale);
 	}
 
 	/**
@@ -202,9 +423,76 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setCleanTitle($cleanTitle, $locale) {
-		$punctuation = array ("\"", "\'", ",", ".", "!", "?", "-", "$", "(", ")");
-		$cleanTitle = str_replace($punctuation, "", $cleanTitle);
-		return $this->setData('cleanTitle', $cleanTitle, $locale);
+		$punctuation = array ('"', '\'', ',', '.', '!', '?', '-', '$', '(', ')');
+		$cleanTitle = str_replace($punctuation, '', $cleanTitle);
+		$this->setData('cleanTitle', $cleanTitle, $locale);
+	}
+
+	/**
+	 * Get the localized version of the subtitle
+	 * @return string
+	 */
+	function getLocalizedSubtitle() {
+		return $this->getLocalizedData('subtitle');
+	}
+
+	/**
+	 * Get the subtitle for a given locale
+	 * @param $locale string
+	 * @return string
+	 */
+	function getSubtitle($locale) {
+		return $this->getData('subtitle', $locale);
+	}
+
+	/**
+	 * Set the subtitle for a locale
+	 * @param $subtitle string
+	 * @param $locale string
+	 */
+	function setSubtitle($subtitle, $locale) {
+		$this->setData('subtitle', $subtitle, $locale);
+	}
+
+	/**
+	 * Get the submission full title (with prefix, title
+	 * and subtitle).
+	 * @return string
+	 */
+	function getLocalizedFullTitle() {
+		$fullTitle = null;
+		if ($prefix = $this->getLocalizedPrefix()) {
+			$fullTitle = $prefix . ' ';
+		}
+
+		$fullTitle .= $this->getLocalizedTitle();
+
+		if ($subtitle = $this->getLocalizedSubtitle()) {
+			$fullTitle = PKPString::concatTitleFields(array($fullTitle, $subtitle));
+		}
+
+		return $fullTitle;
+	}
+
+	/**
+	 * Get the submission full title (with prefix, title
+	 * and subtitle).
+	 * @param $locale string Locale to fetch data in.
+	 * @return string
+	 */
+	function getFullTitle($locale) {
+		$fullTitle = null;
+		if ($prefix = $this->getPrefix($locale)) {
+			$fullTitle = $prefix . ' ';
+		}
+
+		$fullTitle .= $this->getTitle($locale);
+
+		if ($subtitle = $this->getSubtitle($locale)) {
+			$fullTitle = PKPString::concatTitleFields(array($fullTitle, $subtitle));
+		}
+
+		return $fullTitle;
 	}
 
 	/**
@@ -230,7 +518,7 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setPrefix($prefix, $locale) {
-		return $this->setData('prefix', $prefix, $locale);
+		$this->setData('prefix', $prefix, $locale);
 	}
 
 	/**
@@ -256,7 +544,7 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setAbstract($abstract, $locale) {
-		return $this->setData('abstract', $abstract, $locale);
+		$this->setData('abstract', $abstract, $locale);
 	}
 
 	/**
@@ -282,33 +570,7 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setDiscipline($discipline, $locale) {
-		return $this->setData('discipline', $discipline, $locale);
-	}
-
-	/**
-	 * Return the localized subject classification
-	 * @return string
-	 */
-	function getLocalizedSubjectClass() {
-		return $this->getLocalizedData('subjectClass');
-	}
-
-	/**
-	 * Get subject classification.
-	 * @param $locale
-	 * @return string
-	 */
-	function getSubjectClass($locale) {
-		return $this->getData('subjectClass', $locale);
-	}
-
-	/**
-	 * Set subject classification.
-	 * @param $subjectClass string
-	 * @param $locale
-	 */
-	function setSubjectClass($subjectClass, $locale) {
-		return $this->setData('subjectClass', $subjectClass, $locale);
+		$this->setData('discipline', $discipline, $locale);
 	}
 
 	/**
@@ -334,85 +596,33 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setSubject($subject, $locale) {
-		return $this->setData('subject', $subject, $locale);
+		$this->setData('subject', $subject, $locale);
 	}
 
 	/**
-	 * Return the localized geographical coverage
+	 * Return the localized coverage
 	 * @return string
 	 */
-	function getLocalizedCoverageGeo() {
-		return $this->getLocalizedData('coverageGeo');
+	function getLocalizedCoverage() {
+		return $this->getLocalizedData('coverage');
 	}
 
 	/**
-	 * Get geographical coverage.
+	 * Get coverage.
 	 * @param $locale
 	 * @return string
 	 */
-	function getCoverageGeo($locale) {
-		return $this->getData('coverageGeo', $locale);
+	function getCoverage($locale) {
+		return $this->getData('coverage', $locale);
 	}
 
 	/**
-	 * Set geographical coverage.
-	 * @param $coverageGeo string
+	 * Set coverage.
+	 * @param $coverage string
 	 * @param $locale
 	 */
-	function setCoverageGeo($coverageGeo, $locale) {
-		return $this->setData('coverageGeo', $coverageGeo, $locale);
-	}
-
-	/**
-	 * Return the localized chronological coverage
-	 * @return string
-	 */
-	function getLocalizedCoverageChron() {
-		return $this->getLocalizedData('coverageChron');
-	}
-
-	/**
-	 * Get chronological coverage.
-	 * @param $locale
-	 * @return string
-	 */
-	function getCoverageChron($locale) {
-		return $this->getData('coverageChron', $locale);
-	}
-
-	/**
-	 * Set chronological coverage.
-	 * @param $coverageChron string
-	 * @param $locale
-	 */
-	function setCoverageChron($coverageChron, $locale) {
-		return $this->setData('coverageChron', $coverageChron, $locale);
-	}
-
-	/**
-	 * Return the localized sample coverage
-	 * @return string
-	 */
-	function getLocalizedCoverageSample() {
-		return $this->getLocalizedData('coverageSample');
-	}
-
-	/**
-	 * Get research sample coverage.
-	 * @param $locale
-	 * @return string
-	 */
-	function getCoverageSample($locale) {
-		return $this->getData('coverageSample', $locale);
-	}
-
-	/**
-	 * Set geographical coverage.
-	 * @param $coverageSample string
-	 * @param $locale
-	 */
-	function setCoverageSample($coverageSample, $locale) {
-		return $this->setData('coverageSample', $coverageSample, $locale);
+	function setCoverage($coverage, $locale) {
+		$this->setData('coverage', $coverage, $locale);
 	}
 
 	/**
@@ -438,7 +648,7 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setType($type, $locale) {
-		return $this->setData('type', $type, $locale);
+		$this->setData('type', $type, $locale);
 	}
 
 	/**
@@ -456,7 +666,7 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setRights($rights, $locale) {
-		return $this->setData('rights', $rights, $locale);
+		$this->setData('rights', $rights, $locale);
 	}
 
 	/**
@@ -474,7 +684,7 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setSource($source, $locale) {
-		return $this->setData('source', $source, $locale);
+		$this->setData('source', $source, $locale);
 	}
 
 	/**
@@ -490,7 +700,7 @@ class Submission extends DataObject {
 	 * @param $language string
 	 */
 	function setLanguage($language) {
-		return $this->setData('language', $language);
+		$this->setData('language', $language);
 	}
 
 	/**
@@ -516,7 +726,25 @@ class Submission extends DataObject {
 	 * @param $locale
 	 */
 	function setSponsor($sponsor, $locale) {
-		return $this->setData('sponsor', $sponsor, $locale);
+		$this->setData('sponsor', $sponsor, $locale);
+	}
+
+	/**
+	 * Get the copyright notice for a given locale
+	 * @param $locale string
+	 * @return string
+	 */
+	function getCopyrightNotice($locale) {
+		return $this->getData('copyrightNotice', $locale);
+	}
+
+	/**
+	 * Set the copyright notice for a locale
+	 * @param $copyrightNotice string
+	 * @param $locale string
+	 */
+	function setCopyrightNotice($copyrightNotice, $locale) {
+		$this->setData('copyrightNotice', $copyrightNotice, $locale);
 	}
 
 	/**
@@ -532,207 +760,39 @@ class Submission extends DataObject {
 	 * @param $citations string
 	 */
 	function setCitations($citations) {
-		return $this->setData('citations', $citations);
+		$this->setData('citations', $citations);
 	}
 
 	/**
-	 * Get the localized cover filename
+	 * get cover page server-side file name
 	 * @return string
 	 */
-	function getLocalizedFileName() {
-		return $this->getLocalizedData('fileName');
+	function getCoverImage() {
+		return $this->getData('coverImage');
 	}
 
 	/**
-	 * get file name
-	 * @param $locale string
-	 * @return string
+	 * set cover page server-side file name
+	 * @param $coverImage string
 	 */
-	function getFileName($locale) {
-		return $this->getData('fileName', $locale);
-	}
-
-	/**
-	 * set file name
-	 * @param $fileName string
-	 * @param $locale string
-	 */
-	function setFileName($fileName, $locale) {
-		return $this->setData('fileName', $fileName, $locale);
-	}
-
-	/**
-	 * Get the localized submission cover width
-	 * @return string
-	 */
-	function getLocalizedWidth() {
-		return $this->getLocalizedData('width');
-	}
-
-	/**
-	 * get width of cover page image
-	 * @param $locale string
-	 * @return string
-	 */
-	function getWidth($locale) {
-		return $this->getData('width', $locale);
-	}
-
-	/**
-	 * set width of cover page image
-	 * @param $locale string
-	 * @param $width int
-	 */
-	function setWidth($width, $locale) {
-		return $this->setData('width', $width, $locale);
-	}
-
-	/**
-	 * Get the localized submission cover height
-	 * @return string
-	 */
-	function getLocalizedHeight() {
-		return $this->getLocalizedData('height');
-	}
-
-	/**
-	 * get height of cover page image
-	 * @param $locale string
-	 * @return string
-	 */
-	function getHeight($locale) {
-		return $this->getData('height', $locale);
-	}
-
-	/**
-	 * set height of cover page image
-	 * @param $locale string
-	 * @param $height int
-	 */
-	function setHeight($height, $locale) {
-		return $this->setData('height', $height, $locale);
-	}
-
-	/**
-	 * Get the localized cover filename on the uploader's computer
-	 * @return string
-	 */
-	function getLocalizedOriginalFileName() {
-		return $this->getLocalizedData('originalFileName');
-	}
-
-	/**
-	 * get original file name
-	 * @param $locale string
-	 * @return string
-	 */
-	function getOriginalFileName($locale) {
-		return $this->getData('originalFileName', $locale);
-	}
-
-	/**
-	 * set original file name
-	 * @param $originalFileName string
-	 * @param $locale string
-	 */
-	function setOriginalFileName($originalFileName, $locale) {
-		return $this->setData('originalFileName', $originalFileName, $locale);
-	}
-
-	/**
-	 * Get the localized cover alternate text
-	 * @return string
-	 */
-	function getLocalizedCoverPageAltText() {
-		return $this->getLocalizedData('coverPageAltText');
+	function setCoverImage($coverImage) {
+		$this->setData('coverImage', $coverImage);
 	}
 
 	/**
 	 * get cover page alternate text
-	 * @param $locale string
 	 * @return string
 	 */
-	function getCoverPageAltText($locale) {
-		return $this->getData('coverPageAltText', $locale);
+	function getCoverImageAltText() {
+		return $this->getData('coverImageAltText');
 	}
 
 	/**
 	 * set cover page alternate text
-	 * @param $coverPageAltText string
-	 * @param $locale string
+	 * @param $coverImageAltText string
 	 */
-	function setCoverPageAltText($coverPageAltText, $locale) {
-		return $this->setData('coverPageAltText', $coverPageAltText, $locale);
-	}
-
-	/**
-	 * Get the flag indicating whether or not to show
-	 * a cover page.
-	 * @return string
-	 */
-	function getLocalizedShowCoverPage() {
-		return $this->getLocalizedData('showCoverPage');
-	}
-
-	/**
-	 * get show cover page
-	 * @param $locale string
-	 * @return int
-	 */
-	function getShowCoverPage($locale) {
-		return $this->getData('showCoverPage', $locale);
-	}
-
-	/**
-	 * set show cover page
-	 * @param $showCoverPage int
-	 * @param $locale string
-	 */
-	function setShowCoverPage($showCoverPage, $locale) {
-		return $this->setData('showCoverPage', $showCoverPage, $locale);
-	}
-
-	/**
-	 * get hide cover page thumbnail in Toc
-	 * @param $locale string
-	 * @return int
-	 */
-	function getHideCoverPageToc($locale) {
-		return $this->getData('hideCoverPageToc', $locale);
-	}
-
-	/**
-	 * set hide cover page thumbnail in Toc
-	 * @param $hideCoverPageToc int
-	 * @param $locale string
-	 */
-	function setHideCoverPageToc($hideCoverPageToc, $locale) {
-		return $this->setData('hideCoverPageToc', $hideCoverPageToc, $locale);
-	}
-
-	/**
-	 * get hide cover page in abstract view
-	 * @param $locale string
-	 * @return int
-	 */
-	function getHideCoverPageAbstract($locale) {
-		return $this->getData('hideCoverPageAbstract', $locale);
-	}
-
-	/**
-	 * set hide cover page in abstract view
-	 * @param $hideCoverPageAbstract int
-	 * @param $locale string
-	 */
-	function setHideCoverPageAbstract($hideCoverPageAbstract, $locale) {
-		return $this->setData('hideCoverPageAbstract', $hideCoverPageAbstract, $locale);
-	}
-
-	/**
-	 * Get localized hide cover page in abstract view
-	 */
-	function getLocalizedHideCoverPageAbstract() {
-		return $this->getLocalizedData('hideCoverPageAbstract');
+	function setCoverImageAltText($coverImageAltText) {
+		$this->setData('coverImageAltText', $coverImageAltText);
 	}
 
 	/**
@@ -748,7 +808,7 @@ class Submission extends DataObject {
 	 * @param $dateSubmitted date
 	 */
 	function setDateSubmitted($dateSubmitted) {
-		return $this->setData('dateSubmitted', $dateSubmitted);
+		$this->setData('dateSubmitted', $dateSubmitted);
 	}
 
 	/**
@@ -764,7 +824,7 @@ class Submission extends DataObject {
 	 * @param $dateModified date
 	 */
 	function setDateStatusModified($dateModified) {
-		return $this->setData('dateStatusModified', $dateModified);
+		$this->setData('dateStatusModified', $dateModified);
 	}
 
 	/**
@@ -780,7 +840,7 @@ class Submission extends DataObject {
 	 * @param $dateModified date
 	 */
 	function setLastModified($dateModified) {
-		return $this->setData('lastModified', $dateModified);
+		$this->setData('lastModified', $dateModified);
 	}
 
 	/**
@@ -810,7 +870,7 @@ class Submission extends DataObject {
 	 * @param $status int
 	 */
 	function setStatus($status) {
-		return $this->setData('status', $status);
+		$this->setData('status', $status);
 	}
 
 	/**
@@ -821,13 +881,9 @@ class Submission extends DataObject {
 		static $statusMap;
 		if (!isset($statusMap)) {
 			$statusMap = array(
-				STATUS_ARCHIVED => 'submissions.archived',
 				STATUS_QUEUED => 'submissions.queued',
 				STATUS_PUBLISHED => 'submissions.published',
 				STATUS_DECLINED => 'submissions.declined',
-				STATUS_QUEUED_UNASSIGNED => 'submissions.queuedUnassigned',
-				STATUS_QUEUED_REVIEW => 'submissions.queuedReview',
-				STATUS_QUEUED_EDITING => 'submissions.queuedEditing',
 				STATUS_INCOMPLETE => 'submissions.incomplete'
 			);
 		}
@@ -856,55 +912,7 @@ class Submission extends DataObject {
 	 * @param $submissionProgress int
 	 */
 	function setSubmissionProgress($submissionProgress) {
-		return $this->setData('submissionProgress', $submissionProgress);
-	}
-
-	/**
-	 * Get submission file id.
-	 * @return int
-	 */
-	function getSubmissionFileId() {
-		return $this->getData('submissionFileId');
-	}
-
-	/**
-	 * Set submission file id.
-	 * @param $submissionFileId int
-	 */
-	function setSubmissionFileId($submissionFileId) {
-		return $this->setData('submissionFileId', $submissionFileId);
-	}
-
-	/**
-	 * Get revised file id.
-	 * @return int
-	 */
-	function getRevisedFileId() {
-		return $this->getData('revisedFileId');
-	}
-
-	/**
-	 * Set revised file id.
-	 * @param $revisedFileId int
-	 */
-	function setRevisedFileId($revisedFileId) {
-		return $this->setData('revisedFileId', $revisedFileId);
-	}
-
-	/**
-	 * Get review file id.
-	 * @return int
-	 */
-	function getReviewFileId() {
-		return $this->getData('reviewFileId');
-	}
-
-	/**
-	 * Set review file id.
-	 * @param $reviewFileId int
-	 */
-	function setReviewFileId($reviewFileId) {
-		return $this->setData('reviewFileId', $reviewFileId);
+		$this->setData('submissionProgress', $submissionProgress);
 	}
 
 	/**
@@ -920,24 +928,90 @@ class Submission extends DataObject {
 	 * @param $pages string
 	 */
 	function setPages($pages) {
-		return $this->setData('pages',$pages);
+		$this->setData('pages',$pages);
 	}
 
 	/**
-	 * Return submission RT comments status.
+	 * Get the submission's current publication stage ID
 	 * @return int
 	 */
-	function getCommentsStatus() {
-		return $this->getData('commentsStatus');
+	function getStageId() {
+		return $this->getData('stageId');
 	}
 
 	/**
-	 * Set submission RT comments status.
-	 * @param $commentsStatus boolean
+	 * Set the submission's current publication stage ID
+	 * @param $stageId int
 	 */
-	function setCommentsStatus($commentsStatus) {
-		return $this->setData('commentsStatus', $commentsStatus);
+	function setStageId($stageId) {
+		$this->setData('stageId', $stageId);
 	}
+
+	/**
+	 * Get date published.
+	 * @return date
+	 */
+	function getDatePublished() {
+		return $this->getData('datePublished');
+	}
+
+	/**
+	 * Set date published.
+	 * @param $datePublished date
+	 */
+	function setDatePublished($datePublished) {
+		return $this->SetData('datePublished', $datePublished);
+	}
+
+	/**
+	 * Initialize the copyright and license metadata for a submission.
+	 * This should be called at creation and at publication, to setup
+	 * license/copyright holder and copyright year, respectively.
+	 * This depends on the permissions configuration in Setup, and
+	 * (potentially) on the authors of a submission being populated.
+	 * Only initializes empty fields because of the getDefault...()
+	 * behaviour, so subsequent calls are safe.
+	 */
+	function initializePermissions() {
+		$this->setLicenseURL($this->getDefaultLicenseURL());
+		$this->setCopyrightHolder($this->getDefaultCopyrightHolder(null), null);
+		if ($this->getStatus() == STATUS_PUBLISHED) {
+			$this->setCopyrightYear($this->getDefaultCopyrightYear());
+		}
+	}
+
+	/**
+	 * Determines whether or not the license for copyright on this submission is
+	 * a Creative Commons license or not.
+	 * @return boolean
+	 */
+	function isCCLicense() {
+		return preg_match('/creativecommons\.org/i', $this->getLicenseURL());
+	}
+
+	/**
+	 * @copydoc DataObject::getDAO()
+	 */
+	function getDAO() {
+		return Application::getSubmissionDAO();
+	}
+
+	//
+	// Abstract methods.
+	//
+	/**
+	 * Get section id.
+	 * @return int
+	 */
+	abstract function getSectionId();
+
+	/**
+	 * Get the value of a license field from the containing context.
+	 * @param $locale string Locale code
+	 * @param $field PERMISSIONS_FIELD_...
+	 * @return string|null
+	 */
+	abstract function _getContextLicenseFieldValue($locale, $field);
 }
 
 ?>

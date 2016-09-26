@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/config/PKPRequestTest.inc.php
+ * @file tests/classes/core/PKPRequestTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPRequestTest
@@ -14,7 +15,7 @@
  */
 
 
-require_mock_env('lib/pkp/tests/mock');
+require_mock_env('env1');
 
 import('lib.pkp.tests.PKPTestCase');
 import('lib.pkp.classes.core.PKPRequest');
@@ -22,14 +23,22 @@ import('lib.pkp.classes.plugins.HookRegistry'); // This imports our mock HookReg
 
 class PKPRequestTest extends PKPTestCase {
 	protected $request;
+	private $getRemoteAddrTestConfigData;
 
 	public function setUp() {
 		parent::setUp();
+		HookRegistry::rememberCalledHooks();
 		$this->request = new PKPRequest();
+
+		// Save the config data for testTrustXForwardedFor tests
+		$this->getRemoteAddrTestConfigData = Registry::get('configData');
 	}
 
 	public function tearDown() {
 		HookRegistry::resetCalledHooks();
+
+		// Restore the config data after testTrustXForwardedFor tests
+		Registry::set('configData', $this->getRemoteAddrTestConfigData);
 	}
 
 	/**
@@ -98,7 +107,7 @@ class PKPRequestTest extends PKPTestCase {
 		// Two hooks should have been triggered.
 		self::assertEquals(
 			array(
-				array('Request::getServerHost' , array(null)),
+				array('Request::getServerHost' , array(false, false, true)),
 				array('Request::getBaseUrl' , array('http://baseurl1/'))
 			),
 			HookRegistry::getCalledHooks()
@@ -123,7 +132,7 @@ class PKPRequestTest extends PKPTestCase {
 			'HOSTNAME' => 'hostname',
 			'SCRIPT_NAME' => '/some/base/path'
 		);
-		self::assertEquals('http://hostname/some/base', $this->request->getBaseUrl());
+		self::assertEquals('http://hostname/some/base/path', $this->request->getBaseUrl());
 	}
 
 	/**
@@ -133,18 +142,18 @@ class PKPRequestTest extends PKPTestCase {
 		$_SERVER = array(
 			'SCRIPT_NAME' => '/some/base/path'
 		);
-		self::assertEquals('/some/base', $this->request->getBasePath());
+		self::assertEquals('/some/base/path', $this->request->getBasePath());
 
 		// The hook should have been triggered once.
 		self::assertEquals(
-			array(array('Request::getBasePath' , array('/some/base'))),
+			array(array('Request::getBasePath' , array('/some/base/path'))),
 			HookRegistry::getCalledHooks()
 		);
 
 		// Calling getBasePath twice should return the same
 		// result without triggering the hook again.
 		HookRegistry::resetCalledHooks();
-		self::assertEquals('/some/base', $this->request->getBasePath());
+		self::assertEquals('/some/base/path', $this->request->getBasePath());
 		self::assertEquals(
 			array(),
 			HookRegistry::getCalledHooks()
@@ -158,7 +167,7 @@ class PKPRequestTest extends PKPTestCase {
 		$_SERVER = array(
 			'SCRIPT_NAME' => '/main'
 		);
-		self::assertEquals('', $this->request->getBasePath());
+		self::assertEquals('/main', $this->request->getBasePath());
 	}
 
 	/**
@@ -197,7 +206,7 @@ class PKPRequestTest extends PKPTestCase {
 		);
 		$this->setTestConfiguration('request2', 'classes/core/config'); // restful URLs
 
-		self::assertEquals('some/script', $this->request->getRequestPath());
+		self::assertEquals('some/script/name', $this->request->getRequestPath());
 	}
 
 
@@ -224,7 +233,7 @@ class PKPRequestTest extends PKPTestCase {
 		);
 		$this->setTestConfiguration('request2', 'classes/core/config'); // path info disabled
 
-		self::assertEquals('some/script', $this->request->getRequestPath());
+		self::assertEquals('some/script/name', $this->request->getRequestPath());
 	}
 
 	/**
@@ -315,6 +324,55 @@ class PKPRequestTest extends PKPTestCase {
 			'HTTPS' => 'ON'
 		);
 		self::assertEquals('https', $this->request->getProtocol());
+	}
+
+	/**
+	 * @covers PKPRequest::getRemoteAddr
+	 */
+	public function testTrustXForwardedForOn() {
+		list($forwardedIp, $remoteIp) = $this->getRemoteAddrTestPrepare(
+			array('trust_x_forwarded_for' => true)
+		);
+		self::assertEquals($forwardedIp, $this->request->getRemoteAddr());
+	}
+
+	/**
+	 * @covers PKPRequest::getRemoteAddr
+	 */
+	public function testTrustXForwardedForOff() {
+		list($forwardedIp, $remoteIp) = $this->getRemoteAddrTestPrepare(
+			array('trust_x_forwarded_for' => false)
+		);
+		self::assertEquals($remoteIp, $this->request->getRemoteAddr());
+	}
+
+	/**
+	 * @covers PKPRequest::getRemoteAddr
+	 */
+	public function testTrustXForwardedForNotSet() {
+		list($forwardedIp, $remoteIp) = $this->getRemoteAddrTestPrepare(array());
+		self::assertEquals($forwardedIp, $this->request->getRemoteAddr());
+	}
+
+
+	/**
+	 * Helper function for testTrustXForwardedFor tests that prepares the
+	 * environment
+	 *
+	 * @param $generalConfigData mixed Array containing overwrites for the
+	 * general section of the config
+	 */
+	private function getRemoteAddrTestPrepare($generalConfigData = array()) {
+		// Remove cached IP address from registry
+		Registry::delete('remoteIpAddr');
+
+		$_SERVER['HTTP_X_FORWARDED_FOR'] = '1.1.1.1';
+		$_SERVER['REMOTE_ADDR'] = '2.2.2.2';
+
+		$configData =& Registry::get('configData', true, array());
+		$configData['general'] = $generalConfigData;
+
+		return array($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['REMOTE_ADDR']);
 	}
 
 	/**

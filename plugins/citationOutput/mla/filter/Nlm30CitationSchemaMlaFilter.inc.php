@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_citationOutput_mla_filter
+ * @defgroup plugins_citationOutput_mla_filter MLA Citation Format Filter
  */
 
 /**
  * @file plugins/citationOutput/mla/filter/Nlm30CitationSchemaMlaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaMlaFilter
@@ -25,7 +25,7 @@ class Nlm30CitationSchemaMlaFilter extends Nlm30CitationSchemaCitationOutputForm
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function Nlm30CitationSchemaMlaFilter(&$filterGroup) {
+	function Nlm30CitationSchemaMlaFilter($filterGroup) {
 		$this->setDisplayName('MLA Citation Output');
 
 		parent::Nlm30CitationSchemaCitationOutputFormatFilter($filterGroup);
@@ -36,7 +36,7 @@ class Nlm30CitationSchemaMlaFilter extends Nlm30CitationSchemaCitationOutputForm
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationOutput.mla.filter.Nlm30CitationSchemaMlaFilter';
@@ -47,7 +47,7 @@ class Nlm30CitationSchemaMlaFilter extends Nlm30CitationSchemaCitationOutputForm
 	// Implement abstract template methods from TemplateBasedFilter
 	//
 	/**
-	 * @see TemplateBasedFilter::getBasePath()
+	 * @copydoc TemplateBasedFilter::getBasePath()
 	 */
 	function getBasePath() {
 		return dirname(__FILE__);

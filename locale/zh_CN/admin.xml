@@ -2,9 +2,10 @@
 <!DOCTYPE locale SYSTEM "../../dtd/locale.dtd">
 
 <!--
-  * locale/en_US/admin.xml
+  * locale/zh_CN/admin.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localization strings for the en_US (English) locale.
@@ -80,4 +81,7 @@
 	<message key="admin.version.updateAvailable">一个更新的版本可用</message>
 	<message key="admin.version.upToDate">您的系统是最新</message>
 	<message key="admin.version">版本</message>
+	<message key="admin.settings">设置</message>
+	<message key="admin.siteSetup">整站设置</message>
+	<message key="admin.settings.siteTheme">站点主题</message>
 </locale>

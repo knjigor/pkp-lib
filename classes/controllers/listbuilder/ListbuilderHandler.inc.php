@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/listbuilder/ListbuilderHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ListbuilderHandler
@@ -25,24 +26,20 @@ define_exposed('LISTBUILDER_SOURCE_TYPE_SELECT', 1);
 define('LISTBUILDER_SAVE_TYPE_EXTERNAL', 0); // Outside the listbuilder handler
 define('LISTBUILDER_SAVE_TYPE_INTERNAL', 1); // Using ListbuilderHandler::save
 
-// FIXME: Rather than inheriting from grid handler, common base
-// functionality might better be factored into a common base handler
-// class and then both, GridHandler and ListbuilderHandler should
-// inherit from the common base class. The shared concept of grids
-// and list builders is that both seem to work with element lists. Maybe
-// ElementListHandler would be a good name then for a common base
-// class? I'm not a 100% sure about this but it'll become obvious
-// once you try. If there's considerable amounts of code in both
-// the base class and the re-factored grid handler then you know
-// you're on the right track.
+/* String to identify optgroup in the returning options data. If you want to use
+ * optgroup in listbuilder select, return the options data in a multidimensional array
+ * array[columnIndex][optgroupId][selectItemId] and also with
+ * array[columnIndex][LISTBUILDER_OPTGROUP_LABEL][optgroupId] */
+define_exposed('LISTBUILDER_OPTGROUP_LABEL', 'optGroupLabel');
+
 class ListbuilderHandler extends GridHandler {
-	/** @var integer Definition of the type of source LISTBUILDER_SOURCE_TYPE_... **/
+	/** @var int Definition of the type of source LISTBUILDER_SOURCE_TYPE_... */
 	var $_sourceType;
 
-	/** @var integer Constant indicating the save approach for the LB LISTBUILDER_SAVE_TYPE_... **/
+	/** @var int Constant indicating the save approach for the LB LISTBUILDER_SAVE_TYPE_... */
 	var $_saveType = LISTBUILDER_SAVE_TYPE_INTERNAL;
 
-	/** @var $saveFieldName Field for LISTBUILDER_SAVE_TYPE_EXTERNAL naming the field used to send the saved contents of the LB */
+	/** @var string Field for LISTBUILDER_SAVE_TYPE_EXTERNAL naming the field used to send the saved contents of the LB */
 	var $_saveFieldName = null;
 
 	/**
@@ -54,20 +51,15 @@ class ListbuilderHandler extends GridHandler {
 
 	/**
 	 * @see GridHandler::initialize
+	 * @param $request PKPRequest
+	 * @param $addItemLink boolean optional True/default to present an "add item" link action
 	 */
-	function initialize(&$request, $addItemLink = true) {
+	function initialize($request, $addItemLink = true) {
 		parent::initialize($request);
 
 		if ($addItemLink) {
 			import('lib.pkp.classes.linkAction.request.NullAction');
-			$this->addAction(
-				new LinkAction(
-					'addItem',
-					new NullAction(),
-					__('grid.action.addItem'),
-					'add_item'
-				)
-			);
+			$this->addAction($this->getAddItemLinkAction(new NullAction()));
 		}
 	}
 
@@ -128,12 +120,27 @@ class ListbuilderHandler extends GridHandler {
 	}
 
 	/**
-	 * Set the save field name for LISTBUILDER_SAVE_TYPE_EXTERNAL
+	 * Set the save field name for LISTBUILDER_SAVE_TYPE_EXTERNAL.
+	 * This will be the HTML field that receives the data upon submission.
 	 * @return string
 	 */
 	function getSaveFieldName() {
 		assert(isset($this->_saveFieldName));
 		return $this->_saveFieldName;
+	}
+
+	/**
+	 * Get the "add item" link action.
+	 * @param $actionRequest ActionRequest
+	 * @return LinkAction
+	 */
+	function getAddItemLinkAction($actionRequest) {
+		return new LinkAction(
+			'addItem',
+			$actionRequest,
+			__('grid.action.addItem'),
+			'add_item'
+		);
 	}
 
 	/**
@@ -153,7 +160,7 @@ class ListbuilderHandler extends GridHandler {
 	 * @param $rowId mixed ID of row to modify
 	 * @return boolean
 	 */
-	function deleteEntry(&$request, $rowId) {
+	function deleteEntry($request, $rowId) {
 		fatalError('ABSTRACT METHOD');
 	}
 
@@ -164,7 +171,7 @@ class ListbuilderHandler extends GridHandler {
 	 * @param $newRowId mixed ID of the new entry
 	 * @return boolean
 	 */
-	function updateEntry(&$request, $rowId, $newRowId) {
+	function updateEntry($request, $rowId, $newRowId) {
 		// This may well be overridden by a subclass to modify
 		// an existing entry, e.g. to maintain referential integrity.
 		// If not, we can simply delete and insert.
@@ -176,8 +183,9 @@ class ListbuilderHandler extends GridHandler {
 	 * Persist a new entry insert.
 	 * @param $request Request object
 	 * @param $newRowId mixed ID of row to modify
+	 * @return boolean
 	 */
-	function insertEntry(&$request, $newRowId) {
+	function insertEntry($request, $newRowId) {
 		fatalError('ABSTRACT METHOD');
 	}
 
@@ -191,8 +199,8 @@ class ListbuilderHandler extends GridHandler {
 	 * @param request Request
 	 * @return array
 	 */
-	function getOptions(&$request) {
-		fatalError('ABSTRACT METHOD');
+	function getOptions($request) {
+		return array();
 	}
 
 	//
@@ -203,7 +211,27 @@ class ListbuilderHandler extends GridHandler {
 	 * @param $args array
 	 * @param $request PKPRequest
 	 */
-	function fetch($args, &$request) {
+	function fetch($args, $request) {
+		$templateMgr = TemplateManager::getManager($request);
+		$options = $this->getOptions($request);
+		$availableOptions = false;
+		if (is_array($options) && !empty($options)) {
+			$firstColumnOptions = current($options);
+			$optionsCount = count($firstColumnOptions);
+			if (is_array(current($firstColumnOptions))) { // Options with opt group, count only the selectable options.
+				unset($firstColumnOptions[LISTBUILDER_OPTGROUP_LABEL]);
+				$optionsCount--;
+				$optionsCount = count($firstColumnOptions, COUNT_RECURSIVE) - $optionsCount;
+			}
+		
+			$listElements = $this->getGridDataElements($request);
+			if (count($listElements) < $optionsCount) {
+				$availableOptions = true;
+			}
+		}
+
+		$templateMgr->assign('availableOptions', $availableOptions);
+	
 		return $this->fetchGrid($args, $request);
 	}
 
@@ -214,27 +242,16 @@ class ListbuilderHandler extends GridHandler {
 	 * @param $insertionCallback array callback to be used for each updated element
 	 * @param $updateCallback array callback to be used for each updated element
 	 */
-	function unpack(&$request, $data, $deletionCallback = null, $insertionCallback = null, $updateCallback = null) {
-		// Set some defaults
-		// N.B. if this class is called statically, then $this is not set to Listbuilder, but to your calling class.
-		if ( !$deletionCallback ) {
-			$deletionCallback = array(&$this, 'deleteEntry');
-		}
-		if ( !$insertionCallback ) {
-			$insertionCallback = array(&$this, 'insertEntry');
-		}
-		if ( !$updateCallback ) {
-			$updateCallback = array(&$this, 'updateEntry');
-		}
-
-		import('lib.pkp.classes.core.JSONManager');
-		$jsonManager = new JSONManager();
-		$data = $jsonManager->decode($data);
+	static function unpack($request, $data, $deletionCallback, $insertionCallback, $updateCallback) {
+		$data = json_decode($data);
+		$status = true;
 
 		// Handle deletions
-		if (isset($data->deletions)) {
+		if (isset($data->deletions) && $data->deletions !== '') {
 			foreach (explode(' ', trim($data->deletions)) as $rowId) {
-				call_user_func($deletionCallback, $request, $rowId);
+				if (!call_user_func($deletionCallback, $request, $rowId, $data->numberOfRows)) {
+					$status = false;
+				}
 			}
 		}
 
@@ -269,11 +286,12 @@ class ListbuilderHandler extends GridHandler {
 			// array ('localizedColumnName' => array('en_US' => 'englishValue'),
 			// 'nonLocalizedColumnName' => 'someNonLocalizedValue');
 			if (is_null($rowId)) {
-				call_user_func($insertionCallback, $request, $changes);
+				if (!call_user_func($insertionCallback, $request, $changes)) $status = false;
 			} else {
-				call_user_func($updateCallback, $request, $rowId, $changes);
+				if (!call_user_func($updateCallback, $request, $rowId, $changes)) $status = false;
 			}
 		}
+		return $status;
 	}
 
 	/**
@@ -281,17 +299,17 @@ class ListbuilderHandler extends GridHandler {
 	 * @param $args array
 	 * @param $request PKPRequest
 	 */
-	function save($args, &$request) {
+	function save($args, $request) {
 		// The ListbuilderHandler will post a list of changed
 		// data in the "data" post var. Need to go through it
 		// and reconcile the data against this list, adding/
 		// updating/deleting as needed.
 		$data = $request->getUserVar('data');
-		$this->unpack(
+		self::unpack(
 			$request, $data,
-			array(&$this, 'deleteEntry'),
-			array(&$this, 'insertEntry'),
-			array(&$this, 'updateEntry')
+			array($this, 'deleteEntry'),
+			array($this, 'insertEntry'),
+			array($this, 'updateEntry')
 		);
 	}
 
@@ -300,11 +318,11 @@ class ListbuilderHandler extends GridHandler {
 	 * Load the set of options for a select list type listbuilder.
 	 * @param $args array
 	 * @param $request PKPRequest
+	 * @return JSONMessage JSON object
 	 */
-	function fetchOptions($args, &$request) {
+	function fetchOptions($args, $request) {
 		$options = $this->getOptions($request);
-		$json = new JSONMessage(true, $options);
-		return $json->getString();
+		return new JSONMessage(true, $options);
 	}
 
 	//
@@ -312,12 +330,11 @@ class ListbuilderHandler extends GridHandler {
 	//
 	/**
 	 * @see GridHandler::getRowInstance()
-	 * @return CitationGridRow
+	 * @return ListbuilderGridRow
 	 */
-	function &getRowInstance() {
+	protected function getRowInstance() {
 		// Return a citation row
-		$row = new ListbuilderGridRow();
-		return $row;
+		return new ListbuilderGridRow();
 	}
 }
 

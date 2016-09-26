@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file classes/citation/XmlWebService.inc.php
+ * @file classes/webservice/XmlWebService.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XmlWebService
@@ -14,6 +15,7 @@
 
 
 import('lib.pkp.classes.webservice.WebService');
+import('lib.pkp.classes.xslt.XSLTransformer');
 
 class XmlWebService extends WebService {
 	/** @var integer */
@@ -23,7 +25,7 @@ class XmlWebService extends WebService {
 	 * Constructor
 	 */
 	function XmlWebService() {
-		if (checkPhpVersion('5.0.0') && extension_loaded('dom')) {
+		if (extension_loaded('dom')) {
 			$this->_returnType = XSL_TRANSFORMER_DOCTYPE_DOM;
 		} else {
 			$this->_returnType = XSL_TRANSFORMER_DOCTYPE_STRING;
@@ -44,7 +46,7 @@ class XmlWebService extends WebService {
 	 */
 	function setReturnType($returnType) {
 		if ($returnType == XSL_TRANSFORMER_DOCTYPE_DOM) {
-			if (!checkPhpVersion('5.0.0') || !extension_loaded('dom')) {
+			if (!extension_loaded('dom')) {
 				fatalError('This system does not meet minimum requirements!');
 			}
 		}
@@ -62,6 +64,9 @@ class XmlWebService extends WebService {
 		// Call the web service
 		$xmlResult = parent::call($webServiceRequest);
 
+		if (Config::getVar('debug', 'log_web_service_info')) {
+			error_log('Time: ' . date('c') . "\nRequest: " . print_r($webServiceRequest, true) . "\nResponse: " . print_r($xmlResult, true) . "\nLast response status: " . $this->_lastResponseStatus . "\n");
+		}
 		// Catch web service errors
 		if (is_null($xmlResult)) return $xmlResult;
 

@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/feature/GridCategoryAccordionFeature.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GridCategoryAccordionFeature
@@ -38,6 +39,7 @@ class GridCategoryAccordionFeature extends GridFeature{
 	//
 	/**
 	 * @see GridFeature::gridInitialize()
+	 * @param $args array
 	 */
 	function gridInitialize($args) {
 		$grid =& $args['grid'];
@@ -63,6 +65,7 @@ class GridCategoryAccordionFeature extends GridFeature{
 
 	/**
 	 * @see GridFeature::getInitializedCategoryRowInstance()
+	 * @param $args array
 	 */
 	function getInitializedCategoryRowInstance($args) {
 		$request =& $args['request'];
@@ -72,10 +75,7 @@ class GridCategoryAccordionFeature extends GridFeature{
 		// Check if we have category data, if not, don't
 		// add the accordion link actions.
 		$data = $row->getData();
-		$filter = $grid->getFilterSelectionData($request);
-		$categoryData = $grid->getCategoryData($data, $filter);
-
-		if (empty($categoryData)) return;
+		if (!$grid->hasGridDataElementsInCategory($data, $request)) return;
 
 		$row->addAction(
 			new LinkAction(
@@ -83,7 +83,7 @@ class GridCategoryAccordionFeature extends GridFeature{
 				new NullAction(),
 				'',
 				'expanded'
-			), GRID_ACTION_POSITION_DEFAULT
+			), GRID_ACTION_POSITION_ROW_LEFT
 		);
 
 		$row->addAction(
@@ -92,7 +92,7 @@ class GridCategoryAccordionFeature extends GridFeature{
 				new NullAction(),
 				'',
 				'collapsed'
-			), GRID_ACTION_POSITION_DEFAULT
+			), GRID_ACTION_POSITION_ROW_LEFT
 		);
 	}
 }

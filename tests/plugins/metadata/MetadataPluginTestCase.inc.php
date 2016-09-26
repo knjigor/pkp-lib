@@ -1,13 +1,14 @@
 <?php
 
 /**
- * @defgroup tests_plugins_metadata
+ * @defgroup tests_plugins_metadata Metadata Plugin Tests
  */
 
 /**
  * @file tests/plugins/metadata/MetadataPluginTestCase.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataPluginTestCase
@@ -22,7 +23,7 @@ import('lib.pkp.classes.plugins.MetadataPlugin');
 
 class MetadataPluginTestCase extends PluginTestCase {
 	/**
-	 * @see DatabaseTestCase::getAffectedTables()
+	 * @copydoc DatabaseTestCase::getAffectedTables()
 	 */
 	protected function getAffectedTables() {
 		$affectedTables = parent::getAffectedTables();
@@ -45,17 +46,12 @@ class MetadataPluginTestCase extends PluginTestCase {
 		$this->validateXmlConfig(array('./'.$controlledVocabFile, './lib/pkp/'.$controlledVocabFile));
 
 		// Delete vocab data so that we can re-install it.
-		$controlledVocabDao =& DAORegistry::getDAO('ControlledVocabDAO'); /* @var $controlledVocabDao ControlledVocabDAO */
+		$controlledVocabDao = DAORegistry::getDAO('ControlledVocabDAO'); /* @var $controlledVocabDao ControlledVocabDAO */
 		foreach($controlledVocabs as $controlledVocabSymbolic) {
-			$controlledVocab =& $controlledVocabDao->getBySymbolic($controlledVocabSymbolic, 0, 0);
+			$controlledVocab = $controlledVocabDao->getBySymbolic($controlledVocabSymbolic, 0, 0);
 			if ($controlledVocab) $controlledVocabDao->deleteObject($controlledVocab);
 		}
 
-		// Reset the plug-in setting indicating that vocabs have already been installed.
-		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
-		$pluginSettingsDao->updateSetting(0, $pluginName, METADATA_PLUGIN_VOCAB_INSTALLED_SETTING, false);
-
-		// Unregister the plug-in so that we're sure it will be registered again.
 		// Unregister the plug-in so that we're sure it will be registered again.
 		$plugins =& PluginRegistry::getPlugins();
 		unset($plugins['metadata'][$pluginName]);

@@ -3,7 +3,8 @@
 /**
  * @file classes/gift/PKPGiftDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPGiftDAO
@@ -35,7 +36,7 @@ class PKPGiftDAO extends DAO {
 	 * @return Gift object
 	 */
 	function &getGift($giftId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM gifts WHERE gift_id = ?', $giftId
 		);
 
@@ -53,7 +54,7 @@ class PKPGiftDAO extends DAO {
 	 * @return int
 	 */
 	function getGiftAssocId($giftId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT assoc_id FROM gifts WHERE gift_id = ?', $giftId
 		);
 
@@ -66,7 +67,7 @@ class PKPGiftDAO extends DAO {
 	 * @return int
 	 */
 	function getGiftAssocType($giftId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT assoc_type FROM gifts WHERE gift_id = ?', $giftId
 		);
 
@@ -78,7 +79,7 @@ class PKPGiftDAO extends DAO {
 	 * @param $row array
 	 * @return Gift object
 	 */
-	function &_returnGiftFromRow(&$row) {
+	function &_returnGiftFromRow($row) {
 		$gift = $this->newDataObject();
 		$gift->setId($row['gift_id']);
 		$gift->setAssocType($row['assoc_type']);
@@ -102,7 +103,7 @@ class PKPGiftDAO extends DAO {
 		$gift->setGiftNote($row['gift_note']);
 		$gift->setNotes($row['notes']);
 
-		HookRegistry::call('PKPNoteDAO::_returnGiftFromRow', array(&$gift, &$row));
+		HookRegistry::call('PKPGiftDAO::_returnGiftFromRow', array(&$gift, &$row));
 
 		return $gift;
 	}
@@ -160,7 +161,7 @@ class PKPGiftDAO extends DAO {
 				$gift->getNotes()
 			)
 		);
-		$gift->setId($this->getInsertGiftId());
+		$gift->setId($this->getInsertId());
 		return $gift->getId();
 	}
 
@@ -245,10 +246,9 @@ class PKPGiftDAO extends DAO {
 	 * @param $assocId int
 	 */
 	function deleteGiftsByAssocId($assocType, $assocId) {
-		$gifts =& $this->getGiftsByAssocId($assocType, $assocId);
-		while (($gift =& $gifts->next())) {
+		$gifts = $this->getGiftsByAssocId($assocType, $assocId);
+		while ($gift = $gifts->next()) {
 			$this->deleteGiftById($gift->getId());
-			unset($gift);
 		}
 		return true;
 	}
@@ -260,7 +260,7 @@ class PKPGiftDAO extends DAO {
 	 * @return object DAOResultFactory containing matching Gifts
 	 */
 	function &getGiftsByAssocId($assocType, $assocId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM gifts
 			WHERE assoc_type = ? AND assoc_id = ?
@@ -282,7 +282,7 @@ class PKPGiftDAO extends DAO {
 	 * @return boolean
 	 */
 	function recipientHasGift($assocType, $assocId, $userId, $giftId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT COUNT(*)
 			FROM gifts
 			WHERE gift_id = ?
@@ -299,8 +299,6 @@ class PKPGiftDAO extends DAO {
 		$returner = $result->fields[0] ? true : false;
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -313,7 +311,7 @@ class PKPGiftDAO extends DAO {
 	 * @return boolean
 	 */
 	function recipientHasNotRedeemedGift($assocType, $assocId, $userId, $giftId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT COUNT(*)
 			FROM gifts
 			WHERE gift_id = ?
@@ -332,8 +330,6 @@ class PKPGiftDAO extends DAO {
 		$returner = $result->fields[0] ? true : false;
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -357,7 +353,7 @@ class PKPGiftDAO extends DAO {
 	 * @return object DAOResultFactory containing matching Gifts
 	 */
 	function &getAllGiftsByRecipient($assocType, $userId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM gifts
 			WHERE assoc_type = ?
@@ -382,7 +378,7 @@ class PKPGiftDAO extends DAO {
 	 * @return object DAOResultFactory containing matching Gifts
 	 */
 	function &getGiftsByRecipient($assocType, $assocId, $userId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM gifts
 			WHERE assoc_type = ? AND assoc_id = ?
@@ -412,7 +408,7 @@ class PKPGiftDAO extends DAO {
 	 * @return object DAOResultFactory containing matching Gifts
 	 */
 	function &getGiftsByTypeAndRecipient($assocType, $assocId, $giftType, $userId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM gifts
 			WHERE assoc_type = ? AND assoc_id = ?
@@ -442,7 +438,7 @@ class PKPGiftDAO extends DAO {
 	 * @return object DAOResultFactory containing matching Gifts
 	 */
 	function &getNotRedeemedGiftsByRecipient($assocType, $assocId, $userId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM gifts
 			WHERE assoc_type = ? AND assoc_id = ?
@@ -471,7 +467,7 @@ class PKPGiftDAO extends DAO {
 	 * @return object DAOResultFactory containing matching Gifts
 	 */
 	function &getNotRedeemedGiftsByTypeAndRecipient($assocType, $assocId, $giftType, $userId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM gifts
 			WHERE assoc_type = ? AND assoc_id = ?
@@ -496,8 +492,8 @@ class PKPGiftDAO extends DAO {
 	 * Get the ID of the last inserted gift.
 	 * @return int
 	 */
-	function getInsertGiftId() {
-		return $this->getInsertId('gifts', 'gift_id');
+	function getInsertId() {
+		return $this->_getInsertId('gifts', 'gift_id');
 	}
 }
 

@@ -3,7 +3,8 @@
 /**
  * @file tests/classes/filter/PersistableTestFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PersistableTestFilter
@@ -19,7 +20,7 @@ class PersistableTestFilter extends PersistableFilter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function PersistableTestFilter(&$filterGroup) {
+	function PersistableTestFilter($filterGroup) {
 		import('lib.pkp.classes.filter.FilterSetting');
 		$this->addSetting(new FilterSetting('some-key', null, null));
 		parent::PersistableFilter($filterGroup);
@@ -29,7 +30,7 @@ class PersistableTestFilter extends PersistableFilter {
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.tests.classes.filter.PersistableTestFilter';

@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/PKPProcessAccessPolicy.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPProcessAccessPolicy
@@ -25,7 +26,7 @@ class PKPProcessAccessPolicy extends PKPPublicAccessPolicy {
 	 *  this policy is targeting.
 	 * @param $message string a message to be displayed if the authorization fails
 	 */
-	function PKPProcessAccessPolicy(&$request, $args, $operations, $message = 'user.authorization.processAuthenticationTokenRequired') {
+	function PKPProcessAccessPolicy($request, $args, $operations, $message = 'user.authorization.processAuthenticationTokenRequired') {
 		if (isset($args['authToken'])) {
 			$this->authToken = $args['authToken'];
 		}
@@ -52,7 +53,7 @@ class PKPProcessAccessPolicy extends PKPPublicAccessPolicy {
 		}
 
 		// Try to authorize the process with the token.
-		$processDao =& DAORegistry::getDAO('ProcessDAO');
+		$processDao = DAORegistry::getDAO('ProcessDAO');
 		if ($processDao->authorizeProcess($this->authToken)) {
 			return AUTHORIZATION_PERMIT;
 		}

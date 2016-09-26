@@ -3,7 +3,8 @@
 /**
  * @file classes/controlledVocab/ControlledVocabEntryDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ControlledVocabEntryDAO
@@ -24,6 +25,14 @@ class ControlledVocabEntryDAO extends DAO {
 	}
 
 	/**
+	 * Return the entry settings DAO.
+	 * Can be subclassed to provide extended DAOs.
+	 */
+	function getSettingsDAO() {
+		return DAORegistry::getDAO('ControlledVocabEntrySettingsDAO');
+	}
+
+	/**
 	 * Retrieve a controlled vocab entry by controlled vocab entry ID.
 	 * @param $controlledVocabEntryId int
 	 * @param $controlledVocabEntry int optional
@@ -33,7 +42,7 @@ class ControlledVocabEntryDAO extends DAO {
 		$params = array((int) $controlledVocabEntryId);
 		if (!empty($controlledVocabId)) $params[] = (int) $controlledVocabId;
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM controlled_vocab_entries WHERE controlled_vocab_entry_id = ?' .
 			(!empty($controlledVocabId)?' AND controlled_vocab_id = ?':''),
 			$params
@@ -59,7 +68,7 @@ class ControlledVocabEntryDAO extends DAO {
 	 * @return ControlledVocabEntry
 	 */
 	function getBySetting($settingValue, $symbolic, $assocType = 0, $assocId = 0, $settingName = 'name', $locale = '') {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT cve.*
 			 FROM controlled_vocabs cv
 			 INNER JOIN controlled_vocab_entries cve ON cv.controlled_vocab_id = cve.controlled_vocab_id
@@ -95,7 +104,7 @@ class ControlledVocabEntryDAO extends DAO {
 	 * @param $row array
 	 * @return ControlledVocabEntry
 	 */
-	function _fromRow(&$row) {
+	function _fromRow($row) {
 		$controlledVocabEntry = $this->newDataObject();
 		$controlledVocabEntry->setControlledVocabId($row['controlled_vocab_id']);
 		$controlledVocabEntry->setId($row['controlled_vocab_entry_id']);
@@ -118,7 +127,7 @@ class ControlledVocabEntryDAO extends DAO {
 	 * Update the localized fields for this table
 	 * @param $controlledVocabEntry object
 	 */
-	function updateLocaleFields(&$controlledVocabEntry) {
+	function updateLocaleFields($controlledVocabEntry) {
 		$this->updateDataObjectSettings('controlled_vocab_entry_settings', $controlledVocabEntry, array(
 			'controlled_vocab_entry_id' => $controlledVocabEntry->getId()
 		));
@@ -127,14 +136,12 @@ class ControlledVocabEntryDAO extends DAO {
 	/**
 	 * Insert a new ControlledVocabEntry.
 	 * @param $controlledVocabEntry ControlledVocabEntry
-	 * @return int
+	 * @return int Inserted controlled vocabulary entry ID
 	 */
-	function insertObject(&$controlledVocabEntry) {
+	function insertObject($controlledVocabEntry) {
 		$this->update(
-			sprintf('INSERT INTO controlled_vocab_entries
-				(controlled_vocab_id, seq)
-				VALUES
-				(?, ?)'),
+			'INSERT INTO controlled_vocab_entries (controlled_vocab_id, seq)
+			VALUES (?, ?)',
 			array(
 				(int) $controlledVocabEntry->getControlledVocabId(),
 				(float) $controlledVocabEntry->getSequence()
@@ -148,21 +155,19 @@ class ControlledVocabEntryDAO extends DAO {
 	/**
 	 * Delete a controlled vocab entry.
 	 * @param $controlledVocabEntry ControlledVocabEntry
-	 * @return boolean
 	 */
 	function deleteObject($controlledVocabEntry) {
-		return $this->deleteObjectById($controlledVocabEntry->getId());
+		$this->deleteObjectById($controlledVocabEntry->getId());
 	}
 
 	/**
 	 * Delete a controlled vocab entry by controlled vocab entry ID.
 	 * @param $controlledVocabEntryId int
-	 * @return boolean
 	 */
 	function deleteObjectById($controlledVocabEntryId) {
 		$params = array((int) $controlledVocabEntryId);
 		$this->update('DELETE FROM controlled_vocab_entry_settings WHERE controlled_vocab_entry_id = ?', $params);
-		return $this->update('DELETE FROM controlled_vocab_entries WHERE controlled_vocab_entry_id = ?', $params);
+		$this->update('DELETE FROM controlled_vocab_entries WHERE controlled_vocab_entry_id = ?', $params);
 	}
 
 	/**
@@ -175,7 +180,7 @@ class ControlledVocabEntryDAO extends DAO {
 		$params = array((int) $controlledVocabId);
 		if (!empty($filter)) $params[] = "%$filter%";
 
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT *
 			 FROM controlled_vocab_entries cve '.
 			 (!empty($filter) ? 'INNER JOIN controlled_vocab_entry_settings cves ON cve.controlled_vocab_entry_id = cves.controlled_vocab_entry_id ' : '') .
@@ -186,16 +191,15 @@ class ControlledVocabEntryDAO extends DAO {
 			$rangeInfo
 		);
 
-		$returner = new DAOResultFactory($result, $this, '_fromRow');
-		return $returner;
+		return new DAOResultFactory($result, $this, '_fromRow');
 	}
 
 	/**
 	 * Update an existing review form element.
 	 * @param $controlledVocabEntry ControlledVocabEntry
 	 */
-	function updateObject(&$controlledVocabEntry) {
-		$returner = $this->update(
+	function updateObject($controlledVocabEntry) {
+		$this->update(
 			'UPDATE	controlled_vocab_entries
 			SET	controlled_vocab_id = ?,
 				seq = ?
@@ -211,9 +215,10 @@ class ControlledVocabEntryDAO extends DAO {
 
 	/**
 	 * Sequentially renumber entries in their sequence order.
+	 * @param $controlledVocabId int Controlled vocabulary ID
 	 */
 	function resequence($controlledVocabId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT controlled_vocab_entry_id FROM controlled_vocab_entries WHERE controlled_vocab_id = ? ORDER BY seq',
 			array((int) $controlledVocabId)
 		);
@@ -232,7 +237,6 @@ class ControlledVocabEntryDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
 	}
 
 	/**
@@ -240,7 +244,7 @@ class ControlledVocabEntryDAO extends DAO {
 	 * @return int
 	 */
 	function getInsertId() {
-		return parent::getInsertId('controlled_vocab_entries', 'controlled_vocab_entry_id');
+		return parent::_getInsertId('controlled_vocab_entries', 'controlled_vocab_entry_id');
 	}
 }
 

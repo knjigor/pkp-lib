@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/ContextRequiredPolicy.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ContextRequiredPolicy
@@ -22,9 +23,9 @@ class ContextRequiredPolicy extends AuthorizationPolicy {
 	 *
 	 * @param $request PKPRequest
 	 */
-	function ContextRequiredPolicy(&$request, $message = 'user.authorization.contextRequired') {
+	function ContextRequiredPolicy($request, $message = 'user.authorization.contextRequired') {
 		parent::AuthorizationPolicy($message);
-		$this->_request =& $request;
+		$this->_request = $request;
 	}
 
 
@@ -35,7 +36,7 @@ class ContextRequiredPolicy extends AuthorizationPolicy {
 	 * @see AuthorizationPolicy::effect()
 	 */
 	function effect() {
-		$router =& $this->_request->getRouter();
+		$router = $this->_request->getRouter();
 		if (is_object($router->getContext($this->_request))) {
 			return AUTHORIZATION_PERMIT;
 		} else {

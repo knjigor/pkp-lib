@@ -3,7 +3,8 @@
 /**
  * @file classes/security/AccessKeyDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AccessKeyDAO
@@ -30,7 +31,7 @@ class AccessKeyDAO extends DAO {
 	 * @return AccessKey
 	 */
 	function &getAccessKey($accessKeyId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			sprintf(
 				'SELECT * FROM access_keys WHERE access_key_id = ? AND expiry_date > %s',
 				$this->datetimeToDB(Core::getCurrentDate())
@@ -43,7 +44,6 @@ class AccessKeyDAO extends DAO {
 			$accessKey =& $this->_returnAccessKeyFromRow($result->GetRowAssoc(false));
 		}
 		$result->Close();
-		unset($result);
 		return $accessKey;
 	}
 
@@ -54,7 +54,7 @@ class AccessKeyDAO extends DAO {
 	 * @return AccessKey
 	 */
 	function &getAccessKeyByUserId($context, $userId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			sprintf(
 				'SELECT * FROM access_keys WHERE context = ? AND user_id = ? AND expiry_date > %s',
 				$this->datetimeToDB(Core::getCurrentDate())
@@ -67,7 +67,6 @@ class AccessKeyDAO extends DAO {
 			$returner =& $this->_returnAccessKeyFromRow($result->GetRowAssoc(false));
 		}
 		$result->Close();
-		unset($result);
 		return $returner;
 	}
 
@@ -82,7 +81,7 @@ class AccessKeyDAO extends DAO {
 	function &getAccessKeyByKeyHash($context, $userId, $keyHash, $assocId = null) {
 		$paramArray = array($context, $keyHash, (int) $userId);
 		if (isset($assocId)) $paramArray[] = (int) $assocId;
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			sprintf(
 				'SELECT * FROM access_keys WHERE context = ? AND key_hash = ? AND user_id = ? AND expiry_date > %s' . (isset($assocId)?' AND assoc_id = ?':''),
 				$this->datetimeToDB(Core::getCurrentDate())
@@ -95,7 +94,6 @@ class AccessKeyDAO extends DAO {
 			$returner =& $this->_returnAccessKeyFromRow($result->GetRowAssoc(false));
 		}
 		$result->Close();
-		unset($result);
 		return $returner;
 	}
 
@@ -112,7 +110,7 @@ class AccessKeyDAO extends DAO {
 	 * @param $row array
 	 * @return AccessKey
 	 */
-	function &_returnAccessKeyFromRow(&$row) {
+	function &_returnAccessKeyFromRow($row) {
 		$accessKey = $this->newDataObject();
 		$accessKey->setId($row['access_key_id']);
 		$accessKey->setKeyHash($row['key_hash']);
@@ -130,7 +128,7 @@ class AccessKeyDAO extends DAO {
 	 * Insert a new accessKey.
 	 * @param $accessKey AccessKey
 	 */
-	function insertAccessKey(&$accessKey) {
+	function insertObject($accessKey) {
 		$this->update(
 			sprintf('INSERT INTO access_keys
 				(key_hash, expiry_date, context, assoc_id, user_id)
@@ -145,7 +143,7 @@ class AccessKeyDAO extends DAO {
 			)
 		);
 
-		$accessKey->setId($this->getInsertAccessKeyId());
+		$accessKey->setId($this->getInsertId());
 		return $accessKey->getId();
 	}
 
@@ -174,22 +172,12 @@ class AccessKeyDAO extends DAO {
 		);
 	}
 
-	function updateAccessKey(&$accessKey) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->updateObject($accessKey);
-	}
-
 	/**
 	 * Delete an accessKey.
 	 * @param $accessKey AccessKey
 	 */
 	function deleteObject(&$accessKey) {
 		return $this->deleteAccessKeyById($accessKey->getId());
-	}
-
-	function deleteAccessKey(&$accessKey) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->deleteObject($accessKey);
 	}
 
 	/**
@@ -231,8 +219,8 @@ class AccessKeyDAO extends DAO {
 	 * Get the ID of the last inserted accessKey.
 	 * @return int
 	 */
-	function getInsertAccessKeyId() {
-		return $this->getInsertId('access_keys', 'access_key_id');
+	function getInsertId() {
+		return $this->_getInsertId('access_keys', 'access_key_id');
 	}
 }
 

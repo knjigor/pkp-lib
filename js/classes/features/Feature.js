@@ -1,14 +1,11 @@
 /**
  * @defgroup js_classes_features
  */
-// Define the namespace
-$.pkp.classes.features = $.pkp.classes.features || {};
-
-
 /**
  * @file js/classes/features/Feature.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Feature
@@ -22,37 +19,67 @@ $.pkp.classes.features = $.pkp.classes.features || {};
  */
 (function($) {
 
+	/** @type {Object} */
+	$.pkp.classes.features = $.pkp.classes.features || {};
+
+
 
 	/**
 	 * @constructor
-	 * @param {Handler} gridHandler The grid handler object.
+	 * @extends $.pkp.classes.ObjectProxy
+	 * @param {$.pkp.controllers.grid.GridHandler} gridHandler The grid
+	 *  handler object.
 	 * @param {Array} options Associated options.
 	 */
 	$.pkp.classes.features.Feature =
 			function(gridHandler, options) {
-		this.gridHandler_ = gridHandler;
+		this.gridHandler = gridHandler;
 		this.options_ = options;
 		this.addFeatureHtml(this.getGridHtmlElement(), options);
 	};
 
 
 	//
-	// Private properties.
+	// Protected properties.
 	//
 	/**
 	 * The grid that this feature is attached to.
-	 * @private
-	 * @type {jQuery}
+	 * @protected
+	 * @type {$.pkp.controllers.grid.GridHandler}
 	 */
-	$.pkp.classes.features.Feature.prototype.gridHandler_ = null;
+	$.pkp.classes.features.Feature.prototype.gridHandler = null;
 
 
+	//
+	// Private properties.
+	//
 	/**
 	 * This feature configuration options.
 	 * @private
-	 * @type {object}
+	 * @type {Object}
 	 */
 	$.pkp.classes.features.Feature.prototype.options_ = null;
+
+
+	//
+	// Setters and getters.
+	//
+	/**
+	 * @param {Object} options The feature options.
+	 */
+	$.pkp.classes.features.Feature.prototype.setOptions =
+			function(options) {
+		this.options_ = options;
+	};
+
+
+	/**
+	 * @return {Object} The feature options.
+	 */
+	$.pkp.classes.features.Feature.prototype.getOptions =
+			function() {
+		return this.options_;
+	};
 
 
 	//
@@ -66,7 +93,7 @@ $.pkp.classes.features = $.pkp.classes.features || {};
 	 */
 	$.pkp.classes.features.Feature.prototype.init =
 			function() {
-		throw Error('Abstract method!');
+		throw new Error('Abstract method!');
 	};
 
 
@@ -74,23 +101,59 @@ $.pkp.classes.features = $.pkp.classes.features || {};
 	// Template methods (hooks into grid widgets).
 	//
 	/**
-	 * Hook into the append new row grid functionality.
-	 * @param {jQuery} $newRow The new row to be appended.
+	 * Hook into the add new element grid functionality.
+	 * @param {jQueryObject} $newElement The new element to be added.
 	 * @return {boolean} Always returns false.
 	 */
-	$.pkp.classes.features.Feature.prototype.appendRow =
-			function($newRow) {
+	$.pkp.classes.features.Feature.prototype.addElement =
+			function($newElement) {
 		return false;
 	};
 
 
 	/**
-	 * Hook into the replace row content grid functionality.
-	 * @param {jQuery} $newContent The row new content to be shown.
+	 * Hook into the replace element content grid functionality.
+	 * @param {jQueryObject} $newContent The element new content to be shown.
 	 * @return {boolean} Always returns false.
 	 */
-	$.pkp.classes.features.Feature.prototype.replaceRow =
+	$.pkp.classes.features.Feature.prototype.replaceElement =
 			function($newContent) {
+		return false;
+	};
+
+
+	/**
+	 * Hook into the resequence rows grid functionality.
+	 * @param {Object} sequenceMap The grid rows sequence.
+	 * @return {boolean} Always returns false.
+	 */
+	$.pkp.classes.features.Feature.prototype.resequenceRows =
+			function(sequenceMap) {
+		return false;
+	};
+
+
+	/**
+	 * Hook into the refresh grid functionality. Called just before
+	 * the fetch (grid or row) call is done.
+	 * @param {number|Object=} opt_elementId
+	 * @return {boolean} Always returns false.
+	 */
+	$.pkp.classes.features.Feature.prototype.refreshGrid =
+			function(opt_elementId) {
+		return false;
+	};
+
+
+	/**
+	 * Hook into the replace element response handler. Called after the
+	 * response is handled.
+	 * @param {Object} handledJsonData Object with the response content handled
+	 * by the grid.
+	 * @return {boolean} Always returns false.
+	 */
+	$.pkp.classes.features.Feature.prototype.replaceElementResponseHandler =
+			function(handledJsonData) {
 		return false;
 	};
 
@@ -106,14 +169,14 @@ $.pkp.classes.features = $.pkp.classes.features || {};
 	 */
 	$.pkp.classes.features.Feature.prototype.callbackWrapper =
 			function(callback, opt_context) {
-		return this.gridHandler_.callbackWrapper(callback, opt_context);
+		return this.gridHandler.callbackWrapper(callback, opt_context);
 	};
 
 
 	/**
 	 * Extend to add extra html elements in the component
 	 * that this feature is attached to.
-	 * @param {jQuery} $gridElement Grid element to add elements to.
+	 * @param {jQueryObject} $gridElement Grid element to add elements to.
 	 * @param {Object} options Feature options.
 	 */
 	$.pkp.classes.features.Feature.prototype.addFeatureHtml =
@@ -126,13 +189,13 @@ $.pkp.classes.features = $.pkp.classes.features || {};
 	 * Get the html element of the grid that this feature
 	 * is attached to.
 	 *
-	 * @return {jQuery} Return the grid's HTML element.
+	 * @return {jQueryObject} Return the grid's HTML element.
 	 */
 	$.pkp.classes.features.Feature.prototype.getGridHtmlElement =
 			function() {
-		return this.gridHandler_.getHtmlElement();
+		return this.gridHandler.getHtmlElement();
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

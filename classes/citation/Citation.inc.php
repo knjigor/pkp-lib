@@ -1,13 +1,16 @@
 <?php
 
 /**
- * @defgroup citation
+ * @defgroup citation Citation
+ * Implements the Citation Assistant, which is used to facilitate
+ * the parsing and approval of citations.
  */
 
 /**
  * @file classes/citation/Citation.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Citation
@@ -79,11 +82,11 @@ class Citation extends DataObject {
 	 * @return integer the source description's sequence
 	 *  number.
 	 */
-	function addSourceDescription(&$sourceDescription) {
+	function addSourceDescription($sourceDescription) {
 		assert(is_a($sourceDescription, 'MetadataDescription'));
 
 		// Identify an appropriate sequence number.
-		$seq = $sourceDescription->getSeq();
+		$seq = $sourceDescription->getSequence();
 		if (is_numeric($seq) && $seq > 0) {
 			// This description has a pre-set sequence number
 			if ($seq > $this->_maxSourceDescriptionSeq) $this->_maxSourceDescriptionSeq = $seq;
@@ -91,13 +94,13 @@ class Citation extends DataObject {
 			// We'll create a sequence number for the description
 			$this->_maxSourceDescriptionSeq++;
 			$seq = $this->_maxSourceDescriptionSeq;
-			$sourceDescription->setSeq($seq);
+			$sourceDescription->setSequence($seq);
 		}
 
 		// We add descriptions by display name as they are
 		// purely informational. This avoids getting duplicates
 		// when we update a description.
-		$this->_sourceDescriptions[$sourceDescription->getDisplayName()] =& $sourceDescription;
+		$this->_sourceDescriptions[$sourceDescription->getDisplayName()] = $sourceDescription;
 		return $seq;
 	}
 
@@ -199,7 +202,7 @@ class Citation extends DataObject {
 	 * Get the sequence number
 	 * @return integer
 	 */
-	function getSeq() {
+	function getSequence() {
 		return $this->getData('seq');
 	}
 
@@ -207,7 +210,7 @@ class Citation extends DataObject {
 	 * Set the sequence number
 	 * @param $seq integer
 	 */
-	function setSeq($seq) {
+	function setSequence($seq) {
 		$this->setData('seq', $seq);
 	}
 
@@ -232,10 +235,9 @@ class Citation extends DataObject {
 	//
 	/**
 	 * Return supported citation states
-	 * NB: PHP4 work-around for a private static class member
 	 * @return array supported citation states
 	 */
-	function _getSupportedCitationStates() {
+	static function _getSupportedCitationStates() {
 		static $_supportedCitationStates = array(
 			CITATION_RAW,
 			CITATION_CHECKED,
@@ -253,14 +255,14 @@ class Citation extends DataObject {
 	 */
 	function _cleanCitationString($citationString) {
 		// 1) If the string contains non-UTF8 characters, convert it to UTF-8
-		if (Config::getVar('i18n', 'charset_normalization') && !String::utf8_compliant($citationString)) {
-			$citationString = String::utf8_normalize($citationString);
+		if (Config::getVar('i18n', 'charset_normalization') && !PKPString::utf8_compliant($citationString)) {
+			$citationString = PKPString::utf8_normalize($citationString);
 		}
 		// 2) Strip slashes and whitespace
 		$citationString = trim(stripslashes($citationString));
 
 		// 3) Normalize whitespace
-		$citationString = String::regexp_replace('/[\s]+/', ' ', $citationString);
+		$citationString = PKPString::regexp_replace('/[\s]+/', ' ', $citationString);
 
 		return $citationString;
 	}

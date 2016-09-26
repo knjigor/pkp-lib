@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/listbuilder/ListbuilderGridRow.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ListbuilderGridRow
@@ -42,10 +43,9 @@ class ListbuilderGridRow extends GridRow {
 	// Overridden template methods
 	//
 	/**
-	 * @see GridRow::initialize()
-	 * @param PKPRequest $request
+	 * @copydoc GridRow::initialize()
 	 */
-	function initialize(&$request, $template = 'controllers/listbuilder/listbuilderGridRow.tpl') {
+	function initialize($request, $template = 'controllers/listbuilder/listbuilderGridRow.tpl') {
 		parent::initialize($request);
 
 		// Set listbuilder row template
@@ -68,8 +68,8 @@ class ListbuilderGridRow extends GridRow {
 	/**
 	 * @see GridRow::addAction()
 	 */
-	function addAction($action) {
-		return parent::addAction($action, GRID_ACTION_POSITION_ROW_LEFT);
+	function addAction($action, $position = GRID_ACTION_POSITION_ROW_LEFT) {
+		return parent::addAction($action, $position);
 	}
 }
 

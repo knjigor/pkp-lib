@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/security/authorization/PKPProcessAccessPolicyTest.inc.php
+ * @file tests/classes/security/authorization/PKPProcessAccessPolicyTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPProcessAccessPolicyTest
@@ -22,8 +23,8 @@ class PKPProcessAccessPolicyTest extends PolicyTestCase {
 	 */
 	public function testPKPProcessAccessPolicy() {
 		// Generate a test process.
-		$processDao =& DAORegistry::getDAO('ProcessDAO');
-		$process =& $processDao->insertObject(PROCESS_TYPE_CITATION_CHECKING, 1);
+		$processDao = DAORegistry::getDAO('ProcessDAO');
+		$process = $processDao->insertObject(PROCESS_TYPE_CITATION_CHECKING, 1);
 		self::assertInstanceOf('Process', $process);
 
 		// Mock a request to a private method.

@@ -4,7 +4,8 @@
 <!--
   * locale/hr_HR/installer.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localization strings for the hr_HR (Hrvatski) locale.
@@ -21,12 +22,11 @@
 	<message key="installer.clientCharsetInstructions">Enkoding koji se koristi za slanje i primanje podataka iz preglednika.</message>
 	<message key="installer.configFileError"><![CDATA[Konfiguracijska datoteka <tt>config.inc.php</tt> ne postoji ili je nečitljiva.]]></message>
 	<message key="installer.connectionCharset">Skupina znakova konekcije</message>
-	<message key="installer.connectionCharsetInstructions"><![CDATA[Kodna stranica koja se koristi za slanje i primanje podataka iz baze podataka. To bi trebalo biti isto kao i skupina znakova klijenta. Uzmite u obzir da je ova mogućnost podržana s MySQL-om >= 4.1.1 ili PostgreSQL-om >= 7.1. Odaberite "nije primjenjivo" ako vaš poslužitelj baze podataka ne podržava ove zahtjeve.]]></message>
 	<message key="installer.contentsOfConfigFile">Sadržaj konfiguracijske datoteke</message>
 	<message key="installer.createDatabase">Kreiraj novu bazu podataka</message>
 	<message key="installer.createDatabaseInstructions">Da biste koristili ovu opciju, sustav vaše baze podataka mora podržavati kreiranje udaljene baze podataka i vaš koristički račun mora imati prikladne dozvole za kreiranje nove baze podataka. Ukoliko instalacija nije uspjela s ovom odabranom mogućnošću, ručno kreirajte bazu podataka na vašem poslužitelju i ponovno pokrenite instalacijski program bez ove opcije.</message>
 	<message key="installer.databaseCharset">Skupina znakova baze podataka</message>
-	<message key="installer.databaseCharsetInstructions"><![CDATA[Enkoding koji se koristi za podatke pohranjene u bazi podataka. Uzmite u obzir da je ova mogućnost podržana s MySQL-om >= 4.1.1 ili PostgreSQL-om >= 7.1. Odaberite "nije primjenjivo" ako vaš poslužitelj baze podataka ne podržava ove zahtjeve.]]></message>
+	<message key="installer.databaseCharsetInstructions"><![CDATA[Enkoding koji se koristi za podatke pohranjene u bazi podataka.]]></message>
 	<message key="installer.databaseDriver">Upravljač baze podataka</message>
 	<message key="installer.databaseDriverInstructions"><![CDATA[<strong>Upravljači baze podataka izlistani u uglatim zagradama nemaju učitanu potrebnu PHP ekstenziju i instalacija će vjerovatno podbaciti ukoliko su odabrani.</strong><br />Bilo koji nepodržani dolje izlistani upravljači baza podataka su izlistani isključivo za akademske svrhe i vjerovatno neće raditi.]]></message>
 	<message key="installer.databaseHost">Domaćin</message>
@@ -35,7 +35,6 @@
 	<message key="installer.databasePassword">Lozinka</message>
 	<message key="installer.databaseSettings">Postavke baze podataka</message>
 	<message key="installer.databaseUsername">Korisničko ime</message>
-	<message key="installer.encryptionInstructions"><![CDATA[SHA1 je preporučljiv ako ga vaš sustav podržava (zahtijeva PHP >= 4.3.0).]]></message>
 	<message key="installer.encryption">Algoritam enkripcije lozinke</message>
 	<message key="installer.filesDir">Direktorij za slanje datoteka</message>
 	<message key="installer.fileSettings">Postavke datoteka</message>
@@ -65,5 +64,4 @@
 	<message key="installer.publicFilesDirError">Direktorij javnih datoteka ne postoji ili se ne može pisati po njemu.</message>
 	<message key="installer.releaseNotes">Bilješke o izdanju</message>
 	<message key="installer.securitySettings">Sigurnosne postavke</message>
-	<message key="installer.skipFilesDir">Nemoj kreirati obavezne poddirektorije (jedino korisno za ručnu instalaciju)</message>
 </locale>

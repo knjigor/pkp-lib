@@ -3,7 +3,8 @@
 /**
  * @file classes/reviewForm/ReviewFormElement.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ReviewFormElement
@@ -62,7 +63,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $reviewFormId int
 	 */
 	function setReviewFormId($reviewFormId) {
-		return $this->setData('reviewFormId', $reviewFormId);
+		$this->setData('reviewFormId', $reviewFormId);
 	}
 
 	/**
@@ -78,7 +79,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $sequence float
 	 */
 	function setSequence($sequence) {
-		return $this->setData('sequence', $sequence);
+		$this->setData('sequence', $sequence);
 	}
 
 	/**
@@ -94,7 +95,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $reviewFormElementType string
 	 */
 	function setElementType($reviewFormElementType) {
-		return $this->setData('reviewFormElementType', $reviewFormElementType);
+		$this->setData('reviewFormElementType', $reviewFormElementType);
 	}
 
 	/**
@@ -110,7 +111,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $viewable boolean
 	 */
 	function setRequired($required) {
-		return $this->setData('required', $required);
+		$this->setData('required', $required);
 	}
 
 	/**
@@ -126,7 +127,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $included boolean
 	 */
 	function setIncluded($included) {
-		return $this->setData('included', $included);
+		$this->setData('included', $included);
 	}
 
 	/**
@@ -144,7 +145,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $locale string
 	 */
 	function setQuestion($question, $locale) {
-		return $this->setData('question', $question, $locale);
+		$this->setData('question', $question, $locale);
 	}
 
 	/**
@@ -162,7 +163,7 @@ class ReviewFormElement extends DataObject {
 	 * @param $locale string
 	 */
 	function setPossibleResponses($possibleResponses, $locale) {
-		return $this->setData('possibleResponses', $possibleResponses, $locale);
+		$this->setData('possibleResponses', $possibleResponses, $locale);
 	}
 
 	/**
@@ -190,44 +191,6 @@ class ReviewFormElement extends DataObject {
 	function &getMultipleResponsesElementTypes() {
 		static $multipleResponsesElementTypes = array(REVIEW_FORM_ELEMENT_TYPE_CHECKBOXES, REVIEW_FORM_ELEMENT_TYPE_RADIO_BUTTONS, REVIEW_FORM_ELEMENT_TYPE_DROP_DOWN_BOX);
 		return $multipleResponsesElementTypes;
-	}
-
-	/** DEPRECATED **/
-
-	/**
-	 * Get localized question.
-	 * @return string
-	 */
-	function getReviewFormElementQuestion() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedQuestion();
-	}
-
-	/**
-	 * Get localized list of possible responses.
-	 * @return array
-	 */
-	function getReviewFormElementPossibleResponses() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedPossibleResponses();
-	}
-
-	/**
-	 * Get the ID of the review form element.
-	 * @return int
-	 */
-	function getReviewFormElementId() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getId();
-	}
-
-	/**
-	 * Set the ID of the review form element.
-	 * @param $reviewFormElementId int
-	 */
-	function setReviewFormElementId($reviewFormElementId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->setId();
 	}
 }
 

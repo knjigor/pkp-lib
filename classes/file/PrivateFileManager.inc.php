@@ -3,7 +3,8 @@
 /**
  * @file classes/file/PrivateFileManager.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PrivateFileManager
@@ -15,11 +16,16 @@
 import('lib.pkp.classes.file.FileManager');
 
 class PrivateFileManager extends FileManager {
+
+	/** var $filesDir */
+	var $filesDir;
+
 	/**
 	 * Constructor
 	 */
 	function PrivateFileManager() {
 		parent::FileManager();
+		$this->filesDir = $this->getBasePath();
 	}
 
 	/**

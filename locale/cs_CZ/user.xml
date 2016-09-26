@@ -4,14 +4,14 @@
 <!--
   * locale/cs_CZ/user.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the cs_CZ (Czech) locale.
+  * Localization strings for the cs_CZ (Čeština) locale.
   * Translated by František Chmelik, frantisek.chmelik 'at' upol.cz
   * Corrections, migration to the OCS 2.3.x by Ivo Vesely and Petr Petyovsky (petyovsky 'at' feec.vutbr.cz)
   *
-  * $Id: user.xml 218 2011-06-21 20:42:56Z petyovsky $
   -->
 
 <locale name="cs_CZ" full_name = "Čeština">
@@ -26,7 +26,6 @@
 	<message key="user.dateRegistered">Datum registrace</message>
 	<message key="user.editMyProfile">Upravit můj profil</message>
 	<message key="user.email">E-mail</message>
-	<message key="user.fax">Fax</message>
 	<message key="user.feminine">Ž</message>
 	<message key="user.firstName">Jméno</message>
 	<message key="user.gender">Pohlaví</message>
@@ -84,7 +83,6 @@
 	<message key="user.profile.repeatNewPassword">Nové heslo znovu</message>
 	<message key="user.register.form.emailExists">Zvolenou emailovou adresu již používá jiný uživatel.</message>
 	<message key="user.register.form.passwordsDoNotMatch">Hesla nejsou totožná.</message>
-	<message key="user.register.form.usernameAlphaNumeric">Uživatelské jméno může obsahovat pouze alfanumerické znaky, podtržítka a pomlčky a musí začínat a končit alfanumerickým znakem.</message>
 	<message key="user.register.form.usernameExists">Zvolené uživatelské jméno již používá jiný uživatel.</message>
 	<message key="user.register.passwordLengthRestriction">Heslo musí mít nejméně {$length} znaků.</message>
 	<message key="user.register.registerAs">Zaregistrovat jako</message>

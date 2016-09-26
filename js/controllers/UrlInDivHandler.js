@@ -1,7 +1,8 @@
 /**
  * @file js/controllers/UrlInDivHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class UrlInDivHandler
@@ -17,7 +18,7 @@
 	 *
 	 * @extends $.pkp.classes.Handler
 	 *
-	 * @param {jQuery} $divElement the wrapped div element.
+	 * @param {jQueryObject} $divElement the wrapped div element.
 	 * @param {Object} options options to be passed.
 	 */
 	$.pkp.controllers.UrlInDivHandler = function($divElement, options) {
@@ -39,7 +40,7 @@
 	/**
 	 * The URL to be used for data loaded into this div
 	 * @private
-	 * @type {string}
+	 * @type {?string}
 	 */
 	$.pkp.controllers.UrlInDivHandler.sourceUrl_ = null;
 
@@ -53,6 +54,24 @@
 	$.pkp.controllers.UrlInDivHandler.prototype.reload = function() {
 		$.get(this.sourceUrl_,
 				this.callbackWrapper(this.handleLoadedContent_), 'json');
+	};
+
+
+	/**
+	 * Fetches the progress bar URL.
+	 * @return {?string} the source URL.
+	 */
+	$.pkp.controllers.UrlInDivHandler.prototype.getSourceUrl = function() {
+		return this.sourceUrl_;
+	};
+
+
+	/**
+	 * Sets the progress bar URL.
+	 * @param {string} sourceUrl the new source URL.
+	 */
+	$.pkp.controllers.UrlInDivHandler.prototype.setSourceUrl = function(sourceUrl) {
+		this.sourceUrl_ = sourceUrl;
 	};
 
 
@@ -70,77 +89,30 @@
 	$.pkp.controllers.UrlInDivHandler.prototype.handleLoadedContent_ =
 			function(ajaxContext, jsonData) {
 
-		jsonData = this.handleJson(jsonData);
-		if (jsonData.status === true) {
-			this.getHtmlElement().hide().html(jsonData.content).fadeIn(400);
+		var handledJsonData = this.handleJson(jsonData);
+		if (handledJsonData.status === true) {
+			if (handledJsonData.content === undefined) {
+				// Request successful, but no data returned.
+				// Hide this div element.
+				this.getHtmlElement().hide();
+			} else {
+				// See bug #8237.
+				if (! /msie/.test(navigator.userAgent.toLowerCase())) {
+					this.getHtmlElement().hide().html(handledJsonData.content).fadeIn(400);
+				} else {
+					this.getHtmlElement().html(handledJsonData.content);
+				}
+
+				this.trigger('urlInDivLoaded', [this.getHtmlElement().attr('id')]);
+			}
 		} else {
 			// Alert that loading failed.
-			alert(jsonData.content);
+			alert(handledJsonData.content);
 		}
 
 		return false;
 	};
 
-
-	/**
-	 * Handle event triggered by moving through the autocomplete suggestions.
-	 * The default behaviour is to insert the value in the text field.  This
-	 * handler inserts the label instead.
-	 *
-	 * @param {HTMLElement} autocompleteElement The element that triggered
-	 *  the event.
-	 * @param {Event} event The triggered event.
-	 * @param {Object} ui The tabs ui data.
-	 * @return {boolean} Return value to be passed back
-	 *  to jQuery.
-	 */
-	$.pkp.controllers.AutocompleteHandler.prototype.itemFocused =
-			function(autocompleteElement, event, ui) {
-
-		var $textInput = this.textInput_;
-
-		if (ui.item.value !== '') {
-			$textInput.val(ui.item.label);
-		}
-		return false;
-	};
-
-
-	/**
-	 * Search for the users who are availble
-	 * @param {HTMLElement} callingElement The calling HTML element.
-	 * @param {Object} request The autocomplete search request.
-	 * @param {Object} response The response handler function.
-	 */
-	$.pkp.controllers.AutocompleteHandler.prototype.fetchAutocomplete =
-			function(callingElement, request, response) {
-		var $textInput = this.textInput_;
-		$textInput.addClass('spinner');
-		$.post(this.getAutocompleteUrl(), { term: request.term }, function(data) {
-			$textInput.removeClass('spinner');
-			response(data.content);
-		}, 'json');
-	};
-
-
-	/**
-	 * Get the autocomplete Url
-	 * @return {String} Autocomplete URL.
-	 */
-	$.pkp.controllers.AutocompleteHandler.prototype.getAutocompleteUrl =
-			function() {
-		return this.sourceUrl_;
-	};
-
-
-	/**
-	 * Set the autocomplete url
-	 * @param {String} url Autocomplete URL.
-	 */
-	$.pkp.controllers.AutocompleteHandler.prototype.setAutocompleteUrl =
-			function(url) {
-		this.sourceUrl_ = url;
-	};
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

@@ -3,7 +3,8 @@
 /**
  * @file classes/mail/MassMail.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MassMail
@@ -13,7 +14,7 @@
  */
 
 
-import ('classes.mail.MailTemplate');
+import ('lib.pkp.classes.mail.MailTemplate');
 
 class MassMail extends MailTemplate {
 	var $callback;
@@ -22,8 +23,8 @@ class MassMail extends MailTemplate {
 	/**
 	 * Constructor
 	 */
-	function MassMail($emailKey = null, $locale = null, $enableAttachments = null) {
-		parent::MailTemplate($emailKey, $locale, $enableAttachments);
+	function MassMail($emailKey = null, $locale = null) {
+		parent::MailTemplate($emailKey, $locale);
 		$this->callback = null;
 		$this->frequency = 10;
 	}

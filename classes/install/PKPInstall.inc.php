@@ -1,13 +1,16 @@
 <?php
 
 /**
- * @defgroup install
+ * @defgroup install Install
+ * Implements a software installer, including a flexible upgrader that can
+ * manage schema changes, data representation changes, etc.
  */
 
 /**
  * @file classes/install/PKPInstall.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Install
@@ -69,7 +72,7 @@ class PKPInstall extends Installer {
 			$this->getParam('databaseUsername'),
 			$this->getParam('databasePassword'),
 			$this->getParam('createDatabase') ? null : $this->getParam('databaseName'),
-			true,
+			false,
 			$this->getParam('connectionCharset') == '' ? false : $this->getParam('connectionCharset')
 		);
 
@@ -104,10 +107,6 @@ class PKPInstall extends Installer {
 	 * @return boolean
 	 */
 	function createDirectories() {
-		if ($this->getParam('skipFilesDir')) {
-			return true;
-		}
-
 		// Check if files directory exists and is writeable
 		if (!(file_exists($this->getParam('filesDir')) &&  is_writeable($this->getParam('filesDir')))) {
 			// Files upload directory unusable
@@ -164,7 +163,7 @@ class PKPInstall extends Installer {
 		}
 
 		// Get database creation sql
-		$dbdict =& NewDataDictionary($this->dbconn);
+		$dbdict = NewDataDictionary($this->dbconn);
 
 		if ($this->getParam('databaseCharset')) {
 				$dbdict->SetCharSet($this->getParam('databaseCharset'));
@@ -211,7 +210,8 @@ class PKPInstall extends Installer {
 			array(
 				'general' => array(
 					'installed' => 'On',
-					'base_url' => Request::getBaseUrl()
+					'base_url' => Request::getBaseUrl(),
+					'enable_beacon' => $this->getParam('enableBeacon'),
 				),
 				'database' => array(
 					'driver' => $this->getParam('databaseDriver'),
@@ -229,14 +229,81 @@ class PKPInstall extends Installer {
 				'files' => array(
 					'files_dir' => $this->getParam('filesDir')
 				),
-				'security' => array(
-					'encryption' => $this->getParam('encryption')
-				),
 				'oai' => array(
 					'repository_id' => $this->getParam('oaiRepositoryId')
 				)
 			)
 		);
+	}
+
+	/**
+	 * Create initial required data.
+	 * @return boolean
+	 */
+	function createData() {
+		// Add initial site administrator user
+		$userDao = DAORegistry::getDAO('UserDAO', $this->dbconn);
+		$user = $userDao->newDataObject();
+		$user->setUsername($this->getParam('adminUsername'));
+		$user->setPassword(Validation::encryptCredentials($this->getParam('adminUsername'), $this->getParam('adminPassword'), $this->getParam('encryption')));
+		$user->setFirstName($user->getUsername());
+		$user->setLastName('');
+		$user->setEmail($this->getParam('adminEmail'));
+		$user->setInlineHelp(1);
+		if (!$userDao->insertObject($user)) {
+			$this->setError(INSTALLER_ERROR_DB, $this->dbconn->errorMsg());
+			return false;
+		}
+
+		// Create an admin user group
+		AppLocale::requireComponents(LOCALE_COMPONENT_PKP_DEFAULT);
+		$userGroupDao = DAORegistry::getDao('UserGroupDAO', $this->dbconn);
+		$adminUserGroup = $userGroupDao->newDataObject();
+		$adminUserGroup->setRoleId(ROLE_ID_SITE_ADMIN);
+		$adminUserGroup->setContextId(CONTEXT_ID_NONE);
+		$adminUserGroup->setDefault(true);
+		foreach ($this->installedLocales as $locale) {
+			$name = __('default.groups.name.siteAdmin', array(), $locale);
+			$namePlural = __('default.groups.plural.siteAdmin', array(), $locale);
+			$adminUserGroup->setData('name', $name, $locale);
+			$adminUserGroup->setData('namePlural', $namePlural, $locale);
+		}
+		if (!$userGroupDao->insertObject($adminUserGroup)) {
+			$this->setError(INSTALLER_ERROR_DB, $this->dbconn->errorMsg());
+			return false;
+		}
+
+		// Put the installer into this user group
+		$userGroupDao->assignUserToGroup($user->getId(), $adminUserGroup->getId());
+
+		// Add initial site data
+		$locale = $this->getParam('locale');
+		$siteDao = DAORegistry::getDAO('SiteDAO', $this->dbconn);
+		$site = $siteDao->newDataObject();
+		$site->setRedirect(0);
+		$site->setMinPasswordLength(INSTALLER_DEFAULT_MIN_PASSWORD_LENGTH);
+		$site->setPrimaryLocale($locale);
+		$site->setInstalledLocales($this->installedLocales);
+		$site->setSupportedLocales($this->installedLocales);
+		if (!$siteDao->insertSite($site)) {
+			$this->setError(INSTALLER_ERROR_DB, $this->dbconn->errorMsg());
+			return false;
+		}
+
+		// Install email template list and data for each locale
+		$emailTemplateDao = DAORegistry::getDAO('EmailTemplateDAO');
+		$emailTemplateDao->installEmailTemplates($emailTemplateDao->getMainEmailTemplatesFilename());
+		foreach ($this->installedLocales as $locale) {
+			$emailTemplateDao->installEmailTemplateData($emailTemplateDao->getMainEmailTemplateDataFilename($locale));
+		}
+
+		// Install default site settings
+		$siteSettingsDao = DAORegistry::getDAO('SiteSettingsDAO');
+		$siteSettingsDao->installSettings('registry/siteSettings.xml', array(
+			'contactEmail' => $this->getParam('adminEmail')
+		));
+
+		return true;
 	}
 }
 

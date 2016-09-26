@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file classes/cliTool/InstallTool.php
+ * @file classes/cliTool/InstallTool.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class installTool
@@ -14,13 +15,13 @@
 
 
 import('classes.install.Install');
-import('classes.install.form.InstallForm');
+import('lib.pkp.classes.install.form.InstallForm');
 import('lib.pkp.classes.site.Version');
 import('lib.pkp.classes.site.VersionCheck');
 
 class InstallTool extends CommandLineTool {
 
-	/** @var $params array installation parameters */
+	/** @var array installation parameters */
 	var $params;
 
 	/**
@@ -72,7 +73,7 @@ class InstallTool extends CommandLineTool {
 			}
 
 			$newVersion =& $installer->getNewVersion();
-			printf("Successfully installed version %s\n", $newVersion->getVersionString());
+			printf("Successfully installed version %s\n", $newVersion->getVersionString(false));
 
 		} else {
 			printf("ERROR: Installation failed: %s\n", $installer->getErrorString());
@@ -85,11 +86,7 @@ class InstallTool extends CommandLineTool {
 	 * FIXME: Use readline if available?
 	 */
 	function readParams() {
-		if (checkPhpVersion('5.0.0')) { // WARNING: This form needs $this in constructor
-			$installForm = new InstallForm();
-		} else {
-			$installForm =& new InstallForm();
-		}
+		$installForm = new InstallForm(null); // Request object not available to CLI
 
 		// Locale Settings
 		$this->printTitle('installer.localeSettings');
@@ -102,11 +99,6 @@ class InstallTool extends CommandLineTool {
 		// File Settings
 		$this->printTitle('installer.fileSettings');
 		$this->readParam('filesDir', 'installer.filesDir');
-		$this->readParamBoolean('skipFilesDir', 'installer.skipFilesDir');
-
-		// Security Settings
-		$this->printTitle('installer.securitySettings');
-		$this->readParamOptions('encryption', 'installer.encryption', $installForm->supportedEncryptionAlgorithms, 'md5');
 
 		// Administrator Account
 		$this->printTitle('installer.administratorAccount');
@@ -133,6 +125,8 @@ class InstallTool extends CommandLineTool {
 		// Miscellaneous Settings
 		$this->printTitle('installer.miscSettings');
 		$this->readParam('oaiRepositoryId', 'installer.oaiRepositoryId');
+
+		$this->readParamBoolean('enableBeacon', 'installer.beacon.enable', 'Y');
 
 		printf("\n*** ");
 	}

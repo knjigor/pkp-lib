@@ -3,7 +3,8 @@
 /**
  * @file classes/core/ItemIterator.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ItemIterator
@@ -28,7 +29,7 @@ class ItemIterator {
 	 * Return the next item with key.
 	 * @return array ($key, $value);
 	 */
-	function &nextWithKey() {
+	function nextWithKey() {
 		return array(null, null);
 	}
 

@@ -3,7 +3,8 @@
 /**
  * @file classes/search/SearchHelperParser.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SearchHelperParser
@@ -17,7 +18,7 @@ import('lib.pkp.classes.search.SearchFileParser');
 
 class SearchHelperParser extends SearchFileParser {
 
-	/** @var $type string Type should match an index[$type] setting in the "search" section of config.inc.php */
+	/** @var string Type should match an index[$type] setting in the "search" section of config.inc.php */
 	var $type;
 
 	function SearchHelperParser($type, $filePath) {

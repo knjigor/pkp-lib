@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup gift
+ * @defgroup gift Gift
+ * Implements the representation of a gift.
  */
 
 /**
  * @file classes/gift/PKPGift.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPGift
@@ -48,7 +50,7 @@ class PKPGift extends DataObject {
 	 * @param $assocType int
 	 */
 	function setAssocType($assocType) {
-		return $this->setData('assocType', $assocType);
+		$this->setData('assocType', $assocType);
 	}
 
 	/**
@@ -64,7 +66,7 @@ class PKPGift extends DataObject {
 	 * @param $assocId int
 	 */
 	function setAssocId($assocId) {
-		return $this->setData('assocId', $assocId);
+		$this->setData('assocId', $assocId);
 	}
 
 	/**
@@ -80,7 +82,7 @@ class PKPGift extends DataObject {
 	 * @param $status int
 	 */
 	function setStatus($status) {
-		return $this->setData('status', $status);
+		$this->setData('status', $status);
 	}
 
 	/**
@@ -96,7 +98,7 @@ class PKPGift extends DataObject {
 	 * @param $type int
 	 */
 	function setGiftType($type) {
-		return $this->setData('giftType', $type);
+		$this->setData('giftType', $type);
 	}
 
 	/**
@@ -122,7 +124,7 @@ class PKPGift extends DataObject {
 	 * @param $giftAssocId int
 	 */
 	function setGiftAssocId($giftAssocId) {
-		return $this->setData('giftAssocId', $giftAssocId);
+		$this->setData('giftAssocId', $giftAssocId);
 	}
 
 	/**
@@ -138,7 +140,7 @@ class PKPGift extends DataObject {
 	 * @param $buyerFirstName string
 	 */
 	function setBuyerFirstName($buyerFirstName) {
-		return $this->setData('buyerFirstName', $buyerFirstName);
+		$this->setData('buyerFirstName', $buyerFirstName);
 	}
 
 	/**
@@ -154,7 +156,7 @@ class PKPGift extends DataObject {
 	 * @param $buyerMiddleName string
 	 */
 	function setBuyerMiddleName($buyerMiddleName) {
-		return $this->setData('buyerMiddleName', $buyerMiddleName);
+		$this->setData('buyerMiddleName', $buyerMiddleName);
 	}
 
 	/**
@@ -170,7 +172,7 @@ class PKPGift extends DataObject {
 	 * @param $buyerLastName string
 	 */
 	function setBuyerLastName($buyerLastName) {
-		return $this->setData('buyerLastName', $buyerLastName);
+		$this->setData('buyerLastName', $buyerLastName);
 	}
 
 	/**
@@ -184,7 +186,7 @@ class PKPGift extends DataObject {
 		$middleName = $this->getData('buyerMiddleName');
 		$lastName = $this->getData('buyerLastName');
 		if ($lastFirst) {
-			return "$lastName, " . "$firstName" . ($middleName != ''?" $middleName":'');
+			return "$lastName, " . $firstName . ($middleName != ''?" $middleName":'');
 		} else {
 			return "$firstName " . ($middleName != ''?"$middleName ":'') . $lastName;
 		}
@@ -203,7 +205,7 @@ class PKPGift extends DataObject {
 	 * @param $buyerEmail string
 	 */
 	function setBuyerEmail($buyerEmail) {
-		return $this->setData('buyerEmail', $buyerEmail);
+		$this->setData('buyerEmail', $buyerEmail);
 	}
 
 	/**
@@ -219,7 +221,7 @@ class PKPGift extends DataObject {
 	 * @param $userId int
 	 */
 	function setBuyerUserId($userId) {
-		return $this->setData('buyerUserId', $userId);
+		$this->setData('buyerUserId', $userId);
 	}
 
 	/**
@@ -235,7 +237,7 @@ class PKPGift extends DataObject {
 	 * @param $recipientFirstName string
 	 */
 	function setRecipientFirstName($recipientFirstName) {
-		return $this->setData('recipientFirstName', $recipientFirstName);
+		$this->setData('recipientFirstName', $recipientFirstName);
 	}
 
 	/**
@@ -251,7 +253,7 @@ class PKPGift extends DataObject {
 	 * @param $recipientMiddleName string
 	 */
 	function setRecipientMiddleName($recipientMiddleName) {
-		return $this->setData('recipientMiddleName', $recipientMiddleName);
+		$this->setData('recipientMiddleName', $recipientMiddleName);
 	}
 
 	/**
@@ -267,7 +269,7 @@ class PKPGift extends DataObject {
 	 * @param $recipientLastName string
 	 */
 	function setRecipientLastName($recipientLastName) {
-		return $this->setData('recipientLastName', $recipientLastName);
+		$this->setData('recipientLastName', $recipientLastName);
 	}
 
 	/**
@@ -281,7 +283,7 @@ class PKPGift extends DataObject {
 		$middleName = $this->getData('recipientMiddleName');
 		$lastName = $this->getData('recipientLastName');
 		if ($lastFirst) {
-			return "$lastName, " . "$firstName" . ($middleName != ''?" $middleName":'');
+			return "$lastName, " . $firstName . ($middleName != ''?" $middleName":'');
 		} else {
 			return "$firstName " . ($middleName != ''?"$middleName ":'') . $lastName;
 		}
@@ -300,7 +302,7 @@ class PKPGift extends DataObject {
 	 * @param $recipientEmail string
 	 */
 	function setRecipientEmail($recipientEmail) {
-		return $this->setData('recipientEmail', $recipientEmail);
+		$this->setData('recipientEmail', $recipientEmail);
 	}
 
 	/**
@@ -316,7 +318,7 @@ class PKPGift extends DataObject {
 	 * @param $userId int
 	 */
 	function setRecipientUserId($userId) {
-		return $this->setData('recipientUserId', $userId);
+		$this->setData('recipientUserId', $userId);
 	}
 
 	/**
@@ -332,7 +334,7 @@ class PKPGift extends DataObject {
 	 * @param $locale string
 	 */
 	function setLocale($locale) {
-		return $this->setData('locale', $locale);
+		$this->setData('locale', $locale);
 	}
 
 	/**
@@ -348,7 +350,7 @@ class PKPGift extends DataObject {
 	 * @param $giftNote string
 	 */
 	function setGiftNoteTitle($giftNoteTitle) {
-		return $this->setData('giftNoteTitle', $giftNoteTitle);
+		$this->setData('giftNoteTitle', $giftNoteTitle);
 	}
 
 	/**
@@ -364,7 +366,7 @@ class PKPGift extends DataObject {
 	 * @param $giftNote string
 	 */
 	function setGiftNote($giftNote) {
-		return $this->setData('giftNote', $giftNote);
+		$this->setData('giftNote', $giftNote);
 	}
 
 	/**
@@ -380,7 +382,7 @@ class PKPGift extends DataObject {
 	 * @param $notes string
 	 */
 	function setNotes($notes) {
-		return $this->setData('notes', $notes);
+		$this->setData('notes', $notes);
 	}
 
 	/**
@@ -396,7 +398,7 @@ class PKPGift extends DataObject {
 	 * @param $datetimeRedeemed datetime (YYYY-MM-DD HH:MM:SS)
 	 */
 	function setDatetimeRedeemed($datetimeRedeemed) {
-		return $this->setData('dateRedeemed', $datetimeRedeemed);
+		$this->setData('dateRedeemed', $datetimeRedeemed);
 	}
 }
 

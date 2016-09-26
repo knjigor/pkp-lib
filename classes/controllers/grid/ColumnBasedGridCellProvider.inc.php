@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/ColumnBasedGridCellProvider.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ColumnBasedGridCellProvider
@@ -35,8 +36,8 @@ class ColumnBasedGridCellProvider extends GridCellProvider {
 	/**
 	 * @see GridCellProvider::getTemplateVarsFromRowColumn()
 	 */
-	function getTemplateVarsFromRowColumn(&$row, $column) {
-		// Delegate to the colum to provide template variables.
+	function getTemplateVarsFromRowColumn($row, $column) {
+		// Delegate to the column to provide template variables.
 		return $column->getTemplateVarsFromRow($row);
 	}
 }

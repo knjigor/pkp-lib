@@ -2,7 +2,8 @@
 /**
  * @file classes/linkAction/request/ConfirmationModal.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ConfirmationModal
@@ -46,9 +47,14 @@ class ConfirmationModal extends Modal {
 	 *  appear on the cancel button.
 	 * @param $canClose boolean (optional) Whether the modal will
 	 *  have a close button.
+	 * @param $width int (optional) Override the default width of 'auto'
+	 *  for confirmation modals.  Useful for modals that display
+	 *  large blocks of text.
 	 */
-	function ConfirmationModal($dialogText, $title = null, $titleIcon = null, $okButton = null, $cancelButton = null, $canClose = true) {
-		parent::Modal($title, $titleIcon, $canClose);
+	function ConfirmationModal($dialogText, $title = null, $titleIcon = 'modal_confirm', $okButton = null, $cancelButton = null, $canClose = true, $width = MODAL_WIDTH_AUTO) {
+
+		$title = (is_null($title) ? __('common.confirm') : $title);
+		parent::Modal($title, $titleIcon, $canClose, $width);
 
 		$this->_okButton = (is_null($okButton) ? __('common.ok') : $okButton);
 		$this->_cancelButton = (is_null($cancelButton) ? __('common.cancel') : $cancelButton);

@@ -1,12 +1,13 @@
 <?php
 /**
- * @defgroup admin_form
+ * @defgroup admin_form Site administration form
  */
 
 /**
  * @file classes/admin/form/PKPSiteSettingsForm.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SiteSettingsForm
@@ -20,7 +21,7 @@ define('SITE_MIN_PASSWORD_LENGTH', 4);
 import('lib.pkp.classes.form.Form');
 
 class PKPSiteSettingsForm extends Form {
-	/** @var $siteSettingsDao object Site settings DAO */
+	/** @var object Site settings DAO */
 	var $siteSettingsDao;
 
 	/**
@@ -28,7 +29,7 @@ class PKPSiteSettingsForm extends Form {
 	 */
 	function PKPSiteSettingsForm() {
 		parent::Form('admin/settings.tpl');
-		$this->siteSettingsDao =& DAORegistry::getDAO('SiteSettingsDAO');
+		$this->siteSettingsDao = DAORegistry::getDAO('SiteSettingsDAO');
 
 		// Validation checks for this form
 		$this->addCheck(new FormValidatorLocale($this, 'title', 'required', 'admin.settings.form.titleRequired'));
@@ -36,26 +37,26 @@ class PKPSiteSettingsForm extends Form {
 		$this->addCheck(new FormValidatorLocaleEmail($this, 'contactEmail', 'required', 'admin.settings.form.contactEmailRequired'));
 		$this->addCheck(new FormValidatorCustom($this, 'minPasswordLength', 'required', 'admin.settings.form.minPasswordLengthRequired', create_function('$l', sprintf('return $l >= %d;', SITE_MIN_PASSWORD_LENGTH))));
 		$this->addCheck(new FormValidatorPost($this));
+		$this->addCheck(new FormValidatorCSRF($this));
 	}
 
 	/**
 	 * Display the form.
 	 */
 	function display() {
-		$site =& Request::getSite();
+		$site = Request::getSite();
 		$publicFileManager = new PublicFileManager();
 		$siteStyleFilename = $publicFileManager->getSiteFilesPath() . '/' . $site->getSiteStyleFilename();
-		$templateMgr =& TemplateManager::getManager();
-        $templateMgr->assign('showThumbnail', $site->getSetting('showThumbnail'));
-        $templateMgr->assign('showTitle', $site->getSetting('showTitle'));
-        $templateMgr->assign('showDescription', $site->getSetting('showDescription'));
+		$templateMgr = TemplateManager::getManager();
+		$templateMgr->assign('showThumbnail', $site->getSetting('showThumbnail'));
+		$templateMgr->assign('showTitle', $site->getSetting('showTitle'));
+		$templateMgr->assign('showDescription', $site->getSetting('showDescription'));
 		$templateMgr->assign('originalStyleFilename', $site->getOriginalStyleFilename());
 		$templateMgr->assign('pageHeaderTitleImage', $site->getSetting('pageHeaderTitleImage'));
 		$templateMgr->assign('styleFilename', $site->getSiteStyleFilename());
 		$templateMgr->assign('publicFilesDir', Request::getBasePath() . '/' . $publicFileManager->getSiteFilesPath());
 		$templateMgr->assign('dateStyleFileUploaded', file_exists($siteStyleFilename)?filemtime($siteStyleFilename):null);
 		$templateMgr->assign('siteStyleFileExists', file_exists($siteStyleFilename));
-		$templateMgr->assign('helpTopicId', 'site.siteManagement');
 		return parent::display();
 	}
 
@@ -63,22 +64,22 @@ class PKPSiteSettingsForm extends Form {
 	 * Initialize form data from current settings.
 	 */
 	function initData() {
-		$siteDao =& DAORegistry::getDAO('SiteDAO');
-		$site =& $siteDao->getSite();
+		$siteDao = DAORegistry::getDAO('SiteDAO');
+		$site = $siteDao->getSite();
 
 		$data = array(
 			'title' => $site->getSetting('title'), // Localized
 			'intro' => $site->getSetting('intro'), // Localized
 			'redirect' => $site->getRedirect(),
-            'showThumbnail' => $site->getSetting('showThumbnail'),
-            'showTitle' => $site->getSetting('showTitle'),
-            'showDescription' => $site->getSetting('showDescription'),
+			'showThumbnail' => $site->getSetting('showThumbnail'),
+			'showTitle' => $site->getSetting('showTitle'),
+			'showDescription' => $site->getSetting('showDescription'),
 			'about' => $site->getSetting('about'), // Localized
 			'contactName' => $site->getSetting('contactName'), // Localized
 			'contactEmail' => $site->getSetting('contactEmail'), // Localized
 			'minPasswordLength' => $site->getMinPasswordLength(),
 			'pageHeaderTitleType' => $site->getSetting('pageHeaderTitleType'), // Localized
-			'siteTheme' => $site->getSetting('siteTheme')
+			'themePluginPath' => $site->getSetting('themePluginPath')
 		);
 
 		foreach ($data as $key => $value) {
@@ -95,26 +96,32 @@ class PKPSiteSettingsForm extends Form {
 	 */
 	function readInputData() {
 		$this->readUserVars(
-			array('pageHeaderTitleType', 'title', 'intro', 'about', 'redirect', 'contactName', 'contactEmail', 'minPasswordLength', 'pageHeaderTitleImageAltText', 'showThumbnail', 'showTitle', 'showDescription', 'siteTheme')
+			array('pageHeaderTitleType', 'title', 'intro', 'about', 'redirect', 'contactName', 'contactEmail', 'minPasswordLength', 'pageHeaderTitleImageAltText', 'showThumbnail', 'showTitle', 'showDescription', 'themePluginPath')
 		);
 	}
 
 	/**
 	 * Save site settings.
 	 */
-	function execute() {
-		$siteDao =& DAORegistry::getDAO('SiteDAO');
-		$site =& $siteDao->getSite();
+	function execute($request) {
+		parent::execute();
+		$siteDao = DAORegistry::getDAO('SiteDAO');
+		$site = $siteDao->getSite();
 
 		$site->setRedirect($this->getData('redirect'));
 		$site->setMinPasswordLength($this->getData('minPasswordLength'));
 
-		$siteSettingsDao =& $this->siteSettingsDao;
+		// Clear the template cache if theme has changed
+		if ($this->getData('themePluginPath') != $site->getSetting('themePluginPath')) {
+			$templateMgr = TemplateManager::getManager($request);
+			$templateMgr->clearTemplateCache();
+			$templateMgr->clearCssCache();
+		}
+
+		$siteSettingsDao = $this->siteSettingsDao;
 		foreach ($this->getLocaleFieldNames() as $setting) {
 			$siteSettingsDao->updateSetting($setting, $this->getData($setting), null, true);
 		}
-
-		$site->updateSetting('siteTheme', $this->getData('siteTheme'), 'string', false);
 
 		$setting = $site->getSetting('pageHeaderTitleImage');
 		if (!empty($setting)) {
@@ -124,9 +131,9 @@ class PKPSiteSettingsForm extends Form {
 			$site->updateSetting('pageHeaderTitleImage', $setting, 'object', true);
 		}
 
-        $site->updateSetting('showThumbnail', $this->getData('showThumbnail'), bool);
-        $site->updateSetting('showTitle', $this->getData('showTitle'), bool);
-        $site->updateSetting('showDescription', $this->getData('showDescription'), bool);
+		$site->updateSetting('showThumbnail', $this->getData('showThumbnail'), 'bool');
+		$site->updateSetting('showTitle', $this->getData('showTitle'), 'bool');
+		$site->updateSetting('showDescription', $this->getData('showDescription'), 'bool');
 
 		$siteDao->updateObject($site);
 		return true;
@@ -138,7 +145,7 @@ class PKPSiteSettingsForm extends Form {
 	function uploadSiteStyleSheet() {
 		import('classes.file.PublicFileManager');
 		$publicFileManager = new PublicFileManager();
-		$site =& Request::getSite();
+		$site = Request::getSite();
 		if ($publicFileManager->uploadedFileExists('siteStyleSheet')) {
 			$type = $publicFileManager->getUploadedFileType('siteStyleSheet');
 			if ($type != 'text/plain' && $type != 'text/css') {
@@ -147,7 +154,7 @@ class PKPSiteSettingsForm extends Form {
 
 			$uploadName = $site->getSiteStyleFilename();
 			if ($publicFileManager->uploadSiteFile('siteStyleSheet', $uploadName)) {
-				$siteDao =& DAORegistry::getDAO('SiteDAO');
+				$siteDao = DAORegistry::getDAO('SiteDAO');
 				$site->setOriginalStyleFilename($publicFileManager->getUploadedFileName('siteStyleSheet'));
 				$siteDao->updateObject($site);
 			}
@@ -162,7 +169,7 @@ class PKPSiteSettingsForm extends Form {
 	function uploadPageHeaderTitleImage($locale) {
 		import('classes.file.PublicFileManager');
 		$publicFileManager = new PublicFileManager();
-		$site =& Request::getSite();
+		$site = Request::getSite();
 		if ($publicFileManager->uploadedFileExists('pageHeaderTitleImage')) {
 			$type = $publicFileManager->getUploadedFileType('pageHeaderTitleImage');
 			$extension = $publicFileManager->getImageExtension($type);
@@ -170,7 +177,7 @@ class PKPSiteSettingsForm extends Form {
 
 			$uploadName = 'pageHeaderTitleImage_' . $locale . $extension;
 			if ($publicFileManager->uploadSiteFile('pageHeaderTitleImage', $uploadName)) {
-				$siteDao =& DAORegistry::getDAO('SiteDAO');
+				$siteDao = DAORegistry::getDAO('SiteDAO');
 				$setting = $site->getSetting('pageHeaderTitleImage');
 				list($width, $height) = getimagesize($publicFileManager->getSiteFilesPath() . '/' . $uploadName);
 				$setting[$locale] = array(

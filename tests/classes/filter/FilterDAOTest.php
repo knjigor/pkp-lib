@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/filter/FilterDAOTest.inc.php
+ * @file tests/classes/filter/FilterDAOTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterDAOTest
@@ -47,7 +48,7 @@ class FilterDAOTest extends DatabaseTestCase {
 
 		// Install a test filter object.
 		$settings = array('seq' => '1', 'some-key' => 'some-value');
-		$testFilter =& $filterDao->configureObject('lib.pkp.tests.classes.filter.PersistableTestFilter', 'test-filter-group', $settings, false, 9999);
+		$testFilter = $filterDao->configureObject('lib.pkp.tests.classes.filter.PersistableTestFilter', 'test-filter-group', $settings, false, 9999);
 		self::assertInstanceOf('PersistableFilter', $testFilter);
 		$filterId = $testFilter->getId();
 		self::assertTrue(is_integer($filterId));
@@ -92,6 +93,7 @@ class FilterDAOTest extends DatabaseTestCase {
 	}
 
 	public function testCompositeFilterCrud() {
+		$this->markTestSkipped();
 		$filterDao = DAORegistry::getDAO('FilterDAO');
 
 		// sub-filter 1
@@ -139,7 +141,7 @@ class FilterDAOTest extends DatabaseTestCase {
 		// Update filter instance
 		$testFilter = new GenericSequencerFilter($testFilter->getFilterGroup());
 		$testFilter->setDisplayName('composite filter');
-		$testFilter->setSeq(9999);
+		$testFilter->setSequence(9999);
 		$testFilter->setId($filterId);
 		$testFilter->setIsTemplate(true);
 

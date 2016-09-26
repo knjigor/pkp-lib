@@ -3,7 +3,8 @@
 /**
  * @file plugins/citationLookup/isbndb/filter/IsbndbNlm30CitationSchemaIsbnFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class IsbndbNlm30CitationSchemaIsbnFilter
@@ -21,7 +22,7 @@ class IsbndbNlm30CitationSchemaIsbnFilter extends IsbndbNlm30CitationSchemaFilte
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function IsbndbNlm30CitationSchemaIsbnFilter(&$filterGroup) {
+	function IsbndbNlm30CitationSchemaIsbnFilter($filterGroup) {
 		$this->setDisplayName('ISBNdb (from NLM)');
 
 		parent::IsbndbNlm30CitationSchemaFilter($filterGroup);
@@ -31,7 +32,7 @@ class IsbndbNlm30CitationSchemaIsbnFilter extends IsbndbNlm30CitationSchemaFilte
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationLookup.isbndb.filter.IsbndbNlm30CitationSchemaIsbnFilter';
@@ -42,7 +43,7 @@ class IsbndbNlm30CitationSchemaIsbnFilter extends IsbndbNlm30CitationSchemaFilte
 	// Implement template methods from Filter
 	//
 	/**
-	 * @see Filter::supports()
+	 * @copydoc Filter::supports()
 	 * @param $input mixed
 	 * @param $output mixed
 	 * @return boolean
@@ -53,7 +54,7 @@ class IsbndbNlm30CitationSchemaIsbnFilter extends IsbndbNlm30CitationSchemaFilte
 	}
 
 	/**
-	 * @see Filter::process()
+	 * @copydoc Filter::process()
 	 * @param $citationDescription MetadataDescription
 	 * @return string an ISBN or null
 	 */
@@ -75,7 +76,7 @@ class IsbndbNlm30CitationSchemaIsbnFilter extends IsbndbNlm30CitationSchemaFilte
 
 			// Did we get a search hit?
 			$numResults = '';
-			$bookList =& $resultDOM->getElementsByTagName('BookList');
+			$bookList = $resultDOM->getElementsByTagName('BookList');
 			if (is_a($bookList, 'DOMNodeList')) {
 				$bookListFirstItem =& $bookList->item(0);
 				if (is_a($bookListFirstItem, 'DOMNode')) {
@@ -86,7 +87,7 @@ class IsbndbNlm30CitationSchemaIsbnFilter extends IsbndbNlm30CitationSchemaFilte
 		}
 
 		// Retrieve the first search hit
-		$bookDataNodes =& $resultDOM->getElementsByTagName('BookData');
+		$bookDataNodes = $resultDOM->getElementsByTagName('BookData');
 		$bookDataFirstNode = null;
 		if (is_a($bookDataNodes, 'DOMNodeList')) {
 			$bookDataFirstNode =& $bookDataNodes->item(0);

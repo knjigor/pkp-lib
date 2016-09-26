@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/HandlerOperationPolicy.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class HandlerOperationPolicy
@@ -28,7 +29,7 @@ class HandlerOperationPolicy extends AuthorizationPolicy {
 	 *  this policy is targeting.
 	 * @param $message string a message to be displayed if the authorization fails
 	 */
-	function HandlerOperationPolicy(&$request, $operations, $message = null) {
+	function HandlerOperationPolicy($request, $operations, $message = null) {
 		parent::AuthorizationPolicy($message);
 		$this->_request =& $request;
 
@@ -72,7 +73,7 @@ class HandlerOperationPolicy extends AuthorizationPolicy {
 	 */
 	function _checkOperationWhitelist() {
 		// Only permit if the requested operation has been whitelisted.
-		$router =& $this->_request->getRouter();
+		$router = $this->_request->getRouter();
 		$requestedOperation = $router->getRequestedOp($this->_request);
 		assert(!empty($requestedOperation));
 		return in_array($requestedOperation, $this->_operations);

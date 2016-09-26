@@ -1,13 +1,14 @@
 <?php
 
 /**
- * @defgroup tests_plugins_citationParser
+ * @defgroup tests_plugins_citationParser Citation Parser Plugin Tests
  */
 
 /**
- * @file tests/citation/parser/Nlm30CitationSchemaParserFilterTestCase.inc.php
+ * @file tests/plugins/citationParser/Nlm30CitationSchemaParserFilterTestCase.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaParserFilterTestCase
@@ -16,8 +17,7 @@
  * @brief Base class for all Nlm30CitationSchemaFilter tests for parser filters.
  */
 
-
-import('lib.pkp.tests.plugins.metadata.nlm30.filter.Nlm30CitationSchemaFilterTestCase');
+import('lib.pkp.plugins.metadata.nlm30.tests.filter.Nlm30CitationSchemaFilterTestCase');
 
 abstract class Nlm30CitationSchemaParserFilterTestCase extends Nlm30CitationSchemaFilterTestCase {
 	const TEST_ALL_CITATIONS = false;
@@ -36,7 +36,7 @@ abstract class Nlm30CitationSchemaParserFilterTestCase extends Nlm30CitationSche
 	 * will skip this time consuming test.
 	 * @param $filter Nlm30CitationSchemaFilter
 	 */
-	public function testAllCitationsWithThisParser(&$filter) {
+	protected function _testAllCitationsWithThisParser(&$filter) {
 		// Is this test switched off?
 		if (!self::TEST_ALL_CITATIONS) return;
 

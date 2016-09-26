@@ -3,7 +3,8 @@
 /**
  * @file classes/metadata/MetadataProperty.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataProperty
@@ -194,7 +195,7 @@ class MetadataProperty {
 			'-', '', '', '', '-'
 		);
 		$propertyId = trim(str_replace($from, $to, $this->getName()), '-');
-		$propertyId = String::camelize($propertyId);
+		$propertyId = PKPString::camelize($propertyId);
 		return $propertyId;
 	}
 
@@ -348,7 +349,7 @@ class MetadataProperty {
 
 							if (is_string($value)) {
 								// Try to translate the string value into a controlled vocab entry
-								$controlledVocabEntryDao =& DAORegistry::getDao('ControlledVocabEntryDAO'); /* @var $controlledVocabEntryDao ControlledVocabEntryDAO */
+								$controlledVocabEntryDao = DAORegistry::getDao('ControlledVocabEntryDAO'); /* @var $controlledVocabEntryDao ControlledVocabEntryDAO */
 								if (!is_null($controlledVocabEntryDao->getBySetting($value, $symbolic, $assocType, $assocId, 'name', $locale))) {
 									// The string was successfully translated so mark it as "valid".
 									return array(METADATA_PROPERTY_TYPE_VOCABULARY => $allowedTypeParam);
@@ -418,8 +419,6 @@ class MetadataProperty {
 	/**
 	 * Return supported meta-data property types
 	 *
-	 * NB: PHP4 work-around for a public static class member
-	 *
 	 * NB: These types are sorted from most specific to
 	 * most general and will be validated in this order
 	 * so that we'll always identify more specific types
@@ -428,7 +427,7 @@ class MetadataProperty {
 	 *
 	 * @return array supported meta-data property types
 	 */
-	function getSupportedTypes() {
+	static function getSupportedTypes() {
 		static $_supportedTypes = array(
 			METADATA_PROPERTY_TYPE_COMPOSITE,
 			METADATA_PROPERTY_TYPE_VOCABULARY,
@@ -442,10 +441,9 @@ class MetadataProperty {
 
 	/**
 	 * Return supported cardinalities
-	 * NB: PHP4 work-around for a public static class member
 	 * @return array supported cardinalities
 	 */
-	function getSupportedCardinalities() {
+	static function getSupportedCardinalities() {
 		static $_supportedCardinalities = array(
 			METADATA_PROPERTY_CARDINALITY_ONE,
 			METADATA_PROPERTY_CARDINALITY_MANY
@@ -453,4 +451,5 @@ class MetadataProperty {
 		return $_supportedCardinalities;
 	}
 }
+
 ?>

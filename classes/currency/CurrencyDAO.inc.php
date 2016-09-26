@@ -3,7 +3,8 @@
 /**
  * @file classes/currency/CurrencyDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CurrencyDAO
@@ -25,14 +26,14 @@ class CurrencyDAO extends DAO {
 		parent::DAO();
 	}
 
-	function &_getCache() {
+	function _getCache() {
 		$locale = AppLocale::getLocale();
 		$cache =& Registry::get('currencyCache', true, null);
 		if ($cache === null) {
 			$cacheManager = CacheManager::getManager();
-			$cache =& $cacheManager->getFileCache(
+			$cache = $cacheManager->getFileCache(
 				'currencies', $locale,
-				array(&$this, '_cacheMiss')
+				array($this, '_cacheMiss')
 			);
 			$cacheTime = $cache->getCacheTime();
 			if ($cacheTime !== null && $cacheTime < filemtime($this->getCurrencyFilename($locale))) {
@@ -43,7 +44,7 @@ class CurrencyDAO extends DAO {
 		return $cache;
 	}
 
-	function _cacheMiss(&$cache, $id) {
+	function _cacheMiss($cache, $id) {
 		$allCurrencies =& Registry::get('allCurrencies', true, null);
 		if ($allCurrencies === null) {
 			// Add a locale load to the debug notes.
@@ -84,21 +85,20 @@ class CurrencyDAO extends DAO {
 	 * @param $currencyId int
 	 * @return Currency
 	 */
-	function &getCurrencyByAlphaCode($codeAlpha) {
-		$cache =& $this->_getCache();
-		$returner =& $this->_returnCurrencyFromRow($codeAlpha, $cache->get($codeAlpha));
-		return $returner;
+	function getCurrencyByAlphaCode($codeAlpha) {
+		$cache = $this->_getCache();
+		return $this->_returnCurrencyFromRow($codeAlpha, $cache->get($codeAlpha));
 	}
 
 	/**
 	 * Retrieve an array of all currencies.
 	 * @return array of Currencies
 	 */
-	function &getCurrencies() {
-		$cache =& $this->_getCache();
+	function getCurrencies() {
+		$cache = $this->_getCache();
 		$returner = array();
 		foreach ($cache->getContents() as $codeAlpha => $entry) {
-			$returner[] =& $this->_returnCurrencyFromRow($codeAlpha, $entry);
+			$returner[] = $this->_returnCurrencyFromRow($codeAlpha, $entry);
 		}
 		return $returner;
 	}

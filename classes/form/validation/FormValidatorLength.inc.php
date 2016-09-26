@@ -3,7 +3,8 @@
 /**
  * @file classes/form/validation/FormValidatorLength.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidatorLength
@@ -39,6 +40,20 @@ class FormValidatorLength extends FormValidator {
 
 
 	//
+	// Setters and Getters
+	//
+	/**
+	 * @see FormValidator::getMessage()
+	 * @return string
+	 */
+	function getMessage() {
+		$siteDao = DAORegistry::getDAO('SiteDAO');
+		$site = $siteDao->getSite();
+		return __($this->_message, array('length' => $site->getMinPasswordLength()));
+	}
+
+
+	//
 	// Public methods
 	//
 	/**
@@ -51,7 +66,7 @@ class FormValidatorLength extends FormValidator {
 			return true;
 
 		} else {
-			$length = String::strlen($this->getFieldValue());
+			$length = PKPString::strlen($this->getFieldValue());
 			switch ($this->_comparator) {
 				case '==':
 					return $length == $this->_length;

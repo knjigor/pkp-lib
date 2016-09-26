@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/MapGridCellProvider.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MapGridCellProvider
@@ -33,7 +34,7 @@ class MapGridCellProvider extends GridCellProvider {
 	 * @param $column GridColumn
 	 * @return array
 	 */
-	function getTemplateVarsFromRowColumn(&$row, $column) {
+	function getTemplateVarsFromRowColumn($row, $column) {
 		$element =& $row->getData();
 		$columnId = $column->getId();
 		assert(is_array($element) && in_array($columnId, array_keys($element)));

@@ -3,7 +3,8 @@
 /**
  * @file classes/notification/Notification.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Notification
@@ -38,30 +39,53 @@ define('NOTIFICATION_TYPE_PLUGIN_DISABLED',			0x5000002);
 
 define('NOTIFICATION_TYPE_PLUGIN_BASE',				0x6000001);
 
+// Workflow-level notifications
+define('NOTIFICATION_TYPE_SUBMISSION_SUBMITTED',		0x1000001);
+define('NOTIFICATION_TYPE_METADATA_MODIFIED',			0x1000002);
+
+define('NOTIFICATION_TYPE_REVIEWER_COMMENT',			0x1000003);
+define('NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_SUBMISSION',	0x1000004);
+define('NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_INTERNAL_REVIEW',	0x1000005);
+define('NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EXTERNAL_REVIEW',	0x1000006);
+define('NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EDITING',		0x1000007);
+define('NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_PRODUCTION',	0x1000008);
+define('NOTIFICATION_TYPE_AUDITOR_REQUEST',			0x1000009); // DEPRECATED; DO NOT USE
+define('NOTIFICATION_TYPE_REVIEW_ASSIGNMENT',			0x100000B);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_INTERNAL_REVIEW',	0x100000D);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_ACCEPT',		0x100000E);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_EXTERNAL_REVIEW',	0x100000F);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_PENDING_REVISIONS',	0x1000010);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_RESUBMIT',		0x1000011);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_DECLINE',		0x1000012);
+define('NOTIFICATION_TYPE_EDITOR_DECISION_SEND_TO_PRODUCTION',	0x1000013);
+define('NOTIFICATION_TYPE_REVIEW_ROUND_STATUS',			0x1000014);
+define('NOTIFICATION_TYPE_PENDING_INTERNAL_REVISIONS',		0x1000015);
+define('NOTIFICATION_TYPE_PENDING_EXTERNAL_REVISIONS',		0x1000016);
+define('NOTIFICATION_TYPE_COPYEDIT_ASSIGNMENT',			0x1000017);
+define('NOTIFICATION_TYPE_ALL_REVIEWS_IN',			0x1000018);
+define('NOTIFICATION_TYPE_LAYOUT_ASSIGNMENT',			0x1000019);
+define('NOTIFICATION_TYPE_INDEX_ASSIGNMENT',			0x100001A);
+define('NOTIFICATION_TYPE_APPROVE_SUBMISSION',			0x100001B);
+define('NOTIFICATION_TYPE_CONFIGURE_PAYMENT_METHOD',		0x100001C);
+define('NOTIFICATION_TYPE_FORMAT_NEEDS_APPROVED_SUBMISSION',	0x100001D);
+define('NOTIFICATION_TYPE_VISIT_CATALOG',			0x100001E);
+define('NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_REQUIRED',		0x100001F);
+define('NOTIFICATION_TYPE_ALL_REVISIONS_IN',			0x1000020);
+define('NOTIFICATION_TYPE_NEW_QUERY',				0x1000021);
+define('NOTIFICATION_TYPE_QUERY_ACTIVITY',			0x1000022);
+
+define('NOTIFICATION_TYPE_ASSIGN_COPYEDITOR',			0x1000023);
+define('NOTIFICATION_TYPE_AWAITING_COPYEDITS',			0x1000024);
+define('NOTIFICATION_TYPE_AWAITING_REPRESENTATIONS', 	0x1000025);
+define('NOTIFICATION_TYPE_ASSIGN_PRODUCTIONUSER',		0x1000026);
+
+
 class PKPNotification extends DataObject {
 	/**
 	 * Constructor.
 	 */
 	function PKPNotification() {
 		parent::DataObject();
-	}
-
-	/**
-	 * get notification id
-	 * @return int
-	 */
-	function getNotificationId() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getId();
-	}
-
-	/**
-	 * set notification id
-	 * @param $commentId int
-	 */
-	function setNotificationId($notificationId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->setId($notificationId);
 	}
 
 	/**
@@ -77,7 +101,7 @@ class PKPNotification extends DataObject {
 	 * @param $userId int
 	 */
 	function setUserId($userId) {
-		return $this->setData('userId', $userId);
+		$this->setData('userId', $userId);
 	}
 
 	/**
@@ -93,7 +117,7 @@ class PKPNotification extends DataObject {
 	 * @param $level int
 	 */
 	function setLevel($level) {
-		return $this->setData('level', $level);
+		$this->setData('level', $level);
 	}
 
 	/**
@@ -109,7 +133,7 @@ class PKPNotification extends DataObject {
 	 * @param $dateCreated date (YYYY-MM-DD HH:MM:SS)
 	 */
 	function setDateCreated($dateCreated) {
-		return $this->setData('dateCreated', $dateCreated);
+		$this->setData('dateCreated', $dateCreated);
 	}
 
 	/**
@@ -125,7 +149,7 @@ class PKPNotification extends DataObject {
 	 * @param $dateRead date (YYYY-MM-DD HH:MM:SS)
 	 */
 	function setDateRead($dateRead) {
-		return $this->setData('dateRead', $dateRead);
+		$this->setData('dateRead', $dateRead);
 	}
 
 	/**
@@ -141,7 +165,7 @@ class PKPNotification extends DataObject {
 	 * @param $type int
 	 */
 	function setType($type) {
-		return $this->setData('type', $type);
+		$this->setData('type', $type);
 	}
 
 	/**
@@ -157,7 +181,7 @@ class PKPNotification extends DataObject {
 	 * @param $assocType int
 	 */
 	function setAssocType($assocType) {
-		return $this->setData('assocType', $assocType);
+		$this->setData('assocType', $assocType);
 	}
 
 	/**
@@ -173,7 +197,7 @@ class PKPNotification extends DataObject {
 	 * @param $assocId int
 	 */
 	function setAssocId($assocId) {
-		return $this->setData('assocId', $assocId);
+		$this->setData('assocId', $assocId);
 	}
 
 	/**
@@ -189,7 +213,7 @@ class PKPNotification extends DataObject {
 	 * @param $context int
 	 */
 	function setContextId($contextId) {
-		return $this->setData('context_id', $contextId);
+		$this->setData('context_id', $contextId);
 	}
 }
 

@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/grid/CategoryGridDataProvider.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CategoryGridDataProvider
@@ -39,7 +40,7 @@ class CategoryGridDataProvider extends GridDataProvider {
 	 * Get a grid data provider object.
 	 * @return GridDataProvider
 	 */
-	function &getDataProvider() {
+	function getDataProvider() {
 		return $this->_dataProvider;
 	}
 
@@ -47,13 +48,13 @@ class CategoryGridDataProvider extends GridDataProvider {
 	 * Set a grid data provider object.
 	 * @param $dataProvider GridDataProvider
 	 */
-	function setDataProvider(&$dataProvider) {
+	function setDataProvider($dataProvider) {
 		if (is_a($dataProvider, 'CategoryGridDataProvider')) {
 			assert(false);
 			$dataProvider = null;
 		}
 
-		$this->_dataProvider =& $dataProvider;
+		$this->_dataProvider = $dataProvider;
 	}
 
 
@@ -66,7 +67,7 @@ class CategoryGridDataProvider extends GridDataProvider {
 	function setAuthorizedContext(&$authorizedContext) {
 		// We need to pass the authorized context object to
 		// the grid data provider object, if any.
-		$dataProvider =& $this->getDataProvider();
+		$dataProvider = $this->getDataProvider();
 		if ($dataProvider) {
 			$dataProvider->setAuthorizedContext($authorizedContext);
 		}
@@ -80,11 +81,12 @@ class CategoryGridDataProvider extends GridDataProvider {
 	//
 	/**
 	 * Retrieve the category data to load into the grid.
+	 * @param $request PKPRequest
 	 * @param $categoryDataElement mixed
 	 * @param $filter mixed array or null
 	 * @return array
 	 */
-	function &getCategoryData($categoryDataElement, $filter = null) {
+	function loadCategoryData($request, $categoryDataElement, $filter = null) {
 		assert(false);
 	}
 }

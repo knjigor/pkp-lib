@@ -1,12 +1,15 @@
 <?php
 /**
- * @defgroup linkAction
+ * @defgroup linkAction LinkActions
+ * Link actions are representations of various kinds of actions that can be
+ * invoked by clicking a link.
  */
 
 /**
  * @file classes/linkAction/LinkAction.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class LinkAction
@@ -26,6 +29,9 @@ class LinkAction {
 	/** @var string The localized title of the action. */
 	var $_title;
 
+	/** @var string The localized tool tip of the action. */
+	var $_toolTip;
+
 	/** @var string The name of an icon for the action. */
 	var $_image;
 
@@ -36,13 +42,16 @@ class LinkAction {
 	 * @param $title string (optional) The localized title of the action.
 	 * @param $image string (optional) The name of an icon for the
 	 *  action.
+	 * @param $toolTip string (optional) A localized tool tip to display when hovering over
+	 *  the link action.
 	 */
-	function LinkAction($id, &$actionRequest, $title = null, $image = null) {
+	function LinkAction($id, &$actionRequest, $title = null, $image = null, $toolTip = null) {
 		$this->_id = $id;
 		assert(is_a($actionRequest, 'LinkActionRequest'));
 		$this->_actionRequest =& $actionRequest;
 		$this->_title = $title;
 		$this->_image = $image;
+		$this->_toolTip = $toolTip;
 	}
 
 
@@ -61,7 +70,7 @@ class LinkAction {
 	 * Get the action handler.
 	 * @return LinkActionRequest
 	 */
-	function &getActionRequest() {
+	function getActionRequest() {
 		return $this->_actionRequest;
 	}
 
@@ -71,6 +80,30 @@ class LinkAction {
 	 */
 	function getTitle() {
 		return $this->_title;
+	}
+
+	/**
+	 * Get the localized tool tip.
+	 * @return string
+	 */
+	function getToolTip() {
+		return $this->_toolTip;
+	}
+
+	/**
+	 * Get a title for display when a user hovers over the
+	 * link action.  Default to the regular title if it is set.
+	 * @return string
+	 */
+	function getHoverTitle() {
+		if ($this->getToolTip()) {
+			return $this->getToolTip();
+		} else {
+			// for the locale key, remove any unique ids from the id.
+			$id = preg_replace('/([^-]+)\-.+$/', '$1', $this->getId());
+			$title = __('grid.action.' . $id);
+			return $title;
+		}
 	}
 
 	/**

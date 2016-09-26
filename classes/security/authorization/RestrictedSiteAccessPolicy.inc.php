@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/RestrictedSiteAccessPolicy.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class RestrictedSiteAccessPolicy
@@ -26,10 +27,10 @@ class RestrictedSiteAccessPolicy extends AuthorizationPolicy {
 	 *
 	 * @param $request PKPRequest
 	 */
-	function RestrictedSiteAccessPolicy(&$request) {
+	function RestrictedSiteAccessPolicy($request) {
 		parent::AuthorizationPolicy('user.authorization.restrictedSiteAccess');
-		$this->_request =& $request;
-		$this->_router =& $request->getRouter();
+		$this->_request = $request;
+		$this->_router = $request->getRouter();
 	}
 
 	//
@@ -39,7 +40,7 @@ class RestrictedSiteAccessPolicy extends AuthorizationPolicy {
 	 * @see AuthorizationPolicy::applies()
 	 */
 	function applies() {
-		$context =& $this->_router->getContext($this->_request);
+		$context = $this->_router->getContext($this->_request);
 		return ( $context && $context->getSetting('restrictSiteAccess'));
 	}
 
@@ -70,7 +71,7 @@ class RestrictedSiteAccessPolicy extends AuthorizationPolicy {
 	 * @return array
 	 */
 	function _getLoginExemptions() {
-		return array('user', 'login', 'help');
+		return array('user', 'login', 'help', 'header', 'sidebar', 'payment');
 	}
 }
 

@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_citationParser_regex
+ * @defgroup plugins_citationParser_regex Regular Expression Citation Parser
  */
 
 /**
  * @file plugins/citationParser/regex/PKPRegexCitationParserPlugin.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPRegexCitationParserPlugin
@@ -17,7 +17,7 @@
  */
 
 
-import('classes.plugins.Plugin');
+import('lib.pkp.classes.plugins.Plugin');
 
 class PKPRegexCitationParserPlugin extends Plugin {
 	/**
@@ -29,10 +29,10 @@ class PKPRegexCitationParserPlugin extends Plugin {
 
 
 	//
-	// Override protected template methods from PKPPlugin
+	// Override protected template methods from Plugin
 	//
 	/**
-	 * @see PKPPlugin::register()
+	 * @copydoc Plugin::register()
 	 */
 	function register($category, $path) {
 		if (!parent::register($category, $path)) return false;
@@ -41,21 +41,21 @@ class PKPRegexCitationParserPlugin extends Plugin {
 	}
 
 	/**
-	 * @see PKPPlugin::getName()
+	 * @copydoc Plugin::getName()
 	 */
 	function getName() {
 		return 'RegexCitationParserPlugin';
 	}
 
 	/**
-	 * @see PKPPlugin::getDisplayName()
+	 * @copydoc Plugin::getDisplayName()
 	 */
 	function getDisplayName() {
 		return __('plugins.citationParser.regex.displayName');
 	}
 
 	/**
-	 * @see PKPPlugin::getDescription()
+	 * @copydoc Plugin::getDescription()
 	 */
 	function getDescription() {
 		return __('plugins.citationParser.regex.description');

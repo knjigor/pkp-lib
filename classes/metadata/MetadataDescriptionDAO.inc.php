@@ -3,7 +3,8 @@
 /**
  * @file classes/metadata/MetadataDescriptionDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataDescriptionDAO
@@ -42,7 +43,7 @@ class MetadataDescriptionDAO extends DAO {
 				$metadataSchema->getNamespace(),
 				$metadataSchema->getName(),
 				$metadataDescription->getDisplayName(),
-				(integer)$metadataDescription->getSeq()
+				(integer)$metadataDescription->getSequence()
 			)
 		);
 		$metadataDescription->setId($this->getInsertId());
@@ -56,18 +57,16 @@ class MetadataDescriptionDAO extends DAO {
 	 * @return MetadataDescription
 	 */
 	function &getObjectById($metadataDescriptionId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM metadata_descriptions WHERE metadata_description_id = ?', $metadataDescriptionId
 		);
 
 		$metadataDescription = null;
 		if ($result->RecordCount() != 0) {
-			$metadataDescription =& $this->_fromRow($result->GetRowAssoc(false));
+			$metadataDescription = $this->_fromRow($result->GetRowAssoc(false));
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $metadataDescription;
 	}
 
@@ -78,8 +77,8 @@ class MetadataDescriptionDAO extends DAO {
 	 * @param $dbResultRange DBResultRange the desired range
 	 * @return DAOResultFactory containing matching source descriptions (MetadataDescription objects)
 	 */
-	function &getObjectsByAssocId($assocType, $assocId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+	function getObjectsByAssocId($assocType, $assocId, $rangeInfo = null) {
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM metadata_descriptions
 			WHERE assoc_type = ? AND assoc_id = ?
@@ -88,8 +87,7 @@ class MetadataDescriptionDAO extends DAO {
 			$rangeInfo
 		);
 
-		$returner = new DAOResultFactory($result, $this, '_fromRow', array('id'));
-		return $returner;
+	 	return new DAOResultFactory($result, $this, '_fromRow', array('id'));
 	}
 
 	/**
@@ -98,7 +96,7 @@ class MetadataDescriptionDAO extends DAO {
 	 */
 	function updateObject(&$metadataDescription) {
 		$metadataSchema =& $metadataDescription->getMetadataSchema();
-		$returner = $this->update(
+		$this->update(
 			'UPDATE	metadata_descriptions
 			SET	assoc_type = ?,
 				assoc_id = ?,
@@ -113,7 +111,7 @@ class MetadataDescriptionDAO extends DAO {
 				$metadataSchema->getName(),
 				$metadataSchema->getNamespace(),
 				$metadataDescription->getDisplayName(),
-				$metadataDescription->getSeq(),
+				$metadataDescription->getSequence(),
 				$metadataDescription->getId()
 			)
 		);
@@ -147,10 +145,9 @@ class MetadataDescriptionDAO extends DAO {
 	 * @return boolean
 	 */
 	function deleteObjectsByAssocId($assocType, $assocId) {
-		$metadataDescriptions =& $this->getObjectsByAssocId($assocType, $assocId);
-		while ($metadataDescription =& $metadataDescriptions->next()) {
+		$metadataDescriptions = $this->getObjectsByAssocId($assocType, $assocId);
+		while ($metadataDescription = $metadataDescriptions->next()) {
 			$this->deleteObjectById($metadataDescription->getId());
-			unset($metadataDescription);
 		}
 		return true;
 	}
@@ -163,7 +160,7 @@ class MetadataDescriptionDAO extends DAO {
 	 * @return int
 	 */
 	function getInsertId() {
-		return parent::getInsertId('metadata_descriptions', 'metadata_description_id');
+		return parent::_getInsertId('metadata_descriptions', 'metadata_description_id');
 	}
 
 
@@ -215,12 +212,12 @@ class MetadataDescriptionDAO extends DAO {
 	 * @param $row array
 	 * @return MetadataDescription
 	 */
-	function &_fromRow(&$row) {
-		$metadataDescription =& $this->_newDataObject($row['schema_namespace'], $row['schema_name'], (int)$row['assoc_type']);
+	function _fromRow($row) {
+		$metadataDescription = $this->_newDataObject($row['schema_namespace'], $row['schema_name'], (int)$row['assoc_type']);
 		$metadataDescription->setId((int)$row['metadata_description_id']);
 		$metadataDescription->setAssocId((int)$row['assoc_id']);
 		$metadataDescription->setDisplayName($row['display_name']);
-		$metadataDescription->setSeq((int)$row['seq']);
+		$metadataDescription->setSequence((int)$row['seq']);
 
 		$this->getDataObjectSettings('metadata_description_settings', 'metadata_description_id', $row['metadata_description_id'], $metadataDescription);
 

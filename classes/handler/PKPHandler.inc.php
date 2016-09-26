@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file classes/core/PKPHandler.inc.php
+ * @file classes/handler/PKPHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @package core
@@ -12,11 +13,6 @@
  * Base request handler abstract class.
  *
  */
-
-// FIXME: remove these import statements - handler validators are deprecated.
-import('lib.pkp.classes.handler.validation.HandlerValidator');
-import('lib.pkp.classes.handler.validation.HandlerValidatorRoles');
-import('lib.pkp.classes.handler.validation.HandlerValidatorCustom');
 
 class PKPHandler {
 	/**
@@ -87,30 +83,19 @@ class PKPHandler {
 	 * Set the dispatcher
 	 * @param $dispatcher PKPDispatcher
 	 */
-	function setDispatcher(&$dispatcher) {
-		$this->_dispatcher =& $dispatcher;
+	function setDispatcher($dispatcher) {
+		$this->_dispatcher = $dispatcher;
 	}
 
 	/**
 	 * Fallback method in case request handler does not implement index method.
+	 * @param $args array
+	 * @param $request PKPRequest
 	 */
-	function index() {
-		$dispatcher =& $this->getDispatcher();
+	function index($args, $request) {
+		$dispatcher = $this->getDispatcher();
 		if (isset($dispatcher)) $dispatcher->handle404();
 		else Dispatcher::handle404(); // For old-style handlers
-	}
-
-	/**
-	 * Add a validation check to the handler.
-	 *
-	 * NB: deprecated!
-	 *
-	 * @param $handlerValidator HandlerValidator
-	 */
-	function addCheck(&$handlerValidator) {
-		// FIXME: Add a deprecation warning once we've refactored
-		// all HandlerValidator occurrences.
-		$this->_checks[] =& $handlerValidator;
 	}
 
 	/**
@@ -126,7 +111,7 @@ class PKPHandler {
 	 * @param $addToTop boolean whether to insert the new policy
 	 *  to the top of the list.
 	 */
-	function addPolicy(&$authorizationPolicy, $addToTop = false) {
+	function addPolicy($authorizationPolicy, $addToTop = false) {
 		if (is_null($this->_authorizationDecisionManager)) {
 			// Instantiate the authorization decision manager
 			import('lib.pkp.classes.security.authorization.AuthorizationDecisionManager');
@@ -170,7 +155,7 @@ class PKPHandler {
 	 */
 	function getLastAuthorizationMessage() {
 		assert(is_a($this->_authorizationDecisionManager, 'AuthorizationDecisionManager'));
-		$authorizationMessages =& $this->_authorizationDecisionManager->getAuthorizationMessages();
+		$authorizationMessages = $this->_authorizationDecisionManager->getAuthorizationMessages();
 		return end($authorizationMessages);
 	}
 
@@ -209,7 +194,7 @@ class PKPHandler {
 	/**
 	 * This method returns an assignment of operation names for the
 	 * given role.
-	 *
+	 * @param $roleId int
 	 * @return array assignment for the given role.
 	 */
 	function getRoleAssignment($roleId) {
@@ -243,18 +228,23 @@ class PKPHandler {
 	 *
 	 * @param $request Request
 	 * @param $args array request arguments
-	 * @param $roleAssignment array the operation role assignment,
+	 * @param $roleAssignments array the operation role assignment,
 	 *  see getRoleAssignment() for more details.
+	 * @param $enforceRestrictedSite boolean True iff site restrictions are to be enforced
 	 * @return boolean
 	 */
-	function authorize(&$request, &$args, $roleAssignments) {
-		// Enforce restricted site access.
-		import('lib.pkp.classes.security.authorization.RestrictedSiteAccessPolicy');
-		$this->addPolicy(new RestrictedSiteAccessPolicy($request), true);
+	function authorize($request, &$args, $roleAssignments, $enforceRestrictedSite = true) {
+		// Enforce restricted site access if required.
+		if ($enforceRestrictedSite) {
+			import('lib.pkp.classes.security.authorization.RestrictedSiteAccessPolicy');
+			$this->addPolicy(new RestrictedSiteAccessPolicy($request), true);
+		}
 
 		// Enforce SSL site-wide.
-		import('lib.pkp.classes.security.authorization.HttpsPolicy');
-		$this->addPolicy(new HttpsPolicy($request), true);
+		if ($this->requireSSL()) {
+			import('lib.pkp.classes.security.authorization.HttpsPolicy');
+			$this->addPolicy(new HttpsPolicy($request), true);
+		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
 			// Add user roles in authorized context.
@@ -268,7 +258,7 @@ class PKPHandler {
 		// Make sure that we have a valid decision manager instance.
 		assert(is_a($this->_authorizationDecisionManager, 'AuthorizationDecisionManager'));
 
-		$router =& $request->getRouter();
+		$router = $request->getRouter();
 		if (is_a($router, 'PKPPageRouter')) {
 			// We have to apply a blacklist approach for page
 			// controllers to maintain backwards compatibility:
@@ -309,21 +299,13 @@ class PKPHandler {
 	function validate($requiredContexts = null, $request = null) {
 		// FIXME: for backwards compatibility only - remove when request/router refactoring complete
 		if (!isset($request)) {
-			// FIXME: Trigger a deprecation warning when enough instances of this
-			// call have been fixed to not clutter the error log.
 			$request =& Registry::get('request');
+			if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated call without request object.');
 		}
 
 		foreach ($this->_checks as $check) {
 			// Using authorization checks in the validate() method is deprecated
 			// FIXME: Trigger a deprecation warning.
-
-			// WARNING: This line is for PHP4 compatibility when
-			// instantiating handlers without reference. Should not
-			// be removed or otherwise used.
-			// See <http://pkp.sfu.ca/wiki/index.php/Information_for_Developers#Use_of_.24this_in_the_constructor>
-			// for a similar problem.
-			$check->_setHandler($this);
 
 			// check should redirect on fail and continue on pass
 			// default action is to redirect to the index page on fail
@@ -351,18 +333,18 @@ class PKPHandler {
 	 * @param $request PKPRequest
 	 * @param $args array
 	 */
-	function initialize(&$request, $args = null) {
+	function initialize($request, $args = null) {
 		// Set the controller id to the requested
 		// page (page routing) or component name
 		// (component routing) by default.
-		$router =& $request->getRouter();
+		$router = $request->getRouter();
 		if (is_a($router, 'PKPComponentRouter')) {
 			$componentId = $router->getRequestedComponent($request);
 			// Create a somewhat compressed but still globally unique
 			// and human readable component id.
 			// Example: "grid.citation.CitationGridHandler"
 			// becomes "grid-citation-citationgrid"
-			$componentId = str_replace('.', '-', String::strtolower(String::substr($componentId, 0, -7)));
+			$componentId = str_replace('.', '-', PKPString::strtolower(PKPString::substr($componentId, 0, -7)));
 			$this->setId($componentId);
 		} else {
 			assert(is_a($router, 'PKPPageRouter'));
@@ -372,24 +354,24 @@ class PKPHandler {
 
 	/**
 	 * Return the DBResultRange structure and misc. variables describing the current page of a set of pages.
+	 * @param $request PKPRequest
 	 * @param $rangeName string Symbolic name of range of pages; must match the Smarty {page_list ...} name.
 	 * @param $contextData array If set, this should contain a set of data that are required to
 	 * 	define the context of this request (for maintaining page numbers across requests).
 	 *	To disable persistent page contexts, set this variable to null.
-	 * @return array ($pageNum, $dbResultRange)
+	 * @return DBResultRange
 	 */
-	function &getRangeInfo($rangeName, $contextData = null) {
-		//FIXME: is there any way to get around calling a Request (instead of a PKPRequest) here?
-		$context =& Request::getContext();
-		$pageNum = PKPRequest::getUserVar($rangeName . 'Page');
+	static function getRangeInfo($request, $rangeName, $contextData = null) {
+		$context = $request->getContext();
+		$pageNum = $request->getUserVar(self::getPageParamName($rangeName));
 		if (empty($pageNum)) {
-			$session =& PKPRequest::getSession();
+			$session =& $request->getSession();
 			$pageNum = 1; // Default to page 1
 			if ($session && $contextData !== null) {
 				// See if we can get a page number from a prior request
-				$contextHash = PKPHandler::hashPageContext($contextData);
+				$contextHash = self::hashPageContext($request, $contextData);
 
-				if (PKPRequest::getUserVar('clearPageContext')) {
+				if ($request->getUserVar('clearPageContext')) {
 					// Explicitly clear the old page context
 					$session->unsetSessionVar("page-$contextHash");
 				} else {
@@ -398,10 +380,10 @@ class PKPHandler {
 				}
 			}
 		} else {
-			$session =& PKPRequest::getSession();
+			$session =& $request->getSession();
 			if ($session && $contextData !== null) {
 				// Store the page number
-				$contextHash = PKPHandler::hashPageContext($contextData);
+				$contextHash = self::hashPageContext($request, $contextData);
 				$session->setSessionVar("page-$contextHash", $pageNum);
 			}
 		}
@@ -411,23 +393,45 @@ class PKPHandler {
 
 		import('lib.pkp.classes.db.DBResultRange');
 
-		if (isset($count)) $returner = new DBResultRange($count, $pageNum);
-		else $returner = new DBResultRange(-1, -1);
-
-		return $returner;
+		if (isset($count)) return new DBResultRange($count, $pageNum);
+		else return new DBResultRange(-1, -1);
 	}
 
-	function setupTemplate() {
+	/**
+	 * Get the range info page parameter name.
+	 * @param $rangeName string
+	 * @return string
+	 */
+	static function getPageParamName($rangeName) {
+		return $rangeName . 'Page';
+	}
+
+	/**
+	 * Set up the basic template.
+	 * @param $request PKPRequest
+	 */
+	function setupTemplate($request) {
+		// FIXME: for backwards compatibility only - remove
+		if (!isset($request)) {
+			$request =& Registry::get('request');
+			if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated call without request object.');
+		}
+		assert(is_a($request, 'PKPRequest'));
+
 		AppLocale::requireComponents(
 			LOCALE_COMPONENT_PKP_COMMON,
-			LOCALE_COMPONENT_PKP_USER
+			LOCALE_COMPONENT_PKP_USER,
+			LOCALE_COMPONENT_APP_COMMON
 		);
-		if (defined('LOCALE_COMPONENT_APPLICATION_COMMON')) {
-			AppLocale::requireComponents(LOCALE_COMPONENT_APPLICATION_COMMON);
+
+		$userRoles = (array) $this->getAuthorizedContextObject(ASSOC_TYPE_USER_ROLES);
+		if (array_intersect(array(ROLE_ID_MANAGER), $userRoles)) {
+			AppLocale::requireComponents(LOCALE_COMPONENT_PKP_MANAGER);
 		}
 
-		$templateMgr =& TemplateManager::getManager();
-		$templateMgr->assign('userRoles', $this->getAuthorizedContextObject(ASSOC_TYPE_USER_ROLES));
+		$templateMgr = TemplateManager::getManager($request);
+		$templateMgr->assign('userRoles', $userRoles);
+
 		$accessibleWorkflowStages = $this->getAuthorizedContextObject(ASSOC_TYPE_ACCESSIBLE_WORKFLOW_STAGES);
 		if ($accessibleWorkflowStages) $templateMgr->assign('accessibleWorkflowStages', $accessibleWorkflowStages);
 	}
@@ -436,26 +440,74 @@ class PKPHandler {
 	 * Generate a unique-ish hash of the page's identity, including all
 	 * context that differentiates it from other similar pages (e.g. all
 	 * articles vs. all articles starting with "l").
+	 * @param $request PKPRequest
 	 * @param $contextData array A set of information identifying the page
 	 * @return string hash
 	 */
-	function hashPageContext($contextData = array()) {
+	static function hashPageContext($request, $contextData = array()) {
 		return md5(
-			implode(',', Request::getRequestedContextPath()) . ',' .
-			Request::getRequestedPage() . ',' .
-			Request::getRequestedOp() . ',' .
+			implode(',', $request->getRequestedContextPath()) . ',' .
+			$request->getRequestedPage() . ',' .
+			$request->getRequestedOp() . ',' .
 			serialize($contextData)
 		);
 	}
 
 	/**
-	 * Get a list of pages that don't require login, even if the system does
-	 * FIXME: Delete this method when authorization re-factoring is complete.
-	 * @return array
+	 * Get the iterator of working contexts.
+	 * @param $request PKPRequest
+	 * @return ItemIterator
 	 */
-	function getLoginExemptions() {
-		import('lib.pkp.classes.security.authorization.RestrictedSiteAccessPolicy');
-		return RestrictedSiteAccessPolicy::_getLoginExemptions();
+	function getWorkingContexts($request) {
+		// For installation process
+		if (defined('SESSION_DISABLE_INIT') || !Config::getVar('general', 'installed')) {
+			return null;
+		}
+
+		$user = $request->getUser();
+		$contextDao = Application::getContextDAO();
+		return $contextDao->getAvailable($user?$user->getId():null);
+	}
+
+	/**
+	 * Return the context that is configured in site redirect setting.
+	 * @param $request Request
+	 * @return mixed Either Context or null
+	 */
+	function getSiteRedirectContext($request) {
+		$site = $request->getSite();
+		if ($site && ($contextId = $site->getRedirect())) {
+			$contextDao = Application::getContextDAO(); /* @var $contextDao ContextDAO */
+			return $contextDao->getById($contextId);
+		}
+		return null;
+	}
+
+	/**
+	 * Return the first context that user is enrolled with.
+	 * @param $user User
+	 * @param $contexts Array
+	 * @return mixed Either Context or null
+	 */
+	function getFirstUserContext($user, $contexts) {
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+		$context = null;
+		foreach($contexts as $workingContext) {
+			$userIsEnrolled = $userGroupDao->userInAnyGroup($user->getId(), $workingContext->getId());
+			if ($userIsEnrolled) {
+				$context = $workingContext;
+				break;
+			}
+		}
+		return $context;
+	}
+
+	/**
+	 * Assume SSL is required for all handlers, unless overridden in subclasses.
+	 * @return boolean
+	 */
+	function requireSSL() {
+		return true;
 	}
 }
 

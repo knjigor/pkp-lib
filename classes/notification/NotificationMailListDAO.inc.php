@@ -3,7 +3,8 @@
 /**
  * @file classes/notification/NotificationMailListDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class NotificationMailListDAO
@@ -24,7 +25,7 @@ class NotificationMailListDAO extends DAO {
 	/**
 	 * Generates an access key for the guest user and adds them to the notification_mail_list table
 	 * @param $email string
-	 * @param $contextId int
+	 * @param $contextId int Context (journal/conference/press) ID
 	 * @return string
 	 */
 	function subscribeGuest($email, $contextId) {
@@ -34,7 +35,7 @@ class NotificationMailListDAO extends DAO {
 		if($this->getMailListIdByToken($token, $contextId)) return $this->subscribeGuest($email, $contextId);
 
 		// Check that the email doesn't already exist
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM notification_mail_list WHERE email = ? AND context = ?',
 			array(
 				$email,
@@ -61,11 +62,11 @@ class NotificationMailListDAO extends DAO {
 	/**
 	 * Gets a mailing list subscription id by a token value
 	 * @param $token int
-	 * @param $contextId
+	 * @param $contextId int Context (journal/conference/press) ID
 	 * @return int
 	 */
 	function getMailListIdByToken($token, $contextId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT notification_mail_list_id FROM notification_mail_list WHERE token = ? AND context = ?',
 				array($token, (int) $contextId)
 		);
@@ -74,16 +75,13 @@ class NotificationMailListDAO extends DAO {
 		$notificationMailListId = $row['notification_mail_list_id'];
 
 		$result->Close();
-		unset($result);
-
 		return $notificationMailListId;
 	}
 
 	/**
 	 * Removes an email address from email notifications
-	 * @param $email string
-	 * @param $password string
-	 * @param $contextId int
+	 * @param $token string
+	 * @param $contextId int Context (journal/conference/press) ID
 	 * @return boolean
 	 */
 	function unsubscribeGuest($token, $contextId) {
@@ -111,11 +109,11 @@ class NotificationMailListDAO extends DAO {
 
 	/**
 	 * Gets a list of email addresses of users subscribed to the mailing list
-	 * @param $contextId int
+	 * @param $contextId int Context (journal/conference/press) ID
 	 * @return array
 	 */
 	function getMailList($contextId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT email FROM notification_mail_list WHERE context = ?',
 			(int) $contextId
 		);
@@ -128,8 +126,6 @@ class NotificationMailListDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $mailList;
 	}
 
@@ -137,8 +133,8 @@ class NotificationMailListDAO extends DAO {
 	 * Get the ID of the last inserted notification
 	 * @return int
 	 */
-	function getInsertNotificationMailListId() {
-		return $this->getInsertId('notification_mail_list', 'notification_mail_list_id');
+	function getInsertId() {
+		return $this->_getInsertId('notification_mail_list', 'notification_mail_list_id');
 	}
 
 }

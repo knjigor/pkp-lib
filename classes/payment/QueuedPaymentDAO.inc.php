@@ -3,7 +3,8 @@
 /**
  * @file classes/payment/QueuedPaymentDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class QueuedPaymentDAO
@@ -29,7 +30,7 @@ class QueuedPaymentDAO extends DAO {
 	 * @return QueuedPayment or null on failure
 	 */
 	function &getQueuedPayment($queuedPaymentId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM queued_payments WHERE queued_payment_id = ?',
 			(int) $queuedPaymentId
 		);
@@ -40,7 +41,6 @@ class QueuedPaymentDAO extends DAO {
 			if (!is_object($queuedPayment)) $queuedPayment = null;
 		}
 		$result->Close();
-		unset($result);
 		return $queuedPayment;
 	}
 
@@ -49,7 +49,7 @@ class QueuedPaymentDAO extends DAO {
 	 * @param $queuedPayment QueuedPayment
 	 * @param $expiryDate date optional
 	 */
-	function insertQueuedPayment(&$queuedPayment, $expiryDate = null) {
+	function insertObject($queuedPayment, $expiryDate = null) {
 		$this->update(
 			sprintf('INSERT INTO queued_payments
 				(date_created, date_modified, expiry_date, payment_data)
@@ -63,7 +63,7 @@ class QueuedPaymentDAO extends DAO {
 			)
 		);
 
-		return $queuedPayment->setId($this->getInsertQueuedPaymentId());
+		return $queuedPayment->setId($this->getInsertId());
 	}
 
 	/**
@@ -90,8 +90,8 @@ class QueuedPaymentDAO extends DAO {
 	 * Get the ID of the last inserted queued payment.
 	 * @return int
 	 */
-	function getInsertQueuedPaymentId() {
-		return $this->getInsertId('queued_payments', 'queued_payment_id');
+	function getInsertId() {
+		return $this->_getInsertId('queued_payments', 'queued_payment_id');
 	}
 
 	/**

@@ -4,14 +4,14 @@
 <!--
   * locale/cs_CZ/submission.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the cs_CZ (Czech) locale.
+  * Localization strings for the cs_CZ (Čeština) locale.
   * Translated by František Chmelik, frantisek.chmelik 'at' upol.cz
   * Corrections, migration to the OCS 2.3.x by Ivo Vesely and Petr Petyovsky (petyovsky 'at' feec.vutbr.cz)
   *
-  * $Id: submission.xml 218 2011-06-21 20:42:56Z petyovsky $
   -->
 
 <locale name="cs_CZ" full_name = "Čeština">
@@ -24,7 +24,7 @@
 	<message key="submission.backToSubmissionEditing">Zpět na editaci příspěvku</message>
 	<message key="submission.changeComments">Změnit na</message>
 	<message key="submission.citations">Reference</message>
-	<message key="submission.citations.jQueryRequired"><![CDATA[Editace citací vyžaduje doplněk jQuery. Prosím, navštivte <a target="_new" href="{$genericPluginsUrl}">stránku Obecné doplňky</a> a zde povolte doplněk jQuery.]]></message>
+	<message key="submission.citations.jQueryRequired"><![CDATA[Editace citací vyžaduje doplněk jQuery. Prosím, navštivte <a target="_blank" href="{$genericPluginsUrl}">stránku Obecné doplňky</a> a zde povolte doplněk jQuery.]]></message>
 	<message key="submission.citations.grid.fields">Název pole</message>
 	<message key="submission.citations.grid.values">Hodnota pole</message>
 	<message key="submission.citations.grid.title">Upravit citace</message>
@@ -41,7 +41,7 @@
 	<message key="submission.citations.form.description">Pokud nejste spokojen(a) s obsahem citací, můžete citace ručně upravit editací jednotlivých položek a poté provést opětovnou kontrolu.</message>
 	<message key="submission.citations.form.unsavedChanges">Citace obsahuje data z externích databází, které nejsou dosud uloženy. Prosím přečtěte si a případně upravte datová pole. Poté zvolte "OK" pro uložení změn, nebo zvolte tlačítko "Zrušit", kterým provedené změny neuložíte.</message>
 	<message key="submission.citations.form.filterError">Analýza nebo vyhledávání nevrátily žádné výsledky. Úpravou textu citace pravděpodobně získáte lepší výsledek.</message>
-	<message key="submission.citations.output.unsupportedPublicationType">Nepodporovaný nebo chybějící typ publikace. Prosím upravte citaci ručně a zadejte typ publikace (buď "kniha" nebo "časopis").</message>
+	<message key="submission.citations.output.unsupportedPublicationType">Nepodporovaný nebo chybějící typ publikace. Prosím upravte citaci ručně a zadejte typ publikace (buď "book", "journal", "thesis" nebo "conf-proc").</message>
 	<message key="submission.citations.output.exportDescription">Prosím, zkopírujte obsah tohoto dialogového okna a vložte jej do dokumentu.</message>
 	<!-- FIXME: move to meta-data plug-in -->
 	<message key="metadata.property.displayName.author">Autoři</message>
@@ -191,7 +191,7 @@
 	<message key="submission.page.summary">#{$id} Souhrn</message>
 	<message key="submission.page.citations">#{$id} Citace</message>
 	<message key="submission.peerReview"><![CDATA[Recenzní&nbsp;řízení]]></message>
-	<message key="submission.recommendation">Doporučení</message>
+	<message key="submission.recommendation">Doporučení: {$recommendation}</message>
 	<message key="submission.rejected">Zamítnut</message>
 	<message key="submission.request">Požádat</message>
 	<message key="submission.response">Odpověď</message>
@@ -235,4 +235,8 @@
 
 	<!-- Author Submission -->
 	<message key="author.submit.submissionCitations">Uveďte formátovaný seznam referencí pro práce citované v tomto příspěvku.</message>
+	<message key="log.review.reviewerAssigned">{$reviewerName} byl přidělen pro recenzování příspěvku {$submissionId} v recenzním kole {$round}.</message>
+
+	<message key="submission.reviewForm">Formulář posudku</message>
+	<message key="submission.reviewFormResponse">Odpovědi na formulář posudku</message>
 </locale>

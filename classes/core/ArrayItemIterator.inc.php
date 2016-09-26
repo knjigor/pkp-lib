@@ -3,7 +3,8 @@
 /**
  * @file classes/core/ArrayItemIterator.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ArrayItemIterator
@@ -16,16 +17,16 @@
 import('lib.pkp.classes.core.ItemIterator');
 
 class ArrayItemIterator extends ItemIterator {
-	/** @var $theArray array The array of contents of this iterator. */
+	/** @var array The array of contents of this iterator. */
 	var $theArray;
 
-	/** @var $itemsPerPage int Number of items to iterate through on this page */
+	/** @var int Number of items to iterate through on this page */
 	var $itemsPerPage;
 
-	/** @var $page int The current page. */
+	/** @var int The current page. */
 	var $page;
 
-	/** @var $count int The total number of items. */
+	/** @var int The total number of items. */
 	var $count;
 
 	/** Whether or not the iterator was empty from the start */

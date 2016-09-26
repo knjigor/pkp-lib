@@ -3,7 +3,8 @@
 /**
  * @file classes/core/PKPPageRouter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPPageRouter
@@ -19,7 +20,7 @@ import('lib.pkp.classes.core.PKPRouter');
 
 class PKPPageRouter extends PKPRouter {
 	/** @var array pages that don't need an installed system to be displayed */
-	var $_installationPages = array('install', 'help');
+	var $_installationPages = array('install', 'help', 'header', 'sidebar');
 
 	//
 	// Internal state cache variables
@@ -34,6 +35,13 @@ class PKPPageRouter extends PKPRouter {
 	var $_indexUrl;
 	/** @var string cache filename */
 	var $_cacheFilename;
+
+	/**
+	 * Constructor
+	 */
+	function PKPPageRouter() {
+		parent::PKPRouter();
+	}
 
 	/**
 	 * get the installation pages
@@ -59,7 +67,7 @@ class PKPPageRouter extends PKPRouter {
 	 *  bypass session check.
 	 * @return boolean
 	 */
-	function isCacheable(&$request, $testOnly = false) {
+	function isCacheable($request, $testOnly = false) {
 		if (defined('SESSION_DISABLE_INIT') && !$testOnly) return false;
 		if (!Config::getVar('general', 'installed')) return false;
 		if (!empty($_POST) || Validation::isLoggedIn()) return false;
@@ -67,7 +75,7 @@ class PKPPageRouter extends PKPRouter {
 		if ($request->isPathInfoEnabled()) {
 			if (!empty($_GET)) return false;
 		} else {
-			$application =& $this->getApplication();
+			$application = $this->getApplication();
 			$ok = array_merge($application->getContextList(), array('page', 'op', 'path'));
 			if (!empty($_GET) && count(array_diff(array_keys($_GET), $ok)) != 0) {
 				return false;
@@ -84,24 +92,10 @@ class PKPPageRouter extends PKPRouter {
 	 * @param $request PKPRequest the request to be routed
 	 * @return String the page path (under the "pages" directory)
 	 */
-	function getRequestedPage(&$request) {
-		assert(is_a($request->getRouter(), 'PKPPageRouter'));
+	function getRequestedPage($request) {
 		if (!isset($this->_page)) {
-			if ($request->isPathInfoEnabled()) {
-				$application = $this->getApplication();
-				$contextDepth = $application->getContextDepth();
-				if (isset($_SERVER['PATH_INFO'])) {
-					$vars = explode('/', trim($_SERVER['PATH_INFO'], '/'));
-					if (count($vars) > $contextDepth) {
-						$this->_page = $vars[$contextDepth];
-					}
-				}
-			} else {
-				$this->_page = $request->getUserVar('page');
-			}
-			$this->_page = Core::cleanFileVar(is_null($this->_page) ? '' : $this->_page);
+			$this->_page = $this->_getRequestedUrlParts(array('Core', 'getPage'), $request);
 		}
-
 		return $this->_page;
 	}
 
@@ -110,53 +104,20 @@ class PKPPageRouter extends PKPRouter {
 	 * @param $request PKPRequest the request to be routed
 	 * @return string
 	 */
-	function getRequestedOp(&$request) {
-		assert(is_a($request->getRouter(), 'PKPPageRouter'));
+	function getRequestedOp($request) {
 		if (!isset($this->_op)) {
-			$this->_op = '';
-			if ($request->isPathInfoEnabled()) {
-				$application = $this->getApplication();
-				$contextDepth = $application->getContextDepth();
-				if (isset($_SERVER['PATH_INFO'])) {
-					$vars = explode('/', trim($_SERVER['PATH_INFO'], '/'));
-					if (count($vars) > $contextDepth+1) {
-						$this->_op = $vars[$contextDepth+1];
-					}
-				}
-			} else {
-				$this->_op = $request->getUserVar('op');
-			}
-			$this->_op = Core::cleanFileVar(empty($this->_op) ? 'index' : $this->_op);
+			$this->_op = $this->_getRequestedUrlParts(array('Core', 'getOp'), $request);
 		}
-
 		return $this->_op;
 	}
 
 	/**
-	 * Get the arguments requested in the URL (not GET/POST arguments, only arguments appended to the URL separated by "/").
+	 * Get the arguments requested in the URL.
 	 * @param $request PKPRequest the request to be routed
 	 * @return array
 	 */
-	function getRequestedArgs(&$request) {
-		if ($request->isPathInfoEnabled()) {
-			$args = array();
-			if (isset($_SERVER['PATH_INFO'])) {
-				$application = $this->getApplication();
-				$contextDepth = $application->getContextDepth();
-				$vars = explode('/', $_SERVER['PATH_INFO']);
-				if (count($vars) > $contextDepth+3) {
-					$args = array_slice($vars, $contextDepth+3);
-					for ($i=0, $count=count($args); $i<$count; $i++) {
-						$args[$i] = Core::cleanVar(get_magic_quotes_gpc() ? stripslashes($args[$i]) : $args[$i]);
-					}
-				}
-			}
-		} else {
-			$args = $request->getUserVar('path');
-			if (empty($args)) $args = array();
-			elseif (!is_array($args)) $args = array($args);
-		}
-		return $args;
+	function getRequestedArgs($request) {
+		return $this->_getRequestedUrlParts(array('Core', 'getArgs'), $request);
 	}
 
 
@@ -164,31 +125,31 @@ class PKPPageRouter extends PKPRouter {
 	// Implement template methods from PKPRouter
 	//
 	/**
-	 * @see PKPRouter::getCacheFilename()
+	 * @copydoc PKPRouter::getCacheFilename()
 	 */
-	function getCacheFilename(&$request) {
+	function getCacheFilename($request) {
 		if (!isset($this->_cacheFilename)) {
 			if ($request->isPathInfoEnabled()) {
 				$id = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'index';
 				$id .= '-' . AppLocale::getLocale();
 			} else {
 				$id = '';
-				$application =& $this->getApplication();
+				$application = $this->getApplication();
 				foreach($application->getContextList() as $contextName) {
 					$id .= $request->getUserVar($contextName) . '-';
 				}
 				$id .= $request->getUserVar('page') . '-' . $request->getUserVar('op') . '-' . $request->getUserVar('path') . '-' . AppLocale::getLocale();
 			}
-			$path = dirname(INDEX_FILE_LOCATION);
+			$path = Core::getBaseDir();
 			$this->_cacheFilename = $path . '/cache/wc-' . md5($id) . '.html';
 		}
 		return $this->_cacheFilename;
 	}
 
 	/**
-	 * @see PKPRouter::route()
+	 * @copydoc PKPRouter::route()
 	 */
-	function route(&$request) {
+	function route($request) {
 		// Determine the requested page and operation
 		$page = $this->getRequestedPage($request);
 		$op = $this->getRequestedOp($request);
@@ -205,7 +166,7 @@ class PKPPageRouter extends PKPRouter {
 
 				// The correct redirection for the installer page
 				// depends on the context depth of this application.
-				$application =& $this->getApplication();
+				$application = $this->getApplication();
 				$contextDepth = $application->getContextDepth();
 				// The context will be filled with all nulls
 				$redirectArguments = array_pad(array('install'), - $contextDepth - 1, null);
@@ -223,17 +184,18 @@ class PKPPageRouter extends PKPRouter {
 		// opportunity to load required resources and set HANDLER_CLASS.
 		if (!HookRegistry::call('LoadHandler', array(&$page, &$op, &$sourceFile))) {
 			if (file_exists($sourceFile)) require('./'.$sourceFile);
-			elseif (file_exists('lib/pkp/'.$sourceFile)) require('./lib/pkp/'.$sourceFile);
+			elseif (file_exists(PKP_LIB_PATH . DIRECTORY_SEPARATOR . $sourceFile))
+				require('.' . DIRECTORY_SEPARATOR . PKP_LIB_PATH . DIRECTORY_SEPARATOR . $sourceFile);
 			elseif (empty($page)) require(ROUTER_DEFAULT_PAGE);
 			else {
-				$dispatcher =& $this->getDispatcher();
+				$dispatcher = $this->getDispatcher();
 				$dispatcher->handle404();
 			}
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
 			// Initialize session
-			$sessionManager =& SessionManager::getManager();
+			SessionManager::getManager();
 		}
 
 		// Call the selected handler's index operation if
@@ -243,15 +205,15 @@ class PKPPageRouter extends PKPRouter {
 		// Redirect to 404 if the operation doesn't exist
 		// for the handler.
 		$methods = array();
-		if (defined('HANDLER_CLASS')) $methods = array_map('strtolower', get_class_methods(HANDLER_CLASS));
-		if (!in_array(strtolower($op), $methods)) {
-			$dispatcher =& $this->getDispatcher();
+		if (defined('HANDLER_CLASS')) $methods = get_class_methods(HANDLER_CLASS);
+		if (!in_array($op, $methods)) {
+			$dispatcher = $this->getDispatcher();
 			$dispatcher->handle404();
 		}
 
 		// Instantiate the handler class
-		$HandlerClass = HANDLER_CLASS;
-		$handler = new $HandlerClass($request);
+		$handlerClass = HANDLER_CLASS;
+		$handler = new $handlerClass($request);
 
 		// Authorize and initialize the request but don't call the
 		// validate() method on page handlers.
@@ -267,9 +229,9 @@ class PKPPageRouter extends PKPRouter {
 	}
 
 	/**
-	 * @see PKPRouter::url()
+	 * @copydoc PKPRouter::url()
 	 */
-	function url(&$request, $newContext = null, $page = null, $op = null, $path = null,
+	function url($request, $newContext = null, $page = null, $op = null, $path = null,
 				$params = null, $anchor = null, $escape = false) {
 		$pathInfoEnabled = $request->isPathInfoEnabled();
 
@@ -414,7 +376,7 @@ class PKPPageRouter extends PKPRouter {
 	}
 
 	/**
-	 * @see PKPRouter::handleAuthorizationFailure()
+	 * @copydoc PKPRouter::handleAuthorizationFailure()
 	 */
 	function handleAuthorizationFailure($request, $authorizationMessage) {
 		// Redirect to the authorization denied page.
@@ -422,6 +384,75 @@ class PKPPageRouter extends PKPRouter {
 		$request->redirect(null, 'user', 'authorizationDenied', null, array('message' => $authorizationMessage));
 	}
 
+	/**
+	 * Redirect to user home page (or the user group home page if the user has one user group).
+	 * @param $request PKPRequest the request to be routed
+	 */
+	function redirectHome($request) {
+		$request->redirectUrl($this->getHomeUrl($request));
+	}
+
+	/**
+	 * Get the user's "home" page URL (e.g. where they are sent after login).
+	 * @param $request PKPRequest the request to be routed
+	 */
+	function getHomeUrl($request) {
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+		$user = $request->getUser();
+		$userId = $user->getId();
+
+		if ($context = $this->getContext($request, 1)) {
+			// The user is in the context, see if they have zero or one roles only
+			$userGroups = $userGroupDao->getByUserId($userId, $context->getId());
+			if($userGroups->getCount() <= 1) {
+				$userGroup = $userGroups->next();
+				if (!$userGroup || $userGroup->getRoleId() == ROLE_ID_READER) return $request->url(null, 'index');
+			}
+			return $request->url(null, 'submissions');
+		} else {
+			// The user is at the site context, check to see if they are
+			// only registered in one place w/ one role
+			$userGroups = $userGroupDao->getByUserId($userId, CONTEXT_ID_NONE);
+
+			if($userGroups->getCount() == 1) {
+				$contextDao = Application::getContextDAO();
+				$userGroup = $userGroups->next();
+				$context = $contextDao->getById($userGroup->getContextId());
+				if (!isset($context)) $request->redirect('index', 'index');
+				if ($userGroup->getRoleId() == ROLE_ID_READER) $request->redirect(null, 'index');
+			}
+			return $request->url('index', 'index');
+		}
+	}
+
+
+	//
+	// Private helper methods.
+	//
+	/**
+	* Retrieve part of the current requested
+	* url using the passed callback method.
+	* @param $callback array Core method to retrieve
+	* page, operation or arguments from url.
+	* @param $request PKPRequest
+	* @return array|string|null
+	*/
+	private function _getRequestedUrlParts($callback, &$request) {
+		$url = null;
+		assert(is_a($request->getRouter(), 'PKPPageRouter'));
+		$isPathInfoEnabled = $request->isPathInfoEnabled();
+
+		if ($isPathInfoEnabled) {
+			if (isset($_SERVER['PATH_INFO'])) {
+				$url = $_SERVER['PATH_INFO'];
+			}
+		} else {
+			$url = $request->getCompleteUrl();
+		}
+
+		$userVars = $request->getUserVars();
+		return call_user_func_array($callback, array($url, $isPathInfoEnabled, $userVars));
+	}
 }
 
 ?>

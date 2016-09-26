@@ -3,7 +3,8 @@
 /**
  * @file classes/cache/MemcacheCache.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MemcacheCache
@@ -140,7 +141,7 @@ class MemcacheCache extends GenericCache {
 	 * resulting in more subsequent calls to this function,
 	 * resulting in more flushes, etc.
 	 */
-	function setEntireCache(&$contents) {
+	function setEntireCache($contents) {
 		foreach ($contents as $id => $value) {
 			$this->setCache($id, $value);
 		}

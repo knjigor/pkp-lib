@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup currency
+ * @defgroup currency Currency
+ * Implements currency data objects for managing lists of currencies for e-commerce.
  */
 
 /**
  * @file classes/currency/Currency.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Currency
@@ -43,7 +45,7 @@ class Currency extends DataObject {
 	 * @param $name string
 	 */
 	function setName($name) {
-		return $this->setData('name', $name);
+		$this->setData('name', $name);
 	}
 
 	/**
@@ -59,7 +61,7 @@ class Currency extends DataObject {
 	 * @param $alphaCode string
 	 */
 	function setCodeAlpha($codeAlpha) {
-		return $this->setData('codeAlpha', $codeAlpha);
+		$this->setData('codeAlpha', $codeAlpha);
 	}
 
 	/**
@@ -75,7 +77,21 @@ class Currency extends DataObject {
 	 * @param $codeNumeric string
 	 */
 	function setCodeNumeric($codeNumeric) {
-		return $this->setData('codeNumeric', $codeNumeric);
+		$this->setData('codeNumeric', $codeNumeric);
+	}
+
+	/**
+	 * Format a number per a currency.
+	 * @param $amount numeric|null Numeric amount, or null
+	 * @return string|null Formatted amount, or null if null was supplied as amount
+	 */
+	function format($amount) {
+		if ($amount === null) return $amount;
+
+		// Some systems (e.g. Windows) do not provide money_format. Convert directly to string in that case.
+		if (!function_exists('money_format')) return (string) $amount;
+		setlocale(LC_MONETARY, 'en_US.UTF-8');
+		return money_format('%n', $amount);
 	}
 }
 

@@ -1,27 +1,18 @@
 <?php
 
 /**
- * @file pages/help/HelpHandler.inc.php
+ * @file pages/about/HelpHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class HelpHandler
  * @ingroup pages_help
  *
- * @brief Handle requests for viewing help pages.
+ * @brief Handle requests for help functions.
  */
 
-
-
-define('HELP_DEFAULT_TOPIC', 'index/topic/000000');
-define('HELP_DEFAULT_TOC', 'index/toc/000000');
-
-import('lib.pkp.classes.help.HelpToc');
-import('lib.pkp.classes.help.HelpTocDAO');
-import('lib.pkp.classes.help.HelpTopic');
-import('lib.pkp.classes.help.HelpTopicDAO');
-import('lib.pkp.classes.help.HelpTopicSection');
 import('classes.handler.Handler');
 
 class HelpHandler extends Handler {
@@ -30,120 +21,58 @@ class HelpHandler extends Handler {
 	 */
 	function HelpHandler() {
 		parent::Handler();
+		AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON);
 	}
 
 	/**
-	 * Display help table of contents.
-	 */
-	function index() {
-		$this->view(array('index', 'topic', '000000'));
-	}
-
-	function toc() {
-		$this->validate();
-		$this->setupTemplate();
-
-		$templateMgr =& TemplateManager::getManager();
-		import('classes.help.Help');
-		$help =& Help::getHelp();
-		$templateMgr->assign_by_ref('helpToc', $help->getTableOfContents());
-		$templateMgr->display('help/helpToc.tpl');
-	}
-
-	/**
-	 * Display the selected help topic.
-	 * @param $args array first parameter is the ID of the topic to display
+	 * Display help.
+	 * @param $args array
 	 * @param $request PKPRequest
 	 */
-	function view($args, $request) {
-		$this->validate();
-		$this->setupTemplate();
+	function index($args, $request) {
+		require_once('lib/pkp/lib/vendor/michelf/php-markdown/Michelf/Markdown.inc.php');
+		$path = 'docs/manual/';
+		$filename = join('/', $request->getRequestedArgs());
 
-		$topicId = implode("/",$args);
-		$keyword = trim(String::regexp_replace('/[^\w\s\.\-]/', '', strip_tags($request->getUserVar('keyword'))));
-		$result = (int) $request->getUserVar('result');
-
-		$topicDao =& DAORegistry::getDAO('HelpTopicDAO');
-		$topic = $topicDao->getTopic($topicId);
-
-		if ($topic === false) {
-			// Invalid topic, use default instead
-			$topicId = HELP_DEFAULT_TOPIC;
-			$topic = $topicDao->getTopic($topicId);
-		}
-
-		$tocDao =& DAORegistry::getDAO('HelpTocDAO');
-		$toc = $tocDao->getToc($topic->getTocId());
-
-		if ($toc === false) {
-			// Invalid toc, use default instead
-			$toc = $tocDao->getToc(HELP_DEFAULT_TOC);
-		}
-
-		if ($topic->getSubTocId() != null) {
-			$subToc = $tocDao->getToc($topic->getSubTocId());
+		// If a hash (anchor) was specified, discard it -- we don't need it here.
+		if ($hashIndex = strpos($filename, '#')) {
+			$hash = substr($filename, $hashIndex+1);
+			$filename = substr($filename, 0, $hashIndex);
 		} else {
-			$subToc =  null;
+			$hash = null;
 		}
 
-		$relatedTopics = $topic->getRelatedTopics();
+		$language = AppLocale::getIso1FromLocale(AppLocale::getLocale());
+		if (!file_exists($path . $language)) $language = 'en'; // Default
 
-		$topics = $toc->getTopics();
-
-		$templateMgr =& TemplateManager::getManager();
-		$templateMgr->assign('currentTopicId', $topic->getId());
-		$templateMgr->assign_by_ref('topic', $topic);
-		$templateMgr->assign('toc', $toc);
-		$templateMgr->assign('subToc', $subToc);
-		$templateMgr->assign('relatedTopics', $relatedTopics);
-		$templateMgr->assign('locale', AppLocale::getLocale());
-		$templateMgr->assign('breadcrumbs', $toc->getBreadcrumbs());
-		if (!empty($keyword)) {
-			$templateMgr->assign('helpSearchKeyword', $keyword);
+		if (!$filename || !preg_match('#^([[a-zA-Z0-9_-]+/)+[a-zA-Z0-9_-]+\.\w+$#', $filename) || !file_exists($path . $filename)) {
+			$request->redirect(null, null, null, array($language, 'SUMMARY.md'));
 		}
-		if (!empty($result)) {
-			$templateMgr->assign('helpSearchResult', $result);
-		}
-		$templateMgr->display('help/view.tpl');
-	}
 
-	/**
-	 * Display search results for a topic search by keyword.
-	 */
-	function search() {
-		$this->validate();
-		$this->setupTemplate();
-
-		$searchResults = array();
-
-		$keyword = trim(String::regexp_replace('/[^\w\s\.\-]/', '', strip_tags($request->getUserVar('keyword'))));
-
-		if (!empty($keyword)) {
-			$topicDao =& DAORegistry::getDAO('HelpTopicDAO');
-			$topics = $topicDao->getTopicsByKeyword($keyword);
-
-			$tocDao =& DAORegistry::getDAO('HelpTocDAO');
-			foreach ($topics as $topic) {
-				$searchResults[] = array('topic' => $topic, 'toc' => $tocDao->getToc($topic->getTocId()));
+		// Use the summary document to find next/previous links.
+		// (Yes, we're grepping markdown outside the parser, but this is much faster.)
+		$previousLink = $nextLink = null;
+		if (preg_match_all('/\(([^)]+\.md)\)/sm', file_get_contents($path . $language . '/SUMMARY.md'), $matches)) {
+			$matches = $matches[1];
+			if (($i = array_search(substr($filename, strpos($filename, '/')+1), $matches)) !== false) {
+				if ($i>0) $previousLink = $matches[$i-1];
+				if ($i<count($matches)-1) $nextLink = $matches[$i+1];
 			}
 		}
 
-		$templateMgr =& TemplateManager::getManager();
-		$templateMgr->assign('showSearch', true);
-		$templateMgr->assign('pageTitle', __('help.searchResults'));
-		$templateMgr->assign('helpSearchKeyword', $keyword);
-		$templateMgr->assign('searchResults', $searchResults);
-		$templateMgr->display('help/searchResults.tpl');
-	}
-
-	/**
-	 * Initialize the template
-	 */
-	function setupTemplate() {
-		parent::setupTemplate();
-
-		$templateMgr =& TemplateManager::getManager();
-		$templateMgr->setCacheability(CACHEABILITY_PUBLIC);
+		// Use a URL filter to prepend the current path to relative URLs.
+		$parser = new \Michelf\Markdown;
+		$parser->url_filter_func = function ($url) use ($filename) {
+			return dirname($filename) . '/' . $url;
+		};
+		return new JSONMessage(
+			true,
+			array(
+				'content' => $parser->transform(file_get_contents($path . $filename)),
+				'previous' => $previousLink,
+				'next' => $nextLink,
+			)
+		);
 	}
 }
 

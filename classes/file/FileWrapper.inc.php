@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup file_wrapper
+ * @defgroup file_wrapper File Wrappers
  */
 
 /**
  * @file classes/file/FileWrapper.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FileWrapper
@@ -24,13 +24,13 @@
 
 class FileWrapper {
 
-	/** @var $url string URL to the file */
+	/** @var string URL to the file */
 	var $url;
 
-	/** @var $info array parsed URL info */
+	/** @var array parsed URL info */
 	var $info;
 
-	/** @var $fp int the file descriptor */
+	/** @var int the file descriptor */
 	var $fp;
 
 	/**
@@ -106,7 +106,7 @@ class FileWrapper {
 	 * @param $source mixed; URL, filename, or resources
 	 * @return FileWrapper
 	 */
-	function &wrapper($source) {
+	static function &wrapper($source) {
 		if (ini_get('allow_url_fopen') && Config::getVar('general', 'allow_url_fopen') && is_string($source)) {
 			$info = parse_url($source);
 			$wrapper = new FileWrapper($source, $info);
@@ -122,16 +122,27 @@ class FileWrapper {
 			} else {
 				$scheme = null;
 			}
+
+			$application = Application::getApplication();
+			$request = $application->getRequest();
+			$router = $request->getRouter();
+			if (!Config::getVar('general', 'installed') || defined('RUNNING_UPGRADE') || !$router) {
+				$userAgent = $application->getName() . '/?';
+			} else {
+				$currentVersion =& $application->getCurrentVersion();
+				$userAgent = $application->getName() . '/' . $currentVersion->getVersionString();
+			}
+
 			switch ($scheme) {
 				case 'http':
 					import('lib.pkp.classes.file.wrappers.HTTPFileWrapper');
 					$wrapper = new HTTPFileWrapper($source, $info);
-					$wrapper->addHeader('User-Agent', 'PKP/2.x');
+					$wrapper->addHeader('User-Agent', $userAgent);
 					break;
 				case 'https':
 					import('lib.pkp.classes.file.wrappers.HTTPSFileWrapper');
 					$wrapper = new HTTPSFileWrapper($source, $info);
-					$wrapper->addHeader('User-Agent', 'PKP/2.x');
+					$wrapper->addHeader('User-Agent', $userAgent);
 					break;
 				case 'ftp':
 					import('lib.pkp.classes.file.wrappers.FTPFileWrapper');

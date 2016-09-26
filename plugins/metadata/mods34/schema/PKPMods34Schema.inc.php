@@ -1,24 +1,24 @@
 <?php
-
 /**
- * @defgroup plugins_metadata_mods34_schema
+ * @defgroup plugins_metadata_mods34_schema MODS 3.4 Schema
  */
 
 /**
  * @file plugins/metadata/mods34/schema/PKPMods34Schema.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPMods34Schema
  * @ingroup plugins_metadata_mods34_schema
  * @see MetadataSchema
  *
- * @brief Class that provides meta-data properties compliant with
+ * @brief @verbatim Class that provides meta-data properties compliant with
  *  a subset of MODS Version 3.4. We only support those sub-elements
  *  we have use-cases (and data) for. We map elements and attributes
  *  from the original XML standard to 'element/subelement[@attribute="..."]'
- *  property names.
+ *  property names. @endverbatim
  *
  *  MODS allows most elements, especially top-level elements to be repeated.
  *  We do not implement that full flexibility as we only require repeated
@@ -344,13 +344,6 @@ class PKPMods34Schema extends MetadataSchema {
 		// values be parsed into subelements, they may also be listed as a string under topic.
 		$this->addProperty('subject/topic', $topicType, true, METADATA_PROPERTY_CARDINALITY_MANY);
 
-		// Use this subelement for geographic subject terms. If the geographic name is part of a
-		// corporate body (for example, United States. Senate), it is coded as name, not geographic
-		$this->addProperty('subject/geographic', $geographicType, true);
-
-		// Use this subelement for chronological subject terms or temporal coverage.
-		// The first version is expressed as a subject term (historical coverage)
-		$this->addProperty('subject/temporal', $temporalType, true);
 		// The second version is expressed as a structured date using the same data
 		// definition as MODS dates.
 		$this->addProperty('subject/temporal[@encoding="w3cdtf"]', METADATA_PROPERTY_TYPE_DATE);

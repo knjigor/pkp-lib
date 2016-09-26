@@ -1,8 +1,10 @@
 <?php
+
 /**
- * @file classes/filter/ValidatorTypeDescription.inc.php
+ * @file classes/validation/ValidatorTypeDescription.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ValidatorTypeDescription
@@ -71,10 +73,10 @@ class ValidatorTypeDescription extends PrimitiveTypeDescription {
 
 		// Validator name must start with a lower case letter
 		// and may contain only alphanumeric letters.
-		if (!String::regexp_match('/^[a-z][a-zA-Z0-9]+$/', $typeNameParts[0])) return false;
+		if (!PKPString::regexp_match('/^[a-z][a-zA-Z0-9]+$/', $typeNameParts[0])) return false;
 
 		// Translate the validator name into a validator class name.
-		$this->_validatorClassName = 'Validator'.String::ucfirst($typeNameParts[0]);
+		$this->_validatorClassName = 'Validator'.PKPString::ucfirst($typeNameParts[0]);
 
 		return true;
 	}

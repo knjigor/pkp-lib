@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/metadata/FormValidatorLocaleTest.inc.php
+ * @file tests/classes/form/validation/FormValidatorLocaleTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidatorLocaleTest
@@ -14,14 +15,14 @@
  */
 
 
-require_mock_env('lib/pkp/tests/mock');
+require_mock_env('env1');
 
 import('lib.pkp.tests.PKPTestCase');
 import('lib.pkp.classes.form.Form');
 
 class FormValidatorLocaleTest extends PKPTestCase {
 	/**
-	 * @covers FormValidatorAppLocale::getMessage
+	 * @covers FormValidatorLocale::getMessage
 	 */
 	public function testGetMessage() {
 		$formValidator = new FormValidatorLocale($form, 'testData', FORM_VALIDATOR_REQUIRED_VALUE, 'some.message.key');
@@ -29,7 +30,7 @@ class FormValidatorLocaleTest extends PKPTestCase {
 	}
 
 	/**
-	 * @covers FormValidatorAppLocale::getFieldValue
+	 * @covers FormValidatorLocale::getFieldValue
 	 */
 	public function testGetFieldValue() {
 		$form = new Form('some template');

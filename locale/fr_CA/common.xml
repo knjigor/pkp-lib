@@ -4,7 +4,8 @@
 <!--
   * locale/fr_CA/common.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localization strings for the fr_CA (Français (Canada)) locale.
@@ -15,7 +16,6 @@
 	<message key="about.aboutSite">À propos du site</message>
 	<message key="about.contact">Contact</message>
 	<message key="about.contact.email">Courriel</message>
-	<message key="about.contact.fax">Télécopieur</message>
 	<message key="about.contact.phone">Téléphone</message>
 	<message key="about.contact.principalContact">Contact principal</message>
 	<message key="about.contact.supportContact">Contact de soutien</message>
@@ -34,6 +34,8 @@
 	<message key="common.preview">Aperçu</message>
 	<message key="common.activate">Activer</message>
 	<message key="common.deactivate">Désactiver</message>
+	<message key="common.dimensionsInches"><![CDATA[{$width}"&nbsp;x&nbsp;{$height}" @ {$dpi} DPI/PPI]]></message>
+	<message key="common.dimensionsPixels">{$width} x {$height} pixels</message>
 	<message key="common.action">Action</message>
 	<message key="common.active">Actif</message>
 	<message key="common.add">Ajouter</message>
@@ -75,6 +77,7 @@
 	<message key="common.delete">Supprimer</message>
 	<message key="common.deleteSelection">Supprimer la sélection</message>
 	<message key="common.description">Description</message>
+	<message key="common.designation">Désignation</message>
 	<message key="common.disabled">Désactivé</message>
 	<message key="common.discipline">Discipline</message>
 	<message key="common.done">Terminé</message>
@@ -90,6 +93,8 @@
 	<message key="common.fileName">Nom de fichier</message>
 	<message key="common.fileSize">Taille de fichier</message>
 	<message key="common.fileType">Type de fichier</message>
+	<message key="common.file.namingPattern">{$username}, {$userGroup}, {$originalFilename}</message>
+	<message key="common.file.anonymousNamingPattern">{$userGroup}, {$originalFilename}</message>
 	<message key="common.height">Hauteur</message>
 	<message key="common.homePageHeaderLogo.altText">Logo de l'en-tête de la page d'accueil</message>
 	<message key="common.hour">Heure</message>
@@ -112,7 +117,6 @@
 	<message key="common.notAvailable">Non disponible</message>
 	<message key="common.note">Note</message>
 	<message key="common.notes">Notes</message>
-	<message key="common.notify">Aviser</message>
 	<message key="common.off">Arrêté</message>
 	<message key="common.on">Démarré</message>
 	<message key="common.options">Options</message>
@@ -123,6 +127,7 @@
 	<message key="common.pageHeaderLogo.altText">Logo de l'en-tête de la page</message>
 	<message key="common.plugin">Plugiciel</message>
 	<message key="common.publisher">Éditeur</message>
+	<message key="common.quality">Qualité</message>
 	<message key="common.record">Consigner</message>
 	<message key="common.related">Connexe</message>
 	<message key="common.remove">Supprimer</message>
@@ -246,7 +251,7 @@
 	<message key="navigation.userHome">Accueil de l'utilisateur</message>
 	<message key="navigation.user">Utilisateur</message>
 	<message key="search.abstract">Résumé</message>
-	<message key="search.allFields">Tous</message>
+	<message key="search.author">Auteurs</message>
 	<message key="search.coverage">Couverture</message>
 	<message key="search.date">Date</message>
 	<message key="search.dateFrom">De</message>
@@ -260,7 +265,6 @@
 	<message key="search.operator.and">et</message>
 	<message key="search.operator.not">sauf</message>
 	<message key="search.operator.or">ou</message>
-	<message key="search.reviseSearch">Modifier la recherche</message>
 	<message key="search.searchAllCategories">Rechercher dans toutes les catégories pour</message>
 	<message key="search.searchCategories">Catégories de recherche</message>
 	<message key="search.searchResults">Résultats de recherche</message>
@@ -269,21 +273,25 @@
 	<message key="search.title">Titre</message>
 	<message key="search.typeMethodApproach">Type (méthode/approche)</message>
 	<message key="common.ccLicense"><![CDATA[<br /><br />
-		<a target="_new" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
-			<img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png"/>
+		<a target="_blank" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
+			<img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png"/>
 		</a>
 		<br/>
-		Ce travail est autorisé sous licence avec la <a rel="license" target="_new" href="http://creativecommons.org/licenses/by/3.0/">Licence de paternité Creative Commons 3.0</a>.]]></message>
+		Ce travail est autorisé sous licence avec la <a rel="license" target="_blank" href="http://creativecommons.org/licenses/by/3.0/">Licence de paternité Creative Commons 3.0</a>.]]></message>
 	<message key="common.ccLicense.rt"><![CDATA[<div class="rtBlock">
 		<br />
-		<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a>
+		<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
 		<br />
-		Ce travail est autorisé sous licence avec la <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new">Licence de paternité Creative Commons 3.0</a>.
+		Ce travail est autorisé sous licence avec la <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank">Licence de paternité Creative Commons 3.0</a>.
 	</div>]]></message>
 	<message key="common.re">Re:</message>
 	<message key="common.manage">Gérer</message>
 	<message key="common.noComments">Aucun commentaire</message>
 	<message key="form.startsWith">commence par</message>
+	<message key="notification.updatedReviewFiles">Fichiers d'évaluation mis à jour.</message>
+	<message key="notification.addedAuditor">Un vérificateur a été ajouté.</message>
+	<message key="notification.removedAuditor">Le vérificateur a été supprimé.</message>
+	<message key="notification.reviewAcknowledged">On a accusé réception de l'évaluation. Aucun courriel envoyé.</message>
 	<message key="notification.allow">Permettre à ces types d'avis d'apparaître dans mon flux d'avis.</message>
 	<message key="notification.confirmError">Il s'est produit une erreur lors de la confirmation de votre abonnement.</message>
 	<message key="notification.confirmSuccess">Vous vous êtes abonné avec succès.</message>
@@ -311,6 +319,7 @@
 	<message key="notification.unsubscribe">Se désabonner</message>
 	<message key="notification.unsubscribeError">Il s'est produit une erreur lors de votre désabonnement. Veuillez vous assurer que votre adresse de courriel et votre mot de passe sont corrects.</message>
 	<message key="notification.unsubscribeSuccess">Vous avez été désabonné avec succès.</message>
+	<message key="notification.savedSubmissionMetadata">Les métadonnées de la soumission ont été sauvegardées.</message>
 	<message key="common.uploadFailed">Le fichier n'a pu être téléchargé. Veuillez essayer de nouveau ou communiquer avec l'administrateur si le problème persiste.</message>
 	<message key="navigation.dashboard">Tableau de bord</message>
 	<message key="common.false">Faux</message>
@@ -324,4 +333,165 @@
 	<message key="common.pluginDisabled">Le plugiciel "{$pluginName}" a été désactivé.</message>
 	<message key="common.refresh">Rafraîchir</message>
 	<message key="common.loading">Chargement ...</message>
+	<message key="common.accepted">Accepté</message>
+	<message key="reviewer.submission.reviewSchedule">Examiner le calendrier</message>
+	<message key="reviewer.submission.reviewRequestDate">Requête du rédacteur en chef</message>
+	<message key="reviewer.submission.responseDueDate">Date limite de la réponse</message>
+	<message key="reviewer.submission.reviewDueDate">Date limite de l'évaluation</message>
+
+	<!-- Information Center -->
+	<message key="informationCenter.informationCenter">Centre de renseignements</message>
+	<message key="informationCenter.composeNote">Écrire une note</message>
+	<message key="informationCenter.addFileNote">Ajouter au fichier</message>
+	<message key="informationCenter.addSubmissionNote">Ajouter à la soumission</message>
+	<message key="informationCenter.noNotes">Il n'y a aucune note à afficher.</message>
+	<message key="informationCenter.currentNotes">Notes en cours</message>
+	<message key="informationCenter.pastNotes">Notes antérieures</message>
+	<message key="informationCenter.lastUpdated">Dernière mise à jour</message>
+	<message key="informationCenter.deleteConfirm">Vous êtes certain de vouloir supprimer cette note?</message>
+	<message key="informationCenter.currentHistory">Révision en cours</message>
+	<message key="informationCenter.pastHistory">Révisions antérieures</message>
+	<message key="informationCenter.history.noItems">Aucune activité n'a été enregistrée.</message>
+	<message key="informationCenter.history.notePosted">Nouvelle note publiée.</message>
+	<message key="navigation.goBack">Retour</message>
+
+	<!-- Stage Participants -->
+	<message key="stageParticipants.history.messageSent">Avis envoyé aux utilisateurs.</message>
+	<message key="stageParticipants.notify.chooseMessage">Choisir un message prédéfini à utiliser, ou remplir le formulaire ci-dessous.</message>
+	<message key="stageParticipants.notify.message">Message</message>
+	<message key="stageParticipants.notify.warning">Assurez-vous d'avoir rempli le champ Message et d'avoir choisi au moins un destinataire.</message>
+
+	<message key="notification.addedReviewer">Un évaluateur a été ajouté.</message>
+	<message key="notification.removedReviewer">L'évaluateur a été supprimé.</message>
+	<message key="notification.addedStageParticipant">L'utilisateur a été ajouté à titre de participant.</message>
+	<message key="notification.type.reviewAssignment">Vous avez une évaluation en attente.</message>
+	<message key="notification.type.auditorRequest">On vous a demandé de vérifier "{$file}"</message>
+	<message key="notification.type.allReviewsIn">Toutes les évaluations ont été soumises. Il faut prendre une décision à l'étape suivante: {$stage}.</message>
+	<message key="notification.type.allRevisionsIn">Un fichier révisé a été téléchargé dans {$stage} afin que vous puissiez l'évaluer.</message>
+	<message key="notification.type.pendingRevisions">Vous devez tenir compte des révisions à cette étape: {$stage}.</message>
+	<message key="notification.type.pendingRevisions.title">Révisions soumises à {$stage}.</message>
+	<message key="notification.type.roundStatusTitle">Statut de la série {$round} </message>
+	<message key="notification.signedFile">Fichier considéré.</message>
+	<message key="user.authorization.authorRoleMissing">Vos privilèges actuels ne vous permettent pas de visionner cette soumission. Veuillez modifier votre profil pour vous assurer que l'on vous a assigné les rôles appropriés dans la section "S'inscrire comme".</message>
+	<message key="common.publicKnowledgeProject">Projet de connaissances publiques (Public Knowledge Project)</message>
+	<message key="common.currentStyleSheet">Feuille de style actuelle</message>
+	<message key="about.description">Description</message>
+	<message key="about.guidelines">Guides</message>
+	<message key="announcement.postedOn">Publié le {$postDate}</message>
+	<message key="common.tasks">Tâches</message>
+	<message key="common.list">Liste</message>
+	<message key="common.grid">Grille</message>
+	<message key="common.confirmDelete">Êtes-vous sûr de vouloir supprimer cet item? Cette opération est irréversible.</message>
+	<message key="common.abstract">Résumé</message>
+	<message key="common.acknowledged">Reçu</message>
+	<message key="common.name">Nom</message>
+	<message key="common.titleSmallWords">de à le la et un une ou ni mais est si puis alors lorsque à de par ouvert fermé pour à l'intérieur à l'extérieur par-dessus dans avec</message>
+	<message key="common.available">Disponible</message>
+	<message key="common.warning">Avertissement</message>
+	<message key="common.error">Erreur</message>
+	<message key="common.confirm">Confirmer</message>
+	<message key="common.content">Contenu</message>
+	<message key="common.contents">Contenu</message>
+	<message key="common.dateHijri">Calendrier Hijri</message>
+	<message key="common.declined">Refusé</message>
+	<message key="common.finish">Terminer</message>
+	<message key="common.fileUploaderError">Le chargement du téléverseur de fichier système est en cours. S'il n'apparait pas, il est probable qu'aucun de ses temps d'exécution ne soit supporté par ce navigateur. Veuillez contacter l'administrateur pour obtenir de l'aide.</message>
+	<message key="common.go">Continuer</message>
+	<message key="common.itemsPerPage">Items par page</message>
+	<message key="common.less">Réduire</message>
+	<message key="common.billingAddress">Adresse de facturation (si différente)</message>
+	<message key="common.more">Plus</message>
+	<message key="common.notes.tooltip">Notes (jaune: contient de nouvelles notes; bleu: contient des notes déjà visionnées; gris: aucunes notes)</message>
+	<message key="common.notified">Avis envoyé</message>
+	<message key="common.noMatches">Aucunes concordances</message>
+	<message key="common.overdue">En retard</message>
+	<message key="common.prefix">Préfixe</message>
+	<message key="common.prefixAndTitle.tip">Si le titre du livre commence par "un/une" ou "le/la" (ou quelque chose de similaire concernant l'ordre alphabétique), mettre le mot dans Préfixe.</message>
+	<message key="common.subtitle.tip">Le titre optionnel de la soumission suivra les deux points (:), après le titre principal.</message>
+	<message key="common.reminder">Rappel</message>
+	<message key="common.remote">À distance</message>
+	<message key="common.remoteURL">URL Distante</message>
+	<message key="common.reset">Réinitialiser</message>
+	<message key="common.sendEmail">Envoyer le courriel</message>
+	<message key="common.signoff">Approuver</message>
+	<message key="common.startTyping">Commencer à écrire</message>
+	<message key="common.subjects">Sujets</message>
+	<message key="common.subtitle">Sous-titre</message>
+	<message key="common.element">Élément</message>
+	<message key="common.unread">Non lu</message>
+	<message key="common.fileUpload.maxFileSizeStatus"><![CDATA[Ce serveur permet de télécharger un fichier dont la taille maximale est {$fileSize}. Si nécessaire, contactez <a href="mailto:{$supportEmail}">{$supportName}</a> pour obtenir de l'aide.]]></message>
+	<message key="common.invalidFileType">Aucun fichier n'a été téléchargé ou type de fichier invalide!</message>
+	<message key="common.homepageImage.altText">Image de la page d'accueil</message>
+	<message key="common.plugins">Modules externes</message>
+	<message key="common.metric">Métrique</message>
+	<message key="common.count">Décompte</message>
+	<message key="defaultMetric.title">Métrique (par défaut)</message>
+	<message key="defaultMetric.availableMetrics">Mesures disponibles</message>
+	<message key="editor.submissionReview.uploadFile">Télécharger le fichier de révision</message>
+	<message key="editor.submissionReview.uploadAttachment">Télécharger le fichier</message>
+	<message key="email.subjectRequired">Veuillez indiquer le sujet du courriel.</message>
+	<message key="email.bodyRequired">Veuillez ajouter le texte du courriel.</message>
+	<message key="form.confirmSubmit">Vous voulez vraiment envoyer ce formulaire?</message>
+	<message key="form.confirmSubmit.title">Confirmer</message>
+	<message key="form.emailRequired">Vous devez fournir une adresse électronique.</message>
+	<message key="form.dataHasChanged">Les données de ce formulaire ont été modifiées. Vous voulez continuer sans sauvegarder?</message>
+	<message key="form.fileRequired">Un chargement de fichier est requis.</message>
+	<message key="form.invalidImage">Une image non valide a été téléchargée. Seuls les formats .png, .gif ou .jpg sont acceptés.</message>
+	<message key="informationCenter.editorialHistory">Historique de rédaction</message>
+	<message key="navigation.management">Gestion</message>
+	<message key="navigation.access"><![CDATA[Utilisateurs &amp; Rôles]]></message>
+	<message key="navigation.admin">Administration</message>
+	<message key="navigation.tools">Outils</message>
+	<message key="navigation.tools.importExport">Importer/Exporter</message>
+	<message key="navigation.tools.statistics">Statistiques</message>
+	<message key="navigation.browseByAuthor">Par Auteur</message>
+	<message key="navigation.data">Données</message>
+	<message key="navigation.publicMenu">Menu public</message>
+	<message key="navigation.settings">Paramètres</message>
+	<message key="navigation.setup">Configuration</message>
+	<message key="navigation.sitemap">Carte du site</message>
+	<message key="navigation.submissions">Soumissions</message>
+	<message key="navigation.system">Système</message>
+	<message key="navigation.userManagement">Gestion de l'utilisateur</message>
+	<message key="notification.addedAnnouncementType">Type d'annonce ajouté.</message>
+	<message key="notification.editedAnnouncementType">Type d'annoncé modifié.</message>
+	<message key="notification.removedAnnouncementType">Type d'annonce supprimé.</message>
+	<message key="notification.addedAnnouncement">Annonce ajoutée.</message>
+	<message key="notification.editedAnnouncement">Annonce modifiée.</message>
+	<message key="notification.removedAnnouncement">Annonce supprimée.</message>
+	<message key="notification.addedAuthor">Auteur ajouté.</message>
+	<message key="notification.editedAuthor">Auteur modifié.</message>
+	<message key="notification.addedNote">Note publiée.</message>
+	<message key="notification.removedNote">Note supprimée.</message>
+	<message key="notification.removedFile">Fichier supprimé.</message>
+	<message key="notification.sentNotification">Avis envoyé.</message>
+	<message key="search.advancedFilters">Filtres avancés</message>
+	<message key="search.advancedSearchLess">Options de recherche supplémentaires (cliquer pour cacher)</message>
+	<message key="search.cli.rebuildIndex.clearingIndex">Elimination de l'index</message>
+	<message key="search.cli.rebuildIndex.done">Terminé</message>
+	<message key="search.cli.rebuildIndex.error">Erreur</message>
+	<message key="search.cli.rebuildIndex.result">{$numIndexed} articles indexés</message>
+	<message key="search.deleteFilter">Supprimer</message>
+	<message key="search.indexTermsLong">Tous les champs des termes de l'index</message>
+	<message key="grid.action.downloadFile">Télécharger ce fichier</message>
+	<message key="context.path">Chemin d'accès</message>
+	<message key="dashboard.tasks">Tâches</message>
+	<message key="dashboard.submissions">Soumissions</message>
+	<message key="submission.task.responseDueDate">Date d'exigibilité de la réponse</message>
+	<message key="user.authorization.invalidSubmission">Soumission invalide</message>
+	<message key="navigation.archives">Archives</message>
+	<message key="search.advancedSearchMore">Options de recherche supplémentaires (cliquer pour afficher)</message>
+	<message key="review.ensuringBlindReview">Assurer un examen aveugle</message>
+	<message key="grid.action.showReviewPolicy">Lire la politique actuelle concernant la révision</message>
+	<message key="user.authorization.submissionFile">L'utilisateur actuel n'a pas accès au fichier de soumission spécifié.</message>
+	<message key="user.authorization.submissionAuthor">L'utilisateur actuel n'est pas l'auteur de la soumission demandée. Veuillez vous assurer d'avoir ouvert une session avec le compte d'utilisateur approprié.</message>
+	<message key="review.blindPeerReview"><![CDATA[<p>Afin d'assurer l'intégrité de l'examen en aveugle des soumissions envoyées à cette presse, il faut faire tous les efforts possibles pour éviter que l'on révèle l'identité des auteurs et des examinateurs. Pour ce faire, les auteurs, les réviseurs et les examinateurs (qui téléchargent les documents dans le cadre de l'examen) doivent s'assurer de suivre les étapes suivantes en ce qui concerne les propriétés du texte et du fichier:</p>
+
+<ul><li>Supprimer le nom de l'auteur du texte. Dans la bibliographie et dans les notes en bas de page, on utilise le mot "Auteur" et l'année au lieu du nom de l'auteur, du titre de l'article, etc.</li>
+
+<li>En ce qui concerne les documents de type Microsoft Office, l'identification de l'auteur ne doit plus apparaitre dans les propriétés du fichier (voir le menu principal Fichier dans Word). Vous devez cliquer: Fichier &gt; Enregistrer sous &gt; Outils (ou Options sur le Mac) &gt; Sécurité &gt; Éliminer les renseignements personnels des propriétés du fichier au moment de la sauvegarde &gt; Sauvegarder.</li>
+
+<li>Pour les fichiers PDF, le nom de l'auteur doit être enlevé des propriétés du document dans le menu Fichier, du menu principal d'Adobe Acrobat.</li>
+
+		</ul>]]></message>
 </locale>

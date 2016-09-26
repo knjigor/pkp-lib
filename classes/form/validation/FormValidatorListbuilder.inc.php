@@ -3,7 +3,8 @@
 /**
  * @file classes/form/validation/FormValidatorListbuilder.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidatorListbuilder
@@ -20,6 +21,7 @@ class FormValidatorListbuilder extends FormValidator {
 	/* outcome of validation after callbacks */
 	var $_valid = false;
 
+
 	/**
 	 * Constructor.
 	 * @param $form Form the associated form
@@ -34,37 +36,13 @@ class FormValidatorListbuilder extends FormValidator {
 	// Public methods
 	//
 	/**
-	 * Value is valid if at least one of the defined unpack callback functions return true (ie, there is a user id present).
+	 * Check the number of listbuilder rows and ensure that at least one exists.
 	 * @see FormValidator::isValid()
 	 * @return boolean
 	 */
 	function isValid() {
-		$value = $this->getFieldValue();
-		import('lib.pkp.classes.controllers.listbuilder.ListbuilderHandler');
-		ListbuilderHandler::unpack($request, $value);
-		if ($this->_valid) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	function deleteEntry(&$request, $rowId) {
-		return $this->insertEntry($request, $rowId);
-	}
-
-	function insertEntry(&$request, $rowId) {
-			if (is_array($rowId)) {
-			foreach ($rowId as $id) {
-				if ((int) $rowId > 0) {
-					$this->_valid = true;
-				}
-			}
-		} else if ((int) $rowId > 0) {
-			$this->_valid = true;
-		}
-
-		return true;
+		$value = json_decode($this->getFieldValue());
+		return (is_object($value) && isset($value->numberOfRows) && $value->numberOfRows > 0);
 	}
 }
 

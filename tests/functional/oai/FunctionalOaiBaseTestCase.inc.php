@@ -3,7 +3,8 @@
 /**
  * @file lib/pkp/tests/functional/oai/FunctionalOaiBaseTestCase.inc.php
  *
- * Copyright (c) 2000-2011 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FunctionalOaiBaseTestCase
@@ -23,18 +24,18 @@ class FunctionalOaiBaseTestCase extends DatabaseTestCase {
 
 	protected function getAffectedTables() {
 		return array(
-			'issue_settings', 'article_settings',
-			'article_galley_settings', 'article_supp_file_settings'
+			'issue_settings', 'submission_settings',
+			'submission_galley_settings', 'article_supp_file_settings'
 		);
 	}
 
 	public function setUp() {
 		// Retrieve and check configuration.
-		$webtestBaseUrl = Config::getVar('debug', 'webtest_base_url');
+		$webtestBaseUrl = getenv('BASEURL');
 		if (empty($webtestBaseUrl)) {
 			$this->markTestSkipped(
-				'Please set webtest_base_url in your config.php\'s ' .
-				'[debug] section to the base url of your test server.'
+				'Please set the BASEURL environment variable ' .
+				'to the base url of your test server.'
 			);
 		}
 		$this->baseUrl = $webtestBaseUrl . '/index.php/test/oai';;

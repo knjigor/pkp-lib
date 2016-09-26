@@ -1,7 +1,8 @@
 /**
  * @file js/classes/features/OrderGridItemsFeature.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class OrderGridItemsFeature
@@ -15,6 +16,7 @@
 	/**
 	 * @constructor
 	 * @inheritDoc
+	 * @extends $.pkp.classes.features.OrderItemsFeature
 	 */
 	$.pkp.classes.features.OrderGridItemsFeature =
 			function(gridHandler, options) {
@@ -43,14 +45,21 @@
 	 */
 	$.pkp.classes.features.OrderGridItemsFeature.prototype.saveOrderHandler =
 			function() {
-		this.parent('saveOrderHandler');
-		var stringifiedData = JSON.stringify(this.getItemsDataId());
-		var saveOrderCallback = this.callbackWrapper(
-				this.saveOrderResponseHandler_, this);
-		$.post(this.options_.saveItemsSequenceUrl, {data: stringifiedData},
-				saveOrderCallback, 'json');
-		return false;
 
+		var stringifiedData, saveOrderCallback,
+				options = /** @type {{saveItemsSequenceUrl: string}} */
+				(this.getOptions()),
+				returner;
+
+		this.parent('saveOrderHandler');
+
+		stringifiedData = JSON.stringify(this.getItemsDataId());
+		saveOrderCallback = this.callbackWrapper(
+				this.saveOrderResponseHandler_, this);
+		$.post(options.saveItemsSequenceUrl, {data: stringifiedData},
+				saveOrderCallback, 'json');
+
+		return false;
 	};
 
 
@@ -59,7 +68,7 @@
 	//
 	/**
 	 * Get all items data id in a sequence array.
-	 * @return {array} List of all items data.
+	 * @return {Array} List of all items data.
 	 */
 	$.pkp.classes.features.OrderGridItemsFeature.prototype.getItemsDataId =
 			function() {
@@ -79,10 +88,10 @@
 	 */
 	$.pkp.classes.features.OrderGridItemsFeature.prototype.
 			saveOrderResponseHandler_ = function(ajaxContext, jsonData) {
-		jsonData = this.gridHandler_.handleJson(jsonData);
+		var processedJsonData = this.gridHandler.handleJson(jsonData);
 		this.toggleState(false);
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

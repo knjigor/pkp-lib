@@ -1,8 +1,10 @@
 <?php
+
 /**
- * @file classes/filter/XMLTypeDescription.inc.php
+ * @file classes/xslt/XMLTypeDescription.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XMLTypeDescription
@@ -63,7 +65,7 @@ class XMLTypeDescription extends TypeDescription {
 	// Implement abstract template methods from TypeDescription
 	//
 	/**
-	 * @see TypeDescription::parseTypeName()
+	 * @copydoc TypeDescription::parseTypeName()
 	 */
 	function parseTypeName($typeName) {
 		// We expect a validation strategy and an optional validation argument
@@ -96,7 +98,7 @@ class XMLTypeDescription extends TypeDescription {
 	}
 
 	/**
-	 * @see TypeDescription::checkType()
+	 * @copydoc TypeDescription::checkType()
 	 */
 	function checkType(&$object) {
 		// We only accept DOMDocument objects and source strings.
@@ -117,15 +119,15 @@ class XMLTypeDescription extends TypeDescription {
 			// We have to suppress validation errors, otherwise the script
 			// will stop when validation errors occur.
 			case XML_TYPE_DESCRIPTION_VALIDATE_DTD:
-				if (!@$xmlDom->validate()) return false;
+				if (!$xmlDom->validate()) return false;
 				break;
 
 			case XML_TYPE_DESCRIPTION_VALIDATE_SCHEMA:
-				if (!@$xmlDom->schemaValidate($this->_validationSource)) return false;
+				if (!$xmlDom->schemaValidate($this->_validationSource)) return false;
 				break;
 
 			case XML_TYPE_DESCRIPTION_VALIDATE_RELAX_NG:
-				if (!@$xmlDom->relaxNGValidate($this->_validationSource)) return false;
+				if (!$xmlDom->relaxNGValidate($this->_validationSource)) return false;
 				break;
 
 			default:

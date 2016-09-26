@@ -3,7 +3,8 @@
 /**
  * @file classes/file/TemporaryFile.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TemporaryFile
@@ -29,9 +30,9 @@ class TemporaryFile extends PKPFile {
 	 * @return string
 	 */
 	function getFilePath() {
-		import('lib.pkp.classes.file.PKPTemporaryFileManager');
-		$temporaryFileManager = new PKPTemporaryFileManager();
-		return $temporaryFileManager->getBasePath() . $this->getFileName();
+		import('lib.pkp.classes.file.TemporaryFileManager');
+		$temporaryFileManager = new TemporaryFileManager();
+		return $temporaryFileManager->getBasePath() . $this->getServerFileName();
 	}
 
 	//
@@ -51,7 +52,7 @@ class TemporaryFile extends PKPFile {
 	 * @param $userId int
 	 */
 	function setUserId($userId) {
-		return $this->setData('userId', $userId);
+		$this->setData('userId', $userId);
 	}
 }
 

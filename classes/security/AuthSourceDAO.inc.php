@@ -3,7 +3,8 @@
 /**
  * @file classes/security/AuthSourceDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AuthSourceDAO
@@ -66,7 +67,7 @@ class AuthSourceDAO extends DAO {
 	 * @return AuthSource
 	 */
 	function &getSource($authId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM auth_sources WHERE auth_id = ?',
 			array((int) $authId)
 		);
@@ -77,8 +78,6 @@ class AuthSourceDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -87,7 +86,7 @@ class AuthSourceDAO extends DAO {
 	 * @return AuthSource
 	 */
 	function &getDefaultSource() {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM auth_sources WHERE auth_default = 1'
 		);
 
@@ -97,8 +96,6 @@ class AuthSourceDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -115,7 +112,7 @@ class AuthSourceDAO extends DAO {
 	 * @param $row array
 	 * @return AuthSource
 	 */
-	function &_returnAuthSourceFromRow(&$row) {
+	function &_returnAuthSourceFromRow($row) {
 		$auth = $this->newDataObject();
 		$auth->setAuthId($row['auth_id']);
 		$auth->setTitle($row['title']);
@@ -145,7 +142,7 @@ class AuthSourceDAO extends DAO {
 			)
 		);
 
-		$auth->setAuthId($this->getInsertId('auth_sources', 'auth_id'));
+		$auth->setAuthId($this->_getInsertId('auth_sources', 'auth_id'));
 		return $auth->getAuthId();
 	}
 
@@ -167,11 +164,6 @@ class AuthSourceDAO extends DAO {
 		);
 	}
 
-	function updateSource(&$auth) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->updateObject($auth);
-	}
-
 	/**
 	 * Delete a source.
 	 * @param $authId int
@@ -180,11 +172,6 @@ class AuthSourceDAO extends DAO {
 		return $this->update(
 			'DELETE FROM auth_sources WHERE auth_id = ?', $authId
 		);
-	}
-
-	function deleteSource(&$auth) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->deleteObject($auth);
 	}
 
 	/**
@@ -206,7 +193,7 @@ class AuthSourceDAO extends DAO {
 	 * @return array AuthSource
 	 */
 	function &getSources($rangeInfo = null) {
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT * FROM auth_sources ORDER BY auth_id',
 			false,
 			$rangeInfo

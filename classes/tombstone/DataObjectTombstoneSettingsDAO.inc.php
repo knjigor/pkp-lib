@@ -3,7 +3,8 @@
 /**
  * @file classes/tombstone/DataObjectTombstoneSettingsDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DataObjectTombstoneSettingsDAO
@@ -27,19 +28,17 @@ class DataObjectTombstoneSettingsDAO extends DAO {
 			$sql .= ' AND l.locale = ?';
 			$params[] = $locale;
 		}
-		$result =& $this->retrieve($sql, $params);
+		$result = $this->retrieve($sql, $params);
 
 		$setting = null;
 		while (!$result->EOF) {
-			$row =& $result->getRowAssoc(false);
+			$row = $result->getRowAssoc(false);
 			$value = $this->convertFromDB($row['setting_value'], $row['setting_type']);
-			if ($row['locale'] == '') $setting[$row['setting_name']] = $value;
-			else $setting[$row['setting_name']][$row['locale']] = $value;
-			$result->moveNext();
+			if (!array_key_exists('locale', $row) || $row['locale'] == '') $setting[$name] = $value;
+			else $setting[$name][$row['locale']] = $value;
+			$result->MoveNext();
 		}
-		$result->close();
-		unset($result);
-
+		$result->Close();
 		return $setting;
 	}
 
@@ -72,7 +71,7 @@ class DataObjectTombstoneSettingsDAO extends DAO {
 			$returner = true;
 		} else {
 			if (is_array($value)) foreach ($value as $locale => $localeValue) {
-				$this->update('DELETE FROM data_object_tombstone_settings WHERE tombstone_id = ? AND setting_name = ? AND locale = ?', array((int) $tombstone_id, $name, $locale));
+				$this->update('DELETE FROM data_object_tombstone_settings WHERE tombstone_id = ? AND setting_name = ? AND locale = ?', array((int) $tombstoneId, $name, $locale));
 				if (empty($localeValue)) continue;
 				$type = null;
 				$returner = $this->update('INSERT INTO data_object_tombstone_settings

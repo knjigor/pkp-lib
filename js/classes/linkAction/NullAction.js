@@ -1,7 +1,8 @@
 /**
  * @file js/classes/linkAction/NullAction.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class NullAction
@@ -17,7 +18,7 @@
 	 *
 	 * @extends $.pkp.classes.linkAction.LinkActionRequest
 	 *
-	 * @param {jQuery} $linkActionElement The element the link
+	 * @param {jQueryObject} $linkActionElement The element the link
 	 *  action was attached to.
 	 * @param {Object} options Configuration of the link action
 	 *  request.
@@ -41,9 +42,19 @@
 	$.pkp.classes.linkAction.NullAction.prototype.activate =
 			function(element, event) {
 
-		return this.parent('activate', element, event);
+		return /** @type {boolean} */ (this.parent('activate', element, event));
+	};
+
+
+	/**
+	 * Determine whether or not the link action should be debounced.
+	 * @return {boolean} Whether or not to debounce the link action.
+	 */
+	$.pkp.classes.linkAction.NullAction.prototype.shouldDebounce =
+			function() {
+		return false;
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

@@ -4,10 +4,11 @@
 <!--
   * locale/sv_SE/common.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the sv_SE (Swedish) locale.
+  * Localization strings for the sv_SE (Svenska) locale.
   *
   -->
 
@@ -15,7 +16,6 @@
 	<message key="about.aboutSite">Om sidan</message>
 	<message key="about.contact">Kontakt</message>
 	<message key="about.contact.email">E-post</message>
-	<message key="about.contact.fax">Fax</message>
 	<message key="about.contact.phone">Telefon</message>
 	<message key="about.contact.principalContact">Huvudkontakt</message>
 	<message key="about.contact.supportContact">Teknisk kontaktperson</message>
@@ -89,6 +89,8 @@
 	<message key="common.fileName">Filnamn</message>
 	<message key="common.fileSize">Filstorlek</message>
 	<message key="common.fileType">Filtyp</message>
+	<message key="common.file.namingPattern">{$username}, {$userGroup}, {$originalFilename}</message>
+	<message key="common.file.anonymousNamingPattern">{$userGroup}, {$originalFilename}</message>
 	<message key="common.height">Höjd</message>
 	<message key="common.hour">Timme</message>
 	<message key="common.id">ID</message>
@@ -239,7 +241,7 @@
 	<message key="navigation.userHome">Min sida</message>
 	<message key="navigation.user">Användare</message>
 	<message key="search.abstract">Sammanfattning</message>
-	<message key="search.allFields">Alla</message>
+	<message key="search.author">Författare</message>
 	<message key="search.coverage">Täckning</message>
 	<message key="search.date">Datum</message>
 	<message key="search.dateFrom">Från</message>

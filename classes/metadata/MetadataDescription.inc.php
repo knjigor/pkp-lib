@@ -3,7 +3,8 @@
 /**
  * @file classes/metadata/MetadataDescription.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataDescription
@@ -222,7 +223,7 @@ class MetadataDescription extends DataObject {
 	 * Set the sequence id
 	 * @param $seq integer
 	 */
-	function setSeq($seq) {
+	function setSequence($seq) {
 		$this->_seq = $seq;
 	}
 
@@ -230,7 +231,7 @@ class MetadataDescription extends DataObject {
 	 * Get the sequence id
 	 * @return integer
 	 */
-	function getSeq() {
+	function getSequence() {
 		return $this->_seq;
 	}
 
@@ -245,7 +246,7 @@ class MetadataDescription extends DataObject {
 	 * @param $replace boolean whether to replace an existing statement
 	 * @return boolean true if a valid statement was added, otherwise false
 	 */
-	function addStatement($propertyName, &$value, $locale = null, $replace = false) {
+	function addStatement($propertyName, $value, $locale = null, $replace = false) {
 		// Check the property
 		$property =& $this->getProperty($propertyName);
 		if (is_null($property)) return false;
@@ -270,7 +271,7 @@ class MetadataDescription extends DataObject {
 		switch ($property->getCardinality()) {
 			case METADATA_PROPERTY_CARDINALITY_ONE:
 				if (isset($existingValue) && !$replace) return false;
-				$newValue =& $value;
+				$newValue = $value;
 				break;
 
 			case METADATA_PROPERTY_CARDINALITY_MANY:
@@ -279,7 +280,7 @@ class MetadataDescription extends DataObject {
 					$newValue = $existingValue;
 					array_push($newValue, $value);
 				} else {
-					$newValue = array(&$value);
+					$newValue = array($value);
 				}
 				break;
 
@@ -551,10 +552,8 @@ class MetadataDescription extends DataObject {
 	/**
 	 * The allowed replace levels for the
 	 * setStatements() method.
-	 * NB: Workaround for PHP4 which doesn't allow
-	 * static class members.
 	 */
-	function _allowedReplaceLevels() {
+	static function _allowedReplaceLevels() {
 		static $allowedReplaceLevels = array(
 			METADATA_DESCRIPTION_REPLACE_ALL,
 			METADATA_DESCRIPTION_REPLACE_PROPERTIES,
@@ -563,4 +562,5 @@ class MetadataDescription extends DataObject {
 		return $allowedReplaceLevels;
 	}
 }
+
 ?>

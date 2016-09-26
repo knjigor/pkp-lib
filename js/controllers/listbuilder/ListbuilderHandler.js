@@ -1,14 +1,11 @@
 /**
  * @defgroup js_controllers_listbuilder
  */
-// Define the namespace.
-$.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
-
-
 /**
  * @file js/controllers/listbuilder/ListbuilderHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ListbuilderHandler
@@ -18,13 +15,17 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
  */
 (function($) {
 
+	/** @type {Object} */
+	$.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
+
+
 
 	/**
 	 * @constructor
 	 *
 	 * @extends $.pkp.controllers.grid.GridHandler
 	 *
-	 * @param {jQuery} $listbuilder The listbuilder this handler is
+	 * @param {jQueryObject} $listbuilder The listbuilder this handler is
 	 *  attached to.
 	 * @param {Object} options Listbuilder handler configuration.
 	 */
@@ -77,6 +78,24 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 			fetchOptionsUrl_ = null;
 
 
+	/**
+	 * Stores the calling context of the edit item click event.
+	 * @private
+	 * @type {HTMLElement}
+	 */
+	$.pkp.controllers.listbuilder.ListbuilderHandler.
+			prototype.editItemCallingContext_ = null;
+
+
+	/**
+	 * Flag whether there's still available options to be selected or not.
+	 * @private
+	 * @type {boolean}
+	 */
+	$.pkp.controllers.listbuilder.ListbuilderHandler.
+			prototype.availableOptions_ = false;
+
+
 	//
 	// Protected methods
 	//
@@ -92,10 +111,16 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 		this.saveUrl_ = options.saveUrl;
 		this.saveFieldName_ = options.saveFieldName;
 		this.fetchOptionsUrl_ = options.fetchOptionsUrl;
+		this.availableOptions_ = options.availableOptions;
 
 		// Attach the button handlers
 		var $listbuilder = this.getHtmlElement();
-		$listbuilder.find('span[class="options"] > a[id*="addItem"]').click(
+		// Use mousedown to avoid two events being triggered at the same time
+		// (click event was being triggered together with blur event from inputs.
+		// That and a syncronous ajax call triggered by those events
+		// handlers, was leading to an error in IE8 and it was freezing
+		// Firefox 13.0).
+		$listbuilder.find('.actions .pkp_linkaction_addItem').mousedown(
 				this.callbackWrapper(this.addItemHandler_));
 
 		// Attach the content manipulation handlers
@@ -124,12 +149,12 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	/**
 	 * Get the "save" field name for LISTBUILDER_SAVE_TYPE_EXTERNAL.
 	 * @private
-	 * @return {?string} Name of the field to transmit LB contents in.
+	 * @return {string} Name of the field to transmit LB contents in.
 	 */
 	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.getSaveFieldName_ =
 			function() {
 
-		return this.saveFieldName_;
+		return /** @type {string} */ (this.saveFieldName_);
 	};
 
 
@@ -155,21 +180,28 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 			function() {
 
 		// Get deletions
-		var deletions = this.getHtmlElement().find('input.deletions').val();
+		var deletions = this.getHtmlElement().find('input.deletions').val(),
+				// Get insertions and modifications
+				changes = [],
+				numberOfRows, stringifiedData, saveUrl,
+				saveFieldName, $e,
+				handler = this;
 
-		// Get insertions and modifications
-		var changes = [];
 		this.getHtmlElement().find('.gridRow input.isModified[value="1"]')
-				.each(this.callbackWrapper(function(context, k, v) {
-					var $row = $(v).parents('.gridRow');
-					var params = this.buildParamsFromInputs_($row.find(':input'));
+				.each(function(index, v) {
+					var $row = $(v).parents('.gridRow'),
+							params = handler.buildParamsFromInputs_($row.find(':input'));
 					changes.push(params);
-				}));
+				});
+
+		// The listbuilder form validator needs to know if this listbuilder contains
+		// rows or not, so we pass the items number.
+		numberOfRows = this.getRows().length;
 
 		// Assemble and send to the server
-		var stringifiedData = JSON.stringify(
-				{deletions: deletions, changes: changes});
-		var saveUrl = this.getSaveUrl_();
+		stringifiedData = JSON.stringify(
+				{deletions: deletions, changes: changes, numberOfRows: numberOfRows});
+		saveUrl = this.getSaveUrl_();
 		if (saveUrl) {
 			// Post the changes to the server using the internal
 			// save handler.
@@ -178,11 +210,11 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 		} else {
 			// Supply the data to an external save handler (e.g.
 			// a form handler) using a hidden field.
-			var saveFieldName = this.getSaveFieldName_();
+			saveFieldName = this.getSaveFieldName_();
 
 			// Try to find and reuse an existing element (if
 			// e.g. a previous attempt was aborted)
-			var $e = this.getHtmlElement()
+			$e = this.getHtmlElement()
 					.find(':input[type=hidden]')
 					.filter(
 					function() {return $(this).attr('name') == saveFieldName;})
@@ -229,6 +261,19 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 
 
 	//
+	// Extended methods from GridHandler.
+	//
+	/**
+	 * @inheritDoc
+	 */
+	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.getEmptyElement =
+			function($element) {
+		// Listbuilders have only one empty element placeholder.
+		return this.getHtmlElement().find('.empty');
+	};
+
+
+	//
 	// Private Methods
 	//
 	/**
@@ -244,12 +289,18 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.addItemHandler_ =
 			function(callingContext, opt_event) {
 
-		// Close any existing edits if necessary
-		this.closeEdits();
+		if (this.availableOptions_) {
+			// Make sure this event will be handled after any other next triggered one,
+			// like blur event that comes from inputs.
+			setTimeout(this.callbackWrapper(function() {
+				// Close any existing edits if necessary
+				this.closeEdits();
 
-		this.disableControls();
-		$.get(this.getFetchRowUrl(), {modify: true},
-				this.callbackWrapper(this.appendRowResponseHandler_, null), 'json');
+				this.disableControls();
+				$.get(this.getFetchRowUrl(), {modify: true},
+						this.callbackWrapper(this.appendRowResponseHandler_, null), 'json');
+			}), 0);
+		}
 
 		return false;
 	};
@@ -271,18 +322,23 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 		// Close any existing edits if necessary
 		this.closeEdits();
 
-		var $callingContext = $(callingContext);
-		var $targetRow = $callingContext.closest('.gridRow');
-		var $deletions = $callingContext.closest('.pkp_controllers_listbuilder')
-				.find('.deletions');
-		var rowId = $targetRow.find('input[name="rowId"]').val();
+		var $callingContext = $(callingContext),
+				$targetRow = $callingContext.closest('.gridRow'),
+				$deletions = $callingContext.closest('.pkp_controllers_listbuilder')
+						.find('.deletions'),
+				rowId = $targetRow.find('input[name="rowId"]').val();
 
 		// Append the row ID to the deletions list.
 		if (rowId !== undefined) {
 			$deletions.val($deletions.val() + ' ' + rowId);
+
+			// Notify containing form (if any) about a change
+			this.getHtmlElement().trigger('formChange');
 		}
 
-		this.doCommonDeleteRowActions($targetRow);
+		this.deleteElement(/** @type {jQueryObject} */ ($targetRow));
+
+		this.availableOptions_ = true;
 
 		return false;
 	};
@@ -301,16 +357,16 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.
 			appendRowResponseHandler_ = function(ajaxContext, jsonData) {
 
-		jsonData = this.handleJson(jsonData);
-		if (jsonData !== false) {
+		var processedJsonData = this.handleJson(jsonData), $newRow;
+		if (processedJsonData !== false) {
 			// Show the new input row; hide the "empty" row
-			var $newRow = $(jsonData.content);
+			$newRow = $(processedJsonData.content);
 			this.getHtmlElement().find('.empty').hide().before($newRow);
 
 			// Attach content handlers and focus
 			this.attachContentHandlers_($newRow);
 			$newRow.addClass('gridRowEdit');
-			$newRow.find(':input').first().focus();
+			$newRow.find(':input').not('[type="hidden"]').first().focus();
 
 			// If this is a select menu listbuilder, load the options
 			if (this.sourceType_ == $.pkp.cons.LISTBUILDER_SOURCE_TYPE_SELECT) {
@@ -322,7 +378,7 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 				this.enableControls();
 			}
 
-			this.callFeaturesHook('appendRow', $newRow);
+			this.callFeaturesHook('addElement', $newRow);
 		}
 
 		return false;
@@ -330,8 +386,8 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 
 
 	/**
-	 * Callback that will be activated when a request for row appending
-	 * returns.
+	 * Callback that will be activated when a set of options is returned
+	 * from the server for a new select control.
 	 *
 	 * @private
 	 *
@@ -343,69 +399,102 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 			fetchOptionsResponseHandler_ = function(ajaxContext, jsonData) {
 
 		// Find the currently editable select menu and fill
-		jsonData = this.handleJson(jsonData);
-		if (jsonData !== false) {
-			var $listbuilder = this.getHtmlElement();
+		var pjd = this.handleJson(jsonData),
+				$listbuilder = this.getHtmlElement(),
+				selectedValues = [],
+				$selectInput,
+				i, limit,
+				$pulldown, $container, optionsCount, j,
+				$option,
+				label, $optgroup,
+				k, optionsInsideGroup, $lastElement;
 
+		if (pjd !== false) {
 			// Get the list of already-selected options, to ensure
 			// that we don't offer duplicates.
-			var selectedValues = [];
 			$listbuilder.find('.gridCellDisplay :input').each(function(i, selected) {
 				selectedValues[i] = $(selected).val();
 			});
 
 			// Get the currently available input row's elements
-			var $selectInput = $listbuilder.find(
+			$selectInput = $listbuilder.find(
 					'.gridRowEdit:visible .selectMenu:input'
 					);
 
 			// For each pulldown (generally 1), add options.
-			$selectInput.each(function(i) {
+			for (i = 0, limit = $selectInput.length; i < limit; i++) {
 				// Fetch some useful properties
-				var $this = $(this);
-				var $container = $this.parents('.gridCellContainer');
-				var currentIndex = $container.find('.gridCellDisplay :input').val();
+				$pulldown = $($selectInput[i]);
+				$container = $pulldown.parents('.gridCellContainer');
 
 				// Add the options, noting the currently selected index
-				var options = '';
-				var optionsCount = 0;
-				var selectedIndex = null;
-				$this.children().empty();
-				var $lastElement;
-				var j = null;
-				for (j in jsonData.content[i]) {
-					// Check to see if this option is
-					// already in the LB.
-					var isDuplicate = false;
-					if (j != currentIndex) {
-						// If it's the current row, don't consider it a duplicate
-						for (var k = 0; k < selectedValues.length; k++) {
-							if (selectedValues[k] == j) {
-								isDuplicate = true;
-							}
-						}
+				optionsCount = 0;
+				$pulldown.children().empty();
+				j = null;
+				for (j in pjd.content[i]) {
+					// Ignore optgroup labels.
+					if (j == $.pkp.cons.LISTBUILDER_OPTGROUP_LABEL) {
+						continue;
 					}
 
-					if (!isDuplicate) {
-						// Create and populate the option node
-						var content = jsonData.content[i][j];
-						var $option = $('<option/>');
-						$option.attr('value', j);
-						$option.text(content);
-
-						if (j == currentIndex) {
-							$option.attr('selected', 'selected');
+					if (typeof(pjd.content[i][j]) == 'object') {
+						// Options must go inside an optgroup.
+						// Check if we have optgroup label data.
+						if (
+								pjd.
+								content[i][$.pkp.cons.LISTBUILDER_OPTGROUP_LABEL] === undefined) {
+							continue;
 						}
 
-						$this.append($option);
-						optionsCount++;
-						$lastElement = $option;
+						if (typeof(
+								pjd.content[i][$.pkp.cons.LISTBUILDER_OPTGROUP_LABEL]
+								) != 'object') {
+
+							continue;
+						}
+
+						label =
+								pjd.content[i][$.pkp.cons.LISTBUILDER_OPTGROUP_LABEL][j];
+						if (!label) {
+							continue;
+						}
+
+						$optgroup = $('<optgroup></optgroup>');
+						$optgroup.attr('label', label);
+						$pulldown.append($optgroup);
+
+						k = null;
+						optionsInsideGroup = 0;
+						for (k in pjd.content[i][j]) {
+							// Populate the optgroup.
+							$option = this.populatePulldown_($optgroup,
+									selectedValues, pjd.content[i][j][k], k);
+							if ($option) {
+								optionsCount++;
+								optionsInsideGroup++;
+							}
+						}
+
+						// Avoid inserting optgroups that have no option.
+						if (optionsInsideGroup === 0) {
+							$optgroup.remove();
+						}
+					} else {
+						// Just insert the current option.
+						$option = this.populatePulldown_($pulldown,
+								selectedValues, pjd.content[i][j], j);
+						if ($option) {
+							optionsCount++;
+						}
 					}
 				}
 
+				$lastElement = $option;
+
 				// If only one element is available, select it.
-				if (optionsCount === 1) {
+				if (optionsCount === 1 && $lastElement) {
 					$lastElement.attr('selected', 'selected');
+					this.availableOptions_ = false;
 				}
 
 				// If no options are available for this select menu,
@@ -414,10 +503,59 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 					$container.find('.gridCellDisplay').show();
 					$container.find('.gridCellEdit').hide();
 				}
-			});
+			}
 		}
+
 		this.enableControls();
 		return false;
+	};
+
+
+	/**
+	 * Populate the pulldown with options.
+	 * @private
+	 * @param {jQueryObject} $element The element to be populated.
+	 * Can be a pulldown or an optgroup inside the pulldonw.
+	 * @param {Object} selectedValues Current listbuilder
+	 * selected values.
+	 * @param {string} optionText The text to populate the pulldown with.
+	 * @param {string} optionValue The key to populate the pulldown with.
+	 * @return {Object|boolean} Return the inserted option or false.
+	 */
+	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.
+			populatePulldown_ = function(
+			$element, selectedValues, optionText, optionValue) {
+
+		var $container = $element.parents('.gridCellContainer'),
+				currentIndex = $container.find('.gridCellDisplay :input').val(),
+				isDuplicate = false, k,
+				$option;
+
+		// Check to see if this option is already in the LB.
+		if (optionValue != currentIndex) {
+			// If it's the current row, don't consider it a duplicate
+			for (k = 0; k < selectedValues.length; k++) {
+				if (selectedValues[k] == optionValue) {
+					isDuplicate = true;
+				}
+			}
+		}
+
+		if (!isDuplicate) {
+			// Create and populate the option node
+			$option = $('<option/>');
+			$option.attr('value', optionValue);
+			$option.text(optionText);
+
+			if (optionValue == currentIndex) {
+				$option.attr('selected', 'selected');
+			}
+
+			$element.append($option);
+			return $option;
+		} else {
+			return false;
+		}
 	};
 
 
@@ -434,22 +572,27 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.editItemHandler_ =
 			function(callingContext, opt_event) {
 
-		var $targetRow = $(callingContext).closest('.gridRow');
-
 		// Close any existing edits if necessary
 		this.closeEdits();
+		this.editItemCallingContext_ = callingContext;
 
-		// Show inputs; hide display
-		$targetRow.addClass('gridRowEdit');
-		$targetRow.find(':input').first().focus();
+		// Show inputs; hide display. IE8 is slow, and it will execute
+		// this before the timeout setted in inputBlurHandler_. Insert this
+		// code inside a timeout too to avoid closing inputs that are not
+		// meant to.
+		setTimeout(this.callbackWrapper(function() {
+			var $targetRow = $(this.editItemCallingContext_).closest('.gridRow');
+			$targetRow.addClass('gridRowEdit');
+			$targetRow.find(':input').not('[type="hidden"]').first().focus();
 
-		// If this is a select menu listbuilder, load the options
-		if (this.sourceType_ == $.pkp.cons.LISTBUILDER_SOURCE_TYPE_SELECT) {
-			this.disableControls();
-			$.get(this.fetchOptionsUrl_, {},
-					this.callbackWrapper(this.fetchOptionsResponseHandler_, null),
-						'json');
-		}
+			// If this is a select menu listbuilder, load the options
+			if (this.sourceType_ == $.pkp.cons.LISTBUILDER_SOURCE_TYPE_SELECT) {
+				this.disableControls();
+				$.get(this.fetchOptionsUrl_, {},
+						this.callbackWrapper(this.fetchOptionsResponseHandler_, null),
+							'json');
+			}
+		}), 0);
 
 		return false;
 	};
@@ -470,8 +613,8 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 
 		var params = {};
 		$.each($inputs.serializeArray(), function(k, v) {
-			var name = v.name;
-			var value = v.value;
+			var name = v.name,
+					value = v.value;
 
 			params[name] = params[name] === undefined ? value :
 					$.isArray(params[name]) ? params[name].concat(value) :
@@ -495,14 +638,14 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.
 			inputKeystrokeHandler_ = function(callingContext, opt_event) {
 
-		var CR_KEY = 13;
-		var TAB_KEY = 9;
+		var CR_KEY = 13, TAB_KEY = 9,
+				$target, $row, $inputs, i;
 
 		if (opt_event.which == CR_KEY) {
-			var $target = $(callingContext);
-			var $row = $target.parents('.gridRow');
-			var $inputs = $row.find(':input:visible');
-			var i = $inputs.index($target);
+			$target = $(callingContext);
+			$row = $target.parents('.gridRow');
+			$inputs = $row.find(':input:visible');
+			i = $inputs.index($target);
 			if ($inputs.length == i + 1) {
 				this.saveRow($row);
 				return false; // Prevent default
@@ -537,8 +680,8 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 		// Check to see whether the row has lost focus after this event has
 		// been processed.
 		setTimeout(this.callbackWrapper(function() {
-			var $editingRow = $('.editingRowPlaceholder');
-			var found = false;
+			var $editingRow = $('.editingRowPlaceholder'),
+					found = false;
 			$editingRow.find(':input').each(function(index, elem) {
 				if (elem === document.activeElement) {
 					found = true;
@@ -569,16 +712,18 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	$.pkp.controllers.listbuilder.ListbuilderHandler.prototype.
 			saveRowResponseHandler_ = function(ajaxContext, jsonData) {
 
-		jsonData = this.handleJson(jsonData);
-		if (jsonData !== false) {
+		var processedJsonData = this.handleJson(jsonData),
+				$newContent, rowId;
+
+		if (processedJsonData !== false) {
 			// Unfortunately we can't use a closure to get this from
 			// the calling context. Use a class flag "saveRowResponsePlaceholder".
 			// (Risks IE closure/DOM element memory leak.)
-			var $newContent = $(jsonData.content);
+			$newContent = $(processedJsonData.content);
 
 			// Store current row id.
-			var rowId = this.getHtmlElement().
-					find('.saveRowResponsePlaceholder').attr('id');
+			rowId = /** @type {string} */ (this.getHtmlElement()
+					.find('.saveRowResponsePlaceholder').attr('id'));
 
 			// Add to the DOM
 			this.getHtmlElement().find('.saveRowResponsePlaceholder').
@@ -590,8 +735,12 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 			// Attach handlers for content manipulation
 			this.attachContentHandlers_($newContent);
 
-			this.callFeaturesHook('replaceRow', $newContent);
+			this.callFeaturesHook('replaceElement', $newContent);
 		}
+
+		// Ensure that containing forms are notified of the changed data
+		this.getHtmlElement().trigger('formChange');
+
 		this.enableControls();
 	};
 
@@ -632,7 +781,7 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 				.blur(this.callbackWrapper(this.inputBlurHandler_));
 
 		// Attach deletion handler
-		$context.find('.remove_item').click(
+		$context.find('.pkp_linkaction_delete').click(
 				this.callbackWrapper(this.deleteItemHandler_));
 	};
 
@@ -683,11 +832,10 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 			prototype.disableControls = function() {
 
 		this.getHtmlElement().
-				find('span[class="options"] > a[id*="addItem"]').unbind('click');
+				find('span[class="options"] > a[id*="addItem"]').unbind('mousedown');
 
-		// binding false is the same as function() {return false;} in >= 1.4.2
-		this.getHtmlElement().
-				find('span[class="options"] > a[id*="addItem"]').click(false);
+		this.getHtmlElement().find('span[class="options"] > a[id*="addItem"]')
+				.mousedown(function() {return false;});
 		this.getHtmlElement().find('.h3').addClass('spinner');
 	};
 
@@ -697,12 +845,13 @@ $.pkp.controllers.listbuilder = $.pkp.controllers.listbuilder || {};
 	 */
 	$.pkp.controllers.listbuilder.ListbuilderHandler.
 			prototype.enableControls = function() {
-		// rebind our 'click' handler so we can add another item if needed
-		this.getHtmlElement().find('span[class="options"] > a[id*="addItem"]').click(
-				this.callbackWrapper(this.addItemHandler_));
+		// rebind our 'click' handler so we can add another item
+		// if needed
+		this.getHtmlElement().find('span[class="options"] > a[id*="addItem"]').
+				mousedown(this.callbackWrapper(this.addItemHandler_));
 		this.getHtmlElement().find('.h3').removeClass('spinner');
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

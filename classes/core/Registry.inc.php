@@ -3,7 +3,8 @@
 /**
  * @file classes/core/Registry.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Registry
@@ -19,7 +20,7 @@ class Registry {
 	 * Get a static reference to the registry data structure.
 	 * @return array
 	 */
-	function &getRegistry() {
+	static function &_getRegistry() {
 		static $registry = array();
 		return $registry;
 	}
@@ -31,8 +32,8 @@ class Registry {
 	 * @param $createWithDefault mixed If $createIfEmpty, this value will be used as a default
 	 * @return mixed
 	 */
-	function &get($key, $createIfEmpty = false, $createWithDefault = null) {
-		$registry =& Registry::getRegistry();
+	static function &get($key, $createIfEmpty = false, $createWithDefault = null) {
+		$registry =& Registry::_getRegistry();
 
 		$result = null;
 		if (isset($registry[$key])) $result =& $registry[$key];
@@ -49,8 +50,8 @@ class Registry {
 	 * @param $key string
 	 * @param $value mixed
 	 */
-	function set($key, &$value) {
-		$registry =& Registry::getRegistry();
+	static function set($key, &$value) {
+		$registry =& Registry::_getRegistry();
 		$registry[$key] =& $value;
 	}
 
@@ -58,15 +59,15 @@ class Registry {
 	 * Remove an item from the registry.
 	 * @param $key string
 	 */
-	function delete($key) {
-		$registry =& Registry::getRegistry();
+	static function delete($key) {
+		$registry =& Registry::_getRegistry();
 		if (isset($registry[$key])) {
 			unset($registry[$key]);
 		}
 	}
 
-	function clear() {
-		$registry =& Registry::getRegistry();
+	static function clear() {
+		$registry =& Registry::_getRegistry();
 		foreach (array_keys($registry) as $key) {
 			unset($registry[$key]);
 		}

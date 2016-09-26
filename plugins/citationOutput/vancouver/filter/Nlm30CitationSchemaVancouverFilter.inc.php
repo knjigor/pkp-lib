@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_citationOutput_vancouver_filter
+ * @defgroup plugins_citationOutput_vancouver_filter Vancouver Citation Format Filter
  */
 
 /**
  * @file plugins/citationOutput/vancouver/filter/Nlm30CitationSchemaVancouverFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaVancouverFilter
@@ -25,7 +25,7 @@ class Nlm30CitationSchemaVancouverFilter extends Nlm30CitationSchemaCitationOutp
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function Nlm30CitationSchemaVancouverFilter(&$filterGroup) {
+	function Nlm30CitationSchemaVancouverFilter($filterGroup) {
 		$this->setDisplayName('Vancouver Citation Output');
 
 		parent::Nlm30CitationSchemaCitationOutputFormatFilter($filterGroup);
@@ -36,7 +36,7 @@ class Nlm30CitationSchemaVancouverFilter extends Nlm30CitationSchemaCitationOutp
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationOutput.vancouver.filter.Nlm30CitationSchemaVancouverFilter';
@@ -47,7 +47,7 @@ class Nlm30CitationSchemaVancouverFilter extends Nlm30CitationSchemaCitationOutp
 	// Implement abstract template methods from TemplateBasedFilter
 	//
 	/**
-	 * @see TemplateBasedFilter::getBasePath()
+	 * @copydoc TemplateBasedFilter::getBasePath()
 	 */
 	function getBasePath() {
 		return dirname(__FILE__);

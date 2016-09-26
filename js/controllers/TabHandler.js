@@ -1,7 +1,8 @@
 /**
  * @file js/controllers/TabHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TabHandler
@@ -21,18 +22,23 @@
 	 *
 	 * @extends $.pkp.classes.Handler
 	 *
-	 * @param {jQuery} $tabs A wrapped HTML element that
+	 * @param {jQueryObject} $tabs A wrapped HTML element that
 	 *  represents the tabbed interface.
 	 * @param {Object} options Handler options.
 	 */
 	$.pkp.controllers.TabHandler = function($tabs, options) {
+		var pageUrl, pageAnchor, pattern, pageAnchors, tabAnchors, i;
+
 		this.parent($tabs, options);
 
 		// Attach the tabs event handlers.
-		this.bind('tabsselect', this.tabsSelect);
-		this.bind('tabsshow', this.tabsShow);
+		this.bind('tabsbeforeactivate', this.tabsBeforeActivate);
+		this.bind('tabsactivate', this.tabsActivate);
+		this.bind('tabscreate', this.tabsCreate);
+		this.bind('tabsbeforeload', this.tabsBeforeLoad);
 		this.bind('tabsload', this.tabsLoad);
 		this.bind('containerReloadRequested', this.tabsReloadRequested);
+		this.bind('addTab', this.addTab);
 
 		if (options.emptyLastTab) {
 			this.emptyLastTab_ = options.emptyLastTab;
@@ -42,13 +48,13 @@
 		// determine what tab that is for and set the
 		// options.selected value to it so it gets used
 		// when tabs() are initialized.
-		var pageUrl = document.location.toString();
+		pageUrl = document.location.toString();
 		if (pageUrl.match('#')) {
-			var pageAnchor = pageUrl.split('#')[1];
-			var tabAnchors = $tabs.find('li a');
-			for (var i = 0; i < tabAnchors.length; i++) {
-				var pattern = RegExp('[/=]' + pageAnchor + '$');
-				if (tabAnchors[i].getAttribute('href').match(pattern)) {
+			pageAnchor = pageUrl.split('#')[1];
+			tabAnchors = $tabs.find('li a');
+			for (i = 0; i < tabAnchors.length; i++) {
+				if (pageAnchor == tabAnchors[i].getAttribute('name')) {
+					// Matched on anchor name.
 					options.selected = i;
 				}
 			}
@@ -61,7 +67,8 @@
 				cache: false,
 				dataFilter: this.callbackWrapper(this.dataFilter)
 			},
-			selected: options.selected ? options.selected : 0
+			disabled: options.disabled,
+			active: options.selected
 		});
 	};
 	$.pkp.classes.Helper.inherits(
@@ -74,7 +81,7 @@
 	/**
 	 * The current tab.
 	 * @private
-	 * @type {jQuery}
+	 * @type {jQueryObject}
 	 */
 	$.pkp.controllers.TabHandler.prototype.$currentTab_ = null;
 
@@ -104,54 +111,85 @@
 	 * @param {HTMLElement} tabsElement The tab element that triggered
 	 *  the event.
 	 * @param {Event} event The triggered event.
-	 * @param {Object} ui The tabs ui data.
+	 * @param {jQueryObject} ui The tabs ui data.
 	 * @return {boolean} Should return true to continue tab loading.
 	 */
-	$.pkp.controllers.TabHandler.prototype.tabsSelect =
+	$.pkp.controllers.TabHandler.prototype.tabsBeforeActivate =
 			function(tabsElement, event, ui) {
 
 		var unsavedForm = false;
 		this.$currentTab_.find('form').each(function(index) {
-			if ($.pkp.controllers.SiteHandler.prototype.isFormUnsaved(
-					$(this).attr('id'))) {
+
+			var handler = $.pkp.classes.Handler.getHandler($('#' + $(this).attr('id')));
+			if (handler.formChangesTracked) {
 				unsavedForm = true;
 				return false; // found an unsaved form, no need to continue with each().
 			}
 		});
 
+		this.$currentTab_.find('.hasDatepicker').datepicker('hide');
+
 		if (unsavedForm) {
 			if (!confirm($.pkp.locale.form_dataHasChanged)) {
 				return false;
 			} else {
-				$.pkp.controllers.SiteHandler.prototype
-						.unregisterAllUnsavedFormElements();
+				this.trigger('unregisterAllForms');
 			}
 		}
 
 		if (this.emptyLastTab_) {
-			this.$currentTab_.empty();
+			// bind a single (i.e. one()) error event handler to prevent
+			// propagation if the tab being unloaded no longer exists.
+			// We cannot simply getHandler() since that in of itself throws
+			// an Error.
+			$(window).one('error', function(msg, url, line) { return false; });
+			if (this.$currentTab_) {
+				this.$currentTab_.empty();
+			}
 		}
 		return true;
 	};
 
 
 	/**
-	 * Event handler that is called when a tab is shown.
+	 * Event handler that is called when a tab is created.
 	 *
 	 * @param {HTMLElement} tabsElement The tab element that triggered
 	 *  the event.
 	 * @param {Event} event The triggered event.
-	 * @param {Object} ui The tabs ui data.
+	 * @param {jQueryObject} ui The tabs ui data.
 	 * @return {boolean} Should return true to continue tab loading.
 	 */
-	$.pkp.controllers.TabHandler.prototype.tabsShow =
+	$.pkp.controllers.TabHandler.prototype.tabsCreate =
 			function(tabsElement, event, ui) {
 
-		// Save a reference to the current tab.
-		this.$currentTab_ = (ui.panel.jquery ? ui.panel : $(ui.panel));
+		// Save the tab index.
+		this.currentTabIndex_ = ui.tab.index();
+
+		// Save a reference to the current panel.
+		this.$currentTab_ = ui.panel.jquery ? ui.panel : $(ui.panel);
+
+		return true;
+	};
+
+
+	/**
+	 * Event handler that is called when a tab is activated
+	 *
+	 * @param {HTMLElement} tabsElement The tab element that triggered
+	 *  the event.
+	 * @param {Event} event The triggered event.
+	 * @param {jQueryObject} ui The tabs ui data.
+	 * @return {boolean} Should return true to continue tab loading.
+	 */
+	$.pkp.controllers.TabHandler.prototype.tabsActivate =
+			function(tabsElement, event, ui) {
 
 		// Save the tab index.
-		this.currentTabIndex_ = ui.index;
+		this.currentTabIndex_ = ui.newTab.index();
+
+		// Save a reference to the current panel.
+		this.$currentTab_ = ui.newPanel.jquery ? ui.newPanel : $(ui.newPanel);
 
 		return true;
 	};
@@ -163,12 +201,29 @@
 	 * @param {HTMLElement} tabsElement The tab element that triggered
 	 *  the event.
 	 * @param {Event} event The triggered event.
-	 * @param {Object} ui The tabs ui data.
+	 * @param {jQueryObject} ui The tabs ui data.
 	 * @return {boolean} Should return true to continue tab loading.
 	 */
 	$.pkp.controllers.TabHandler.prototype.tabsLoad =
 			function(tabsElement, event, ui) {
 		return true;
+	};
+
+
+	/**
+	 * Callback that that is triggered before the tab is loaded.
+	 *
+	 * @param {HTMLElement} tabsElement The tab element that triggered
+	 *  the event.
+	 * @param {Event} event The triggered event.
+	 * @param {jQueryObject} ui The tabs ui data.
+	 */
+	$.pkp.controllers.TabHandler.prototype.tabsBeforeLoad =
+			function(tabsElement, event, ui) {
+
+		// Initialize AJAX settings for loading tab content remotely
+		ui.ajaxSettings.cache = false;
+		ui.ajaxSettings.dataFilter = this.callbackWrapper(this.dataFilter);
 	};
 
 
@@ -205,7 +260,7 @@
 	 * @param {HTMLElement} divElement The parent DIV element
 	 *  which contains the tabs.
 	 * @param {Event} event The triggered event (tabsReloadRequested).
-	 * @param {Object} jsonContent The tabs ui data.
+	 * @param {{tabsUrl: string}} jsonContent The tabs ui data.
 	 */
 	$.pkp.controllers.TabHandler.prototype.tabsReloadRequested =
 			function(divElement, event, jsonContent) {
@@ -218,13 +273,88 @@
 	};
 
 
+	/**
+	 * Callback that processes data returned by the server when
+	 * an 'addTab' event is received.
+	 *
+	 * This is useful e.g. when the results of a form handler
+	 * should be sent to a different tab in the containing tabset.
+	 *
+	 * @param {HTMLElement} divElement The parent DIV element
+	 *  which contains the tabs.
+	 * @param {Event} event The triggered event (addTab).
+	 * @param {{url: string, title: string}} jsonContent The tabs ui data.
+	 */
+	$.pkp.controllers.TabHandler.prototype.addTab =
+			function(divElement, event, jsonContent) {
+
+		var $element = this.getHtmlElement(),
+				numTabs = $element.children('ul').children('li').length + 1,
+				$anchorElement = $('<a/>')
+						.text(jsonContent.title)
+						.attr('href', jsonContent.url),
+				$closeSpanElement = $('<a/>')
+						.addClass('close')
+						.text($.pkp.locale.common_close)
+						.attr('href', '#'),
+				$liElement = $('<li/>')
+						.append($anchorElement)
+						.append($closeSpanElement);
+
+		// Get the "close" button working
+		$closeSpanElement.click(function() {
+			var $liElement = $(this).closest('li'),
+					$divElement = $('#' + $liElement.attr('aria-controls')),
+					thisTabIndex, unsavedForm;
+
+			// Check to see if any unsaved changes need to be confirmed
+			unsavedForm = false;
+			$divElement.find('form').each(function() {
+				var handler = $.pkp.classes.Handler.getHandler($(this));
+				if (handler.formChangesTracked) {
+					// Confirm before proceeding
+					if (!confirm($.pkp.locale.form_dataHasChanged)) {
+						unsavedForm = true;
+						return false;
+					}
+				}
+			});
+
+			if (!unsavedForm) {
+				$divElement.find('form').each(function() {
+					var handler = $.pkp.classes.Handler.getHandler($(this));
+					if (handler) {
+						handler.unregisterForm();
+					}
+				});
+
+				// If the panel being closed is currently selected, move off first.
+				thisTabIndex = $liElement.eq(0).index();
+				if ($element.tabs('option', 'active') == thisTabIndex) {
+					$element.tabs('option', 'active', thisTabIndex - 1);
+				}
+
+				$liElement.remove();
+				$divElement.remove();
+
+				$element.tabs('refresh');
+			}
+		});
+
+		// Add the new tab element and refresh the tab set.
+		$element.children('ul').append($liElement);
+		$element.tabs('refresh');
+		$element.tabs('option', 'active', numTabs - 1);
+	};
+
+
 	//
 	// Protected methods
 	//
 	/**
 	 * Get the current tab.
 	 * @protected
-	 * @return {jQuery} The current tab.
+	 * @return {jQueryObject} The current tab.
 	 */
 	$.pkp.controllers.TabHandler.prototype.getCurrentTab = function() {
 		return this.$currentTab_;
@@ -242,4 +372,4 @@
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

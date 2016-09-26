@@ -1,7 +1,8 @@
 /**
  * @file js/classes/features/GridCategoryAccordionFeature.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GridCategoryAccordionFeature
@@ -15,6 +16,7 @@
 	/**
 	 * @constructor
 	 * @inheritDoc
+	 * @extends $.pkp.classes.features.Feature
 	 */
 	$.pkp.classes.features.GridCategoryAccordionFeature =
 			function(gridHandler, options) {
@@ -49,15 +51,16 @@
 
 
 	/**
-	 * Get category rows accordion link actions.
-	 * @return {jQuery} Link actions.
+	 * Get category rows accordion link actions inside the passed
+	 * element.
+	 * @param {jQueryObject} $context The context element.
+	 * @return {jQueryObject} Link actions.
 	 */
 	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.
-			getAccordionLinks = function() {
-		var $table = this.getGridHtmlElement().find('table');
-		var collapseSelector = '.' + this.getCollapseClass();
-		var expandSelector = '.' + this.getExpandClass();
-		return $(collapseSelector + ',' + expandSelector, $table);
+			getAccordionLinks = function($context) {
+		var collapseSelector = '.' + this.getCollapseClass(),
+				expandSelector = '.' + this.getExpandClass();
+		return $(collapseSelector + ',' + expandSelector, $context);
 	};
 
 
@@ -66,29 +69,69 @@
 	 */
 	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.init =
 			function() {
+
+		var $collapseAllLink;
+
 		$('.grid_header_bar .expand_all', this.getGridHtmlElement()).
 				click(this.callbackWrapper(this.expandAllClickHandler_, this));
 
-		var $collapseAllLink = $('.grid_header_bar .collapse_all',
+		$collapseAllLink = $('.grid_header_bar .collapse_all',
 				this.getGridHtmlElement());
 		$collapseAllLink.click(this.callbackWrapper(
 				this.collapseAllClickHandler_, this));
 
-		var $accordionLinkActions = this.getAccordionLinks();
-		$accordionLinkActions.click(
-				this.callbackWrapper(this.accordionRowClickHandler_, this));
+		this.bindCategoryAccordionControls_(this.getGridHtmlElement());
 
 		$collapseAllLink.click();
 
 		// Hide all no items tbody.
-		var $emptyPlaceholders = $('tbody.empty', this.getGridHtmlElement());
-		$emptyPlaceholders.hide();
+		this.hideEmptyPlaceholders_();
+
+	};
+
+
+	/**
+	 * @inheritDoc
+	 */
+	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.replaceElement =
+			function($newContent) {
+		this.bindCategoryAccordionControls_($newContent);
+		// Make sure the category items are visible.
+		$('.' + this.getExpandClass(), $newContent).click();
+		this.hideEmptyPlaceholders_();
+		return false;
 	};
 
 
 	//
 	// Private helper methods.
 	//
+	/**
+	 * Add click handlers to the accordion controls inside the
+	 * passed element.
+	 * @param {jQueryObject} $element The context element.
+	 * @private
+	 */
+	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.
+			bindCategoryAccordionControls_ = function($element) {
+		var $accordionLinkActions = this.getAccordionLinks($element);
+		$accordionLinkActions.click(
+				this.callbackWrapper(this.accordionRowClickHandler_, this));
+	};
+
+
+	/**
+	 * Hide all grid empty placeholders.
+	 * @private
+	 */
+	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.
+			hideEmptyPlaceholders_ = function() {
+		var $emptyPlaceholders = $('tbody.empty',
+				this.getGridHtmlElement());
+		$emptyPlaceholders.hide();
+	};
+
+
 	/**
 	 * Expand all link action click handler.
 	 * @private
@@ -121,6 +164,8 @@
 		$('.category .' + this.getCollapseClass(),
 				this.getGridHtmlElement()).click();
 
+		this.closeOpenedRowControls_();
+
 		return false;
 	};
 
@@ -135,27 +180,32 @@
 	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.
 			accordionRowClickHandler_ = function(callingContext, opt_event) {
 
-		var $link = $(callingContext);
+		var $link = $(callingContext),
+				$category, $categoryElements,
+				$actionsContainer,
+				$collapseLink, $expandLink;
 		$link.hide();
 
-		var $category = $link.parents('.category_grid_body:first');
-		var $categoryElements = $('.gridRow', $category);
-		if ($categoryElements.length == 0) {
-			$categoryElements = this.gridHandler_.
+		$category = $link.parents('.category_grid_body:first');
+		$categoryElements = this.gridHandler.
+				getRowsInCategory($category);
+		if ($categoryElements.length === 0) {
+			$categoryElements = this.gridHandler.
 					getCategoryEmptyPlaceholder($category);
 		}
 
-		var $actionsContainer = $link.parent();
+		$actionsContainer = $link.parent();
 		if ($link.hasClass(this.getExpandClass())) {
-			var $collapseLink = $('.' + this.getCollapseClass(),
+			$collapseLink = $('.' + this.getCollapseClass(),
 					$actionsContainer);
 			$collapseLink.show();
 			$categoryElements.show();
 		} else {
-			var $expandLink = $('.' + this.getExpandClass(),
+			$expandLink = $('.' + this.getExpandClass(),
 					$actionsContainer);
 			$expandLink.show();
 			$categoryElements.hide();
+			this.closeOpenedRowControls_($category);
 		}
 
 		this.updateGridActions_();
@@ -173,21 +223,26 @@
 	 */
 	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.
 			updateGridActions_ = function() {
+
+		var $grid, selectors, $allRowActions, $expandActions, $collapseActions,
+				$gridCollapseAction, $gridExpandAction;
 		// Only execute if grid is visible.
-		if (!this.getGridHtmlElement().is(':visible')) return;
+		if (!this.getGridHtmlElement().is(':visible')) {
+			return;
+		}
 
-		var $grid = this.getGridHtmlElement();
-		var selectors = '.' + this.getExpandClass() +
+		$grid = this.getGridHtmlElement();
+		selectors = '.' + this.getExpandClass() +
 				', .' + this.getCollapseClass();
-		var $allRowActions = $(selectors, $grid).filter(':visible');
+		$allRowActions = $(selectors, $grid).filter(':visible');
 
-		var $expandActions = $('.' + this.getExpandClass(), $grid).
+		$expandActions = $('.' + this.getExpandClass(), $grid).
 				filter(':visible');
-		var $collapseActions = $('.' + this.getCollapseClass(), $grid).
+		$collapseActions = $('.' + this.getCollapseClass(), $grid).
 				filter(':visible');
 
-		var $gridCollapseAction = $('.grid_header_bar .collapse_all');
-		var $gridExpandAction = $('.grid_header_bar .expand_all');
+		$gridCollapseAction = $('.grid_header_bar .collapse_all');
+		$gridExpandAction = $('.grid_header_bar .expand_all');
 
 		if ($allRowActions.length == $expandActions.length &&
 				$gridCollapseAction.is(':visible')) {
@@ -201,5 +256,21 @@
 	};
 
 
+	/**
+	 * Close all visible grid row controls.
+	 * @param {jQueryObject=} opt_$context Close row controls only inside
+	 * this object.
+	 * @private
+	 */
+	$.pkp.classes.features.GridCategoryAccordionFeature.prototype.
+			closeOpenedRowControls_ = function(opt_$context) {
+		if (opt_$context == undefined) {
+			opt_$context = this.gridHandler.getHtmlElement();
+		}
+		$('.row_controls :visible', opt_$context).closest('tr').prev().
+				find('.row_actions > a:first').click();
+	};
+
+
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

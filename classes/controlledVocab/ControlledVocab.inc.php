@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup controlled_vocab
+ * @defgroup controlled_vocab Controlled Vocabulary
  */
 
 /**
  * @file classes/controlledVocab/ControlledVocab.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ControlledVocab
@@ -42,7 +42,7 @@ class ControlledVocab extends DataObject {
 	 * @param $assocId int
 	 */
 	function setAssocId($assocId) {
-		return $this->setData('assocId', $assocId);
+		$this->setData('assocId', $assocId);
 	}
 
 	/**
@@ -58,7 +58,7 @@ class ControlledVocab extends DataObject {
 	 * @param $assocType int
 	 */
 	function setAssocType($assocType) {
-		return $this->setData('assocType', $assocType);
+		$this->setData('assocType', $assocType);
 	}
 
 	/**
@@ -74,7 +74,7 @@ class ControlledVocab extends DataObject {
 	 * @param $symbolic string
 	 */
 	function setSymbolic($symbolic) {
-		return $this->setData('symbolic', $symbolic);
+		$this->setData('symbolic', $symbolic);
 	}
 
 	/**
@@ -83,7 +83,7 @@ class ControlledVocab extends DataObject {
 	 * @return array $controlledVocabEntryId => name
 	 */
 	function enumerate($settingName = 'name') {
-		$controlledVocabDao =& DAORegistry::getDAO('ControlledVocabDAO');
+		$controlledVocabDao = DAORegistry::getDAO('ControlledVocabDAO');
 		return $controlledVocabDao->enumerate($this->getId(), $settingName);
 	}
 }

@@ -3,7 +3,8 @@
 /**
  * @file classes/db/DBDataXMLParser.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DBDataXMLParser
@@ -17,10 +18,6 @@
 import('lib.pkp.classes.xml.XMLParser');
 
 class DBDataXMLParser {
-
-	/** @var XMLParser the parser to use */
-	var $parser;
-
 	/** @var ADOConnection the underlying database connection */
 	var $dbconn;
 
@@ -31,7 +28,6 @@ class DBDataXMLParser {
 	 * Constructor.
 	 */
 	function DBDataXMLParser() {
-		$this->parser = new XMLParser();
 		$this->sql = array();
 	}
 
@@ -51,125 +47,127 @@ class DBDataXMLParser {
 	 */
 	function parseData($file) {
 		$this->sql = array();
-		$tree = $this->parser->parse($file);
+		$parser = new XMLParser();
+		$tree = $parser->parse($file);
+		if (!$tree) return array();
+
 		$allTables =& $this->dbconn->MetaTables();
-		if ($tree !== false) {
-			foreach ($tree->getChildren() as $table) {
-				if ($table->getName() == 'table') {
-					$fieldDefaultValues = array();
+		foreach ($tree->getChildren() as $type) switch($type->getName()) {
+			case 'table':
+				$fieldDefaultValues = array();
 
-					// Match table element
-					foreach ($table->getChildren() as $row) {
-						switch ($row->getName()) {
-							case 'field_default':
-								// Match a default field element
-								list($fieldName, $value) = $this->_getFieldData($row);
-								$fieldDefaultValues[$fieldName] = $value;
-								break;
+				// Match table element
+				foreach ($type->getChildren() as $row) {
+					switch ($row->getName()) {
+						case 'field_default':
+							// Match a default field element
+							list($fieldName, $value) = $this->_getFieldData($row);
+							$fieldDefaultValues[$fieldName] = $value;
+							break;
 
-							case 'row':
-								// Match a row element
-								$fieldValues = array();
+						case 'row':
+							// Match a row element
+							$fieldValues = array();
 
-								foreach ($row->getChildren() as $field) {
-									// Get the field names and values for this INSERT
-									list($fieldName, $value) = $this->_getFieldData($field);
-									$fieldValues[$fieldName] = $value;
-								}
-
-								$fieldValues = array_merge($fieldDefaultValues, $fieldValues);
-
-								if (count($fieldValues) > 0) {
-									$this->sql[] = sprintf(
-											'INSERT INTO %s (%s) VALUES (%s)',
-											$table->getAttribute('name'),
-											join(', ', array_keys($fieldValues)),
-											join(', ', array_values($fieldValues)));
-								}
-								break;
-
-							default:
-								assert(false);
-						}
-					}
-
-				} else if ($table->getName() == 'sql') {
-					// Match sql element (set of SQL queries)
-					foreach ($table->getChildren() as $query) {
-						// FIXME This code
-						if ($query->getName() == 'drop') {
-							if (!isset($dbdict)) {
-								$dbdict = @NewDataDictionary($this->dbconn);
-							}
-							$table = $query->getAttribute('table');
-							$column = $query->getAttribute('column');
-							if ($column) {
-								// NOT PORTABLE; do not use this
-								$this->sql[] = $dbdict->DropColumnSql($table, $column);
-							} else {
-								$this->sql[] = $dbdict->DropTableSQL($table);
+							foreach ($row->getChildren() as $field) {
+								// Get the field names and values for this INSERT
+								list($fieldName, $value) = $this->_getFieldData($field);
+								$fieldValues[$fieldName] = $value;
 							}
 
-						} else if ($query->getName() == 'rename') {
-							if (!isset($dbdict)) {
-								$dbdict = @NewDataDictionary($this->dbconn);
-							}
-							$table = $query->getAttribute('table');
-							$column = $query->getAttribute('column');
-							$to = $query->getAttribute('to');
-							if ($column) {
-								// Make sure the target column does not yet exist.
-								// This is to guarantee idempotence of upgrade scripts.
-								$run = false;
-								if (in_array($table, $allTables)) {
-									$columns =& $this->dbconn->MetaColumns($table, true);
-									if (!isset($columns[strtoupper($to)])) {
-										// Only run if the column has not yet been
-										// renamed.
-										$run = true;
-									}
-								} else {
-									// If the target table does not exist then
-									// we assume that another rename entry will still
-									// rename it and we should run after it.
-									$run = true;
-								}
+							$fieldValues = array_merge($fieldDefaultValues, $fieldValues);
 
-								if ($run) {
-									$colId = strtoupper($column);
-									$flds = '';
-									if (isset($columns[$colId])) {
-										$col = $columns[$colId];
-										if ($col->max_length == "-1") {
-											$max_length = '';
-										} else {
-											$max_length = $col->max_length;
-										}
-										$fld = array('NAME' => $col->name, 'TYPE' => $dbdict->MetaType($col), 'SIZE' => $max_length);
-										if ($col->primary_key) $fld['KEY'] = 'KEY';
-										if ($col->auto_increment) $fld['AUTOINCREMENT'] = 'AUTOINCREMENT';
-										if ($col->not_null) $fld['NOTNULL'] = 'NOTNULL';
-										if ($col->has_default) $fld['DEFAULT'] = $col->default_value;
-										$flds = array($colId => $fld);
-									} else assert(false);
-									$this->sql[] = $dbdict->RenameColumnSQL($table, $column, $to, $flds);
-								}
-							} else {
-								// Make sure the target table does not yet exist.
-								// This is to guarantee idempotence of upgrade scripts.
-								if (!in_array($to, $allTables)) {
-									$this->sql[] = $dbdict->RenameTableSQL($table, $to);
-								}
+							if (count($fieldValues) > 0) {
+								$this->sql[] = sprintf(
+										'INSERT INTO %s (%s) VALUES (%s)',
+										$type->getAttribute('name'),
+										join(', ', array_keys($fieldValues)),
+										join(', ', array_values($fieldValues)));
 							}
-						} else {
-							$driver = $query->getAttribute('driver');
-							if (empty($driver) || $this->dbconn->databaseType === $driver) {
-								$this->sql[] = $query->getValue();
-							}
-						}
+							break;
+
+						default:
+							assert(false);
 					}
 				}
-			}
+				break;
+			case 'sql':
+				// Match sql element (set of SQL queries)
+				foreach ($type->getChildren() as $child) switch ($child->getName()) {
+					case 'drop':
+						if (!isset($dbdict)) {
+							$dbdict = @NewDataDictionary($this->dbconn);
+						}
+						$table = $child->getAttribute('table');
+						$column = $child->getAttribute('column');
+						if ($column) {
+							// NOT PORTABLE; do not use this
+							$this->sql[] = $dbdict->DropColumnSql($table, $column);
+						} else {
+							$this->sql[] = $dbdict->DropTableSQL($table);
+						}
+						break;
+					case 'rename':
+						if (!isset($dbdict)) {
+							$dbdict = @NewDataDictionary($this->dbconn);
+						}
+						$table = $child->getAttribute('table');
+						$column = $child->getAttribute('column');
+						$to = $child->getAttribute('to');
+						if ($column) {
+							// Make sure the target column does not yet exist.
+							// This is to guarantee idempotence of upgrade scripts.
+							$run = false;
+							if (in_array($table, $allTables)) {
+								$columns =& $this->dbconn->MetaColumns($table, true);
+								if (!isset($columns[strtoupper($to)])) {
+									// Only run if the column has not yet been
+									// renamed.
+									$run = true;
+								}
+							} else {
+								// If the target table does not exist then
+								// we assume that another rename entry will still
+								// rename it and we should run after it.
+								$run = true;
+							}
+
+							if ($run) {
+								$colId = strtoupper($column);
+								$flds = '';
+								if (isset($columns[$colId])) {
+									$col = $columns[$colId];
+									if ($col->max_length == "-1") {
+										$max_length = '';
+									} else {
+										$max_length = $col->max_length;
+									}
+									$fld = array('NAME' => $col->name, 'TYPE' => $dbdict->MetaType($col), 'SIZE' => $max_length);
+									if ($col->primary_key) $fld['KEY'] = 'KEY';
+									if ($col->auto_increment) $fld['AUTOINCREMENT'] = 'AUTOINCREMENT';
+									if ($col->not_null) $fld['NOTNULL'] = 'NOTNULL';
+									if ($col->has_default) $fld['DEFAULT'] = $col->default_value;
+									$flds = array($colId => $fld);
+								} else assert(false);
+
+								$this->sql[] = $dbdict->RenameColumnSQL($table, $column, $to, $flds);
+							}
+						} else {
+							// Make sure the target table does not yet exist.
+							// This is to guarantee idempotence of upgrade scripts.
+							if (!in_array($to, $allTables)) {
+								$this->sql[] = $dbdict->RenameTableSQL($table, $to);
+							}
+						}
+						break;
+					case 'query':
+						$driver = $child->getAttribute('driver');
+						if (empty($driver) || $this->dbconn->databaseType === $driver) {
+							$this->sql[] = $child->getValue();
+						}
+						break;
+				}
+				break;
 		}
 		return $this->sql;
 	}
@@ -206,14 +204,6 @@ class DBDataXMLParser {
 	 */
 	function quoteString($str) {
 		return $this->dbconn->qstr($str);
-	}
-
-	/**
-	 * Perform required clean up for this object.
-	 */
-	function destroy() {
-		$this->parser->destroy();
-		unset($this);
 	}
 
 

@@ -3,7 +3,8 @@
 /**
  * @file plugins/metadata/nlm30/filter/Nlm30CitationSchemaCitationOutputFormatFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaCitationOutputFormatFilter
@@ -28,7 +29,7 @@ class Nlm30CitationSchemaCitationOutputFormatFilter extends TemplateBasedFilter 
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function Nlm30CitationSchemaCitationOutputFormatFilter(&$filterGroup) {
+	function Nlm30CitationSchemaCitationOutputFormatFilter($filterGroup) {
 		parent::TemplateBasedFilter($filterGroup);
 	}
 
@@ -68,7 +69,7 @@ class Nlm30CitationSchemaCitationOutputFormatFilter extends TemplateBasedFilter 
 	 *  to be transformed
 	 * @return string the rendered citation output
 	 */
-	function process(&$input) {
+	function &process(&$input) {
 		// Check whether the incoming publication type is supported by this
 		// output filter.
 		$supportedPublicationTypes = $this->getSupportedPublicationTypes();
@@ -102,18 +103,17 @@ class Nlm30CitationSchemaCitationOutputFormatFilter extends TemplateBasedFilter 
 	 * @param $request Request
 	 * @param $locale AppLocale
 	 */
-	function addTemplateVars(&$templateMgr, &$input, &$request, &$locale) {
+	function addTemplateVars($templateMgr, &$input, $request, &$locale) {
 		// Loop over the statements in the schema and add them
 		// to the template
-		$propertyNames =& $input->getPropertyNames();
+		$propertyNames = $input->getPropertyNames();
 		$setProperties = array();
 		foreach($propertyNames as $propertyName) {
 			$templateVariable = $input->getNamespacedPropertyId($propertyName);
 			if ($input->hasStatement($propertyName)) {
-				$property =& $input->getProperty($propertyName);
+				$property = $input->getProperty($propertyName);
 				$propertyLocale = $property->getTranslated() ? $locale : null;
-				$templateMgr->assign_by_ref($templateVariable, $input->getStatement($propertyName, $propertyLocale));
-				unset($property);
+				$templateMgr->assign($templateVariable, $input->getStatement($propertyName, $propertyLocale));
 			} else {
 				// Delete potential leftovers from previous calls
 				$templateMgr->clear_assign($templateVariable);

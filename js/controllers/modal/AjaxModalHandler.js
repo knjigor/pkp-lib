@@ -1,14 +1,14 @@
 /**
  * @file js/controllers/modal/AjaxModalHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AjaxModalHandler
  * @ingroup js_controllers_modal
  *
- * @brief A modal that retrieves content from
- *  a remote AJAX endpoint.
+ * @brief A modal that retrieves content from a remote AJAX endpoint.
  */
 (function($) {
 
@@ -18,7 +18,7 @@
 	 *
 	 * @extends $.pkp.controllers.modal.ModalHandler
 	 *
-	 * @param {jQuery} $handledElement The clickable element
+	 * @param {jQueryObject} $handledElement The clickable element
 	 *  the modal will be attached to.
 	 * @param {Object} options non-default Dialog options
 	 *  to be passed into the dialog widget.
@@ -34,7 +34,7 @@
 
 		// We assume that AJAX modals usually contain forms and
 		// therefore bind to form events by default.
-		this.bind('formSubmitted', this.modalClose);
+		this.bind('formSubmitted', this.formSubmitted);
 		this.bind('formCanceled', this.modalClose);
 		this.bind('ajaxHtmlError', this.modalClose);
 	};
@@ -61,45 +61,41 @@
 	/** @inheritDoc */
 	$.pkp.controllers.modal.AjaxModalHandler.prototype.mergeOptions =
 			function(options) {
-		// Bind open event.
-		this.bind('dialogopen', this.dialogOpen);
 
 		// Call parent.
-		return this.parent('mergeOptions', options);
-	};
-
-
-	/** @inheritDoc */
-	$.pkp.controllers.modal.AjaxModalHandler.prototype.modalClose =
-			function(callingContext, event) {
-
-		if (event.type == 'formSubmitted') {
-			// Trigger the notify user event.
-			this.getHtmlElement().parent().trigger('notifyUser');
-		}
-
-		return this.parent('modalClose');
+		return /** @type {Object} */ (this.parent('mergeOptions', options));
 	};
 
 
 	/**
-	 * Callback that will be bound to the open event
-	 * triggered when the dialog is opened.
+	 * Open the modal and fetch content via ajax
+	 * @param {jQueryObject} $handledElement The clickable element
+	 *  the modal will be attached to.
 	 * @protected
-	 * @param {HTMLElement} dialogElement The element the
-	 *  dialog was created on.
 	 */
-	$.pkp.controllers.modal.AjaxModalHandler.prototype.dialogOpen =
-			function(dialogElement) {
-		// Make sure that the modal will remain on screen.
-		var $dialogElement = $(dialogElement);
-		$dialogElement.css({'max-height': 600, 'overflow-y': 'auto',
-			'z-index': '10000'});
+	$.pkp.controllers.modal.AjaxModalHandler.prototype.modalOpen =
+			function($handledElement) {
+		this.parent('modalOpen', $handledElement);
 
 		// Retrieve remote modal content.
-		var url = $dialogElement.dialog('option' , 'url');
-		$dialogElement.pkpAjaxHtml(url);
+		$handledElement.find('.content')
+				.pkpAjaxHtml(/** @type {{ url: string }} */ (this.options).url);
+	};
+
+
+	/**
+	 * Close the modal when a form submission is complete
+	 * @param {Object} callingContext The calling element or object.
+	 * @param {Event} event The triggering event (e.g. a click on
+	 *  a button.
+	 * @protected
+	 */
+	$.pkp.controllers.modal.AjaxModalHandler.prototype.formSubmitted =
+			function(callingContext, event) {
+
+		this.getHtmlElement().parent().trigger('notifyUser');
+		this.modalClose();
 	};
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

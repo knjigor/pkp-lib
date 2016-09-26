@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup form_validation
+ * @defgroup form_validation Form Validation
  */
 
 /**
  * @file classes/form/validation/FormValidator.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidator
@@ -76,17 +76,6 @@ class FormValidator {
 	 */
 	function getMessage() {
 		return __($this->_message);
-	}
-
-	/**
-	 * Set the form associated with this check. Used only for PHP4
-	 * compatibility when instantiating without =& (which is deprecated).
-	 * SHOULD NOT BE USED otherwise.
-	 * See http://pkp.sfu.ca/wiki/index.php/Information_for_Developers#Use_of_.24this_in_the_constructor
-	 * for a full explanation.
-	 */
-	function setForm(&$form) {
-		$this->_form =& $form;
 	}
 
 	/**

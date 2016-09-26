@@ -3,7 +3,8 @@
 /**
  * @file classes/plugins/BlockPlugin.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class BlockPlugin
@@ -13,12 +14,11 @@
  */
 
 define('BLOCK_CONTEXT_LEFT_SIDEBAR',		0x00000001);
-define('BLOCK_CONTEXT_RIGHT_SIDEBAR',		0x00000002);
 define('BLOCK_CONTEXT_HOMEPAGE',		0x00000003);
 
 import('lib.pkp.classes.plugins.LazyLoadPlugin');
 
-class BlockPlugin extends LazyLoadPlugin {
+abstract class BlockPlugin extends LazyLoadPlugin {
 	/**
 	 * Constructor
 	 */
@@ -27,29 +27,29 @@ class BlockPlugin extends LazyLoadPlugin {
 	}
 
 	/*
-	 * Override public methods from PKPPlugin
+	 * Override public methods from Plugin
 	 */
 	/**
-	 * @see PKPPlugin::register()
+	 * @see Plugin::register()
 	 */
 	function register($category, $path) {
 		$success = parent::register($category, $path);
 		if ($success && $this->getEnabled()) {
-			$contextMap =& $this->getContextMap();
+			$contextMap = $this->getContextMap();
 			$blockContext = $this->getBlockContext();
 			if (isset($contextMap[$blockContext])) {
 				$hookName = $contextMap[$blockContext];
-				HookRegistry::register($hookName, array(&$this, 'callback'));
+				HookRegistry::register($hookName, array($this, 'callback'));
 			}
 		}
 		return $success;
 	}
 
-	/*
-	 * Override protected methods from PKPPlugin
+	/**
+	 * Override protected methods from Plugin
 	 */
 	/**
-	 * @see PKPPlugin::getSeq()
+	 * @see Plugin::getSeq()
 	 *
 	 * NB: In the case of block plugins, higher numbers move
 	 * plugins down the page compared to other blocks.
@@ -100,7 +100,7 @@ class BlockPlugin extends LazyLoadPlugin {
 	function getSupportedContexts() {
 		// Will return left and right process as this is the
 		// most frequent use case.
-		return array(BLOCK_CONTEXT_LEFT_SIDEBAR, BLOCK_CONTEXT_RIGHT_SIDEBAR);
+		return array(BLOCK_CONTEXT_LEFT_SIDEBAR);
 	}
 
 	/**
@@ -111,13 +111,12 @@ class BlockPlugin extends LazyLoadPlugin {
 	function &getContextMap() {
 		static $contextMap = array(
 			BLOCK_CONTEXT_LEFT_SIDEBAR => 'Templates::Common::LeftSidebar',
-			BLOCK_CONTEXT_RIGHT_SIDEBAR => 'Templates::Common::RightSidebar',
 		);
 
 		$homepageHook = $this->_getContextSpecificHomepageHook();
 		if ($homepageHook) $contextMap[BLOCK_CONTEXT_HOMEPAGE] = $homepageHook;
 
-		HookRegistry::call('BlockPlugin::getContextMap', array(&$this, &$contextMap));
+		HookRegistry::call('BlockPlugin::getContextMap', array($this, &$contextMap));
 		return $contextMap;
 	}
 
@@ -140,7 +139,7 @@ class BlockPlugin extends LazyLoadPlugin {
 	 * @param $request PKPRequest (Optional for legacy plugins)
 	 * @return string
 	 */
-	function getContents(&$templateMgr, $request = null) {
+	function getContents($templateMgr, $request = null) {
 		$blockTemplateFilename = $this->getBlockTemplateFilename();
 		if ($blockTemplateFilename === null) return '';
 		return $templateMgr->fetch($this->getTemplatePath() . $blockTemplateFilename);
@@ -157,7 +156,7 @@ class BlockPlugin extends LazyLoadPlugin {
 		$params =& $args[0];
 		$smarty =& $args[1];
 		$output =& $args[2];
-		$output .= $this->getContents($smarty, PKPApplication::getRequest());
+		$output .= $this->getContents($smarty, $this->getRequest());
 		return false;
 	}
 
@@ -170,7 +169,7 @@ class BlockPlugin extends LazyLoadPlugin {
 	 * @return string
 	 */
 	function _getContextSpecificHomepageHook() {
-		$application =& PKPApplication::getApplication();
+		$application = PKPApplication::getApplication();
 
 		if ($application->getContextDepth() == 0) return null;
 
@@ -178,4 +177,5 @@ class BlockPlugin extends LazyLoadPlugin {
 		return 'Templates::Index::'.array_shift($contextList);
 	}
 }
+
 ?>

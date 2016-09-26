@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/db/DBConnectionTest.inc.php
+ * @file tests/classes/db/DBConnectionTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DBConnectionTest
@@ -23,12 +24,24 @@ class DBConnectionTest extends DatabaseTestCase {
 	 * @covers DBConnection::DBConnection
 	 * @covers DBConnection::initDefaultDBConnection
 	 * @covers DBConnection::initConn
-	 * @covers AdodbMysqlCompat::AdodbMysqlCompat
 	 */
 	public function testInitDefaultDBConnection() {
 		$conn = new DBConnection();
 		$dbConn = $conn->getDBConn();
-		self::assertInstanceOf('ADODB_mysql', $dbConn);
+		switch (Config::getVar('database', 'driver')) {
+			case 'mysqli':
+				self::assertInstanceOf('ADODB_mysqli', $dbConn);
+				break;
+			case 'mysql':
+				self::assertInstanceOf('ADODB_mysql', $dbConn);
+				break;
+			case 'postgres':
+				self::assertInstanceOf('ADODB_postgres64', $dbConn);
+				break;
+			default:
+				$this->fail('Unknown DB driver.');
+				return false;
+		}
 		$conn->disconnect();
 		unset($conn);
 	}
@@ -40,6 +53,7 @@ class DBConnectionTest extends DatabaseTestCase {
 	 * @covers AdodbPostgres7Compat::AdodbPostgres7Compat
 	 */
 	public function testInitPostgresDBConnection() {
+		$this->markTestSkipped();
 		$this->setTestConfiguration(self::CONFIG_PGSQL);
 		$conn = new DBConnection();
 		$dbConn = $conn->getDBConn();
@@ -54,6 +68,7 @@ class DBConnectionTest extends DatabaseTestCase {
 	 * @covers DBConnection::initConn
 	 */
 	public function testInitCustomDBConnection() {
+		$this->markTestSkipped();
 		$this->setTestConfiguration(self::CONFIG_PGSQL);
 		$conn = new DBConnection('sqlite', 'localhost', 'ojs', 'ojs', 'ojs', true, false, false);
 		$dbConn = $conn->getDBConn();

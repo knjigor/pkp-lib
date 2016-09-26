@@ -3,7 +3,8 @@
 /**
  * @file classes/site/Version.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Version
@@ -67,7 +68,7 @@ class Version extends DataObject {
 		$versionArray = explode('.', $versionString);
 
 		if(!$product && !$productType) {
-			$application =& PKPApplication::getApplication();
+			$application = PKPApplication::getApplication();
 			$product = $application->getName();
 			$productType = 'core';
 		}
@@ -106,7 +107,7 @@ class Version extends DataObject {
 	 * @param $major int
 	 */
 	function setMajor($major) {
-		return $this->setData('major', $major);
+		$this->setData('major', $major);
 	}
 
 	/**
@@ -122,7 +123,7 @@ class Version extends DataObject {
 	 * @param $minor int
 	 */
 	function setMinor($minor) {
-		return $this->setData('minor', $minor);
+		$this->setData('minor', $minor);
 	}
 
 	/**
@@ -138,7 +139,7 @@ class Version extends DataObject {
 	 * @param $revision int
 	 */
 	function setRevision($revision) {
-		return $this->setData('revision', $revision);
+		$this->setData('revision', $revision);
 	}
 
 	/**
@@ -154,7 +155,7 @@ class Version extends DataObject {
 	 * @param $build int
 	 */
 	function setBuild($build) {
-		return $this->setData('build', $build);
+		$this->setData('build', $build);
 	}
 
 	/**
@@ -170,7 +171,7 @@ class Version extends DataObject {
 	 * @param $dateInstalled date
 	 */
 	function setDateInstalled($dateInstalled) {
-		return $this->setData('dateInstalled', $dateInstalled);
+		$this->setData('dateInstalled', $dateInstalled);
 	}
 
 	/**
@@ -186,7 +187,7 @@ class Version extends DataObject {
 	 * @param $current int
 	 */
 	function setCurrent($current) {
-		return $this->setData('current', $current);
+		$this->setData('current', $current);
 	}
 
 	/**
@@ -199,10 +200,10 @@ class Version extends DataObject {
 
 	/**
 	 * Set product type.
-	 * @param $product string
+	 * @param $productType string
 	 */
 	function setProductType($productType) {
-		return $this->setData('productType', $productType);
+		$this->setData('productType', $productType);
 	}
 
 	/**
@@ -218,7 +219,7 @@ class Version extends DataObject {
 	 * @param $product string
 	 */
 	function setProduct($product) {
-		return $this->setData('product', $product);
+		$this->setData('product', $product);
 	}
 
 	/**
@@ -250,7 +251,7 @@ class Version extends DataObject {
 	 * @param $lazyLoad boolean
 	 */
 	function setLazyLoad($lazyLoad) {
-		return $this->setData('lazyLoad', $lazyLoad);
+		$this->setData('lazyLoad', $lazyLoad);
 	}
 
 	/**
@@ -266,15 +267,21 @@ class Version extends DataObject {
 	 * @param $sitewide boolean
 	 */
 	function setSitewide($sitewide) {
-		return $this->setData('sitewide', $sitewide);
+		$this->setData('sitewide', $sitewide);
 	}
 
 	/**
 	 * Return complete version string.
+	 * @numeric boolean True (default) iff a numeric (comparable) version is to be returned.
 	 * @return string
 	 */
-	function getVersionString() {
-		return sprintf('%d.%d.%d.%d', $this->getMajor(), $this->getMinor(), $this->getRevision(), $this->getBuild());
+	function getVersionString($numeric = true) {
+		$numericVersion = sprintf('%d.%d.%d.%d', $this->getMajor(), $this->getMinor(), $this->getRevision(), $this->getBuild());
+		if (!$numeric && $this->getProduct() == 'omp' && preg_match('/^0\.9\.9\./', $numericVersion)) return ('1.0 Beta');
+		if (!$numeric && $this->getProduct() == 'ojs2' && preg_match('/^2\.9\.0\./', $numericVersion)) return ('3.0 Alpha 1');
+		if (!$numeric && $this->getProduct() == 'ojs2' && preg_match('/^2\.9\.9\.0/', $numericVersion)) return ('3.0 Beta 1');
+
+		return $numericVersion;
 	}
 }
 

@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/filter/FilterHelperTest.inc.php
+ * @file tests/classes/filter/FilterHelperTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterHelperTest
@@ -49,7 +50,7 @@ class FilterHelperTest extends PKPTestCase {
 		$filterA = new CompositeFilter($someGroup);
 		$filterBSettings = array();
 		$filterBSubfilter = new CompositeFilter($someGroup);
-		$filterBSubfilter->setSeq(1);
+		$filterBSubfilter->setSequence(1);
 		$filterBSubfilters = array($filterBSubfilter);
 		self::assertFalse($filterHelper->compareFilters($filterA, $filterBSettings, $filterBSubfilters));
 

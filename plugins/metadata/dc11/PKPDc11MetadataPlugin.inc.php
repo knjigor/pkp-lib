@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_metadata_dc11
+ * @defgroup plugins_metadata_dc11 Dublin Core 1.1 Metadata Format
  */
 
 /**
  * @file plugins/metadata/dc11/PKPDc11MetadataPlugin.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPDc11MetadataPlugin
@@ -29,24 +29,24 @@ class PKPDc11MetadataPlugin extends MetadataPlugin {
 
 
 	//
-	// Override protected template methods from PKPPlugin
+	// Override protected template methods from Plugin
 	//
 	/**
-	 * @see PKPPlugin::getName()
+	 * @copydoc Plugin::getName()
 	 */
 	function getName() {
 		return 'Dc11MetadataPlugin';
 	}
 
 	/**
-	 * @see PKPPlugin::getDisplayName()
+	 * @copydoc Plugin::getDisplayName()
 	 */
 	function getDisplayName() {
 		return __('plugins.metadata.dc11.displayName');
 	}
 
 	/**
-	 * @see PKPPlugin::getDescription()
+	 * @copydoc Plugin::getDescription()
 	 */
 	function getDescription() {
 		return __('plugins.metadata.dc11.description');

@@ -3,7 +3,8 @@
 /**
  * @file classes/i18n/TimeZoneDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TimeZoneDAO
@@ -33,10 +34,10 @@ class TimeZoneDAO extends DAO {
 	function &_getTimeZoneCache() {
 		$cache =& Registry::get('allTimeZones', true, null);
 		if ($cache === null) {
-			$cacheManager =& CacheManager::getManager();
+			$cacheManager = CacheManager::getManager();
 			$cache = $cacheManager->getFileCache(
 				'timeZone', 'list',
-				array(&$this, '_timeZoneCacheMiss')
+				array($this, '_timeZoneCacheMiss')
 			);
 
 			// Check to see if the data is outdated
@@ -48,7 +49,7 @@ class TimeZoneDAO extends DAO {
 		return $cache;
 	}
 
-	function _timeZoneCacheMiss(&$cache, $id) {
+	function _timeZoneCacheMiss($cache, $id) {
 		$timeZones =& Registry::get('allTimeZonesData', true, null);
 		if ($timeZones === null) {
 			// Reload time zone registry file

@@ -3,7 +3,8 @@
 /**
  * @file classes/validation/ValidatorUrl.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ValidatorUrl
@@ -30,7 +31,7 @@ class ValidatorUrl extends ValidatorUri {
 	 * @see ValidatorUri::getRegexp()
 	 * @return string
 	 */
-	function getRegexp() {
+	static function getRegexp() {
 		return parent::getRegexp(ValidatorUrl::_getAllowedSchemes());
 	}
 
@@ -38,11 +39,10 @@ class ValidatorUrl extends ValidatorUri {
 	// Private static methods
 	//
 	/**
-	 * Return allowed schemes (PHP4 workaround for
-	 * a private static field).
+	 * Return allowed schemes
 	 * @return array
 	 */
-	function _getAllowedSchemes() {
+	static function _getAllowedSchemes() {
 		return array('http', 'https', 'ftp');
 	}
 }

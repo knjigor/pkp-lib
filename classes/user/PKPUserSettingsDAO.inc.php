@@ -3,7 +3,8 @@
 /**
  * @file classes/user/PKPUserSettingsDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPUserSettingsDAO
@@ -31,7 +32,7 @@ class PKPUserSettingsDAO extends DAO {
 	 * @return mixed
 	 */
 	function &getSetting($userId, $name, $assocType = null, $assocId = null) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT	setting_value,
 				setting_type
 			FROM	user_settings
@@ -48,7 +49,7 @@ class PKPUserSettingsDAO extends DAO {
 		);
 
 		if ($result->RecordCount() != 0) {
-			$row =& $result->getRowAssoc(false);
+			$row = $result->getRowAssoc(false);
 			$returner = $this->convertFromDB($row['setting_value'], $row['setting_type']);
 		} else {
 			$returner = null;
@@ -67,10 +68,10 @@ class PKPUserSettingsDAO extends DAO {
 	 * @return DAOResultFactory matching Users
 	 */
 	function &getUsersBySetting($name, $value, $type = null, $assocType = null, $assocId = null) {
-		$userDao =& DAORegistry::getDAO('UserDAO');
+		$userDao = DAORegistry::getDAO('UserDAO');
 
 		$value = $this->convertToDB($value, $type);
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT	u.*
 			FROM	users u,
 				user_settings s
@@ -96,7 +97,7 @@ class PKPUserSettingsDAO extends DAO {
 	function &getSettingsByAssoc($userId, $assocType = null, $assocId = null) {
 		$userSettings = array();
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT	setting_name,
 				setting_value,
 				setting_type
@@ -108,14 +109,12 @@ class PKPUserSettingsDAO extends DAO {
 		);
 
 		while (!$result->EOF) {
-			$row =& $result->getRowAssoc(false);
+			$row = $result->getRowAssoc(false);
 			$value = $this->convertFromDB($row['setting_value'], $row['setting_type']);
 			$userSettings[$row['setting_name']] = $value;
 			$result->MoveNext();
 		}
 		$result->Close();
-		unset($result);
-
 		return $userSettings;
 	}
 
@@ -176,8 +175,6 @@ class PKPUserSettingsDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 

@@ -3,7 +3,8 @@
 /**
  * @file classes/filter/TemplateBasedFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TemplateBasedFilter
@@ -20,7 +21,7 @@ class TemplateBasedFilter extends PersistableFilter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function TemplateBasedFilter(&$filterGroup) {
+	function TemplateBasedFilter($filterGroup) {
 		parent::PersistableFilter($filterGroup);
 	}
 
@@ -56,7 +57,7 @@ class TemplateBasedFilter extends PersistableFilter {
 	 * @param $request Request
 	 * @param $locale AppLocale
 	 */
-	function addTemplateVars(&$templateMgr, &$input, &$request, &$locale) {
+	function addTemplateVars($templateMgr, &$input, $request, &$locale) {
 		// Must be implemented by sub-classes.
 		assert(false);
 	}
@@ -71,9 +72,9 @@ class TemplateBasedFilter extends PersistableFilter {
 	function &process(&$input) {
 		// Initialize view
 		$locale = AppLocale::getLocale();
-		$application =& PKPApplication::getApplication();
-		$request =& $application->getRequest();
-		$templateMgr =& TemplateManager::getManager($request);
+		$application = PKPApplication::getApplication();
+		$request = $application->getRequest();
+		$templateMgr = TemplateManager::getManager($request);
 
 		// Add the filter's directory as additional template dir so that
 		// templates can include sub-templates in the same folder.

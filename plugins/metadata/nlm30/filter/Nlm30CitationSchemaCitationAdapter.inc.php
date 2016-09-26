@@ -3,7 +3,8 @@
 /**
  * @file plugins/metadata/nlm30/filter/Nlm30CitationSchemaCitationAdapter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaCitationAdapter
@@ -23,7 +24,7 @@ class Nlm30CitationSchemaCitationAdapter extends MetadataDataObjectAdapter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function Nlm30CitationSchemaCitationAdapter(&$filterGroup) {
+	function Nlm30CitationSchemaCitationAdapter($filterGroup) {
 		parent::MetadataDataObjectAdapter($filterGroup);
 	}
 
@@ -31,7 +32,7 @@ class Nlm30CitationSchemaCitationAdapter extends MetadataDataObjectAdapter {
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.metadata.nlm30.filter.Nlm30CitationSchemaCitationAdapter';
@@ -42,7 +43,7 @@ class Nlm30CitationSchemaCitationAdapter extends MetadataDataObjectAdapter {
 	// Implement template methods from MetadataDataObjectAdapter
 	//
 	/**
-	 * @see MetadataDataObjectAdapter::injectMetadataIntoDataObject()
+	 * @copydoc MetadataDataObjectAdapter::injectMetadataIntoDataObject()
 	 * @param $metadataDescription MetadataDescription
 	 * @param $dataObject Citation
 	 * @return DataObject
@@ -92,12 +93,12 @@ class Nlm30CitationSchemaCitationAdapter extends MetadataDataObjectAdapter {
 	}
 
 	/**
-	 * @see MetadataDataObjectAdapter::extractMetadataFromDataObject()
+	 * @copydoc MetadataDataObjectAdapter::extractMetadataFromDataObject()
 	 * @param $dataObject Citation
 	 * @return MetadataDescription
 	 */
-	function &extractMetadataFromDataObject(&$dataObject) {
-		$metadataDescription =& $this->instantiateMetadataDescription();
+	function extractMetadataFromDataObject(&$dataObject) {
+		$metadataDescription = $this->instantiateMetadataDescription();
 
 		// Establish the association between the meta-data description
 		// and the citation object.

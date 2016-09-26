@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup xml
+ * @defgroup xml XML
+ * Implements XML parsing and creation concerns.
  */
 
 /**
  * @file classes/xml/XMLParser.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XMLParser
@@ -28,10 +30,10 @@ class XMLParser {
 	/** @var int original magic_quotes_runtime setting */
 	var $magicQuotes;
 
-	/** @var $handler object instance of XMLParserHandler */
+	/** @var object instance of XMLParserHandler */
 	var $handler;
 
-	/** @var $errors array List of error strings */
+	/** @var array List of error strings */
 	var $errors;
 
 	/**
@@ -59,19 +61,19 @@ class XMLParser {
 		xml_set_character_data_handler($parser, "characterData");
 
 		// if the string contains non-UTF8 characters, convert it to UTF-8 for parsing
-		if ( Config::getVar('i18n', 'charset_normalization') == 'On' && !String::utf8_compliant($text) ) {
+		if ( Config::getVar('i18n', 'charset_normalization') == 'On' && !PKPString::utf8_compliant($text) ) {
 
-			$text = String::utf8_normalize($text);
+			$text = PKPString::utf8_normalize($text);
 
 			// strip any invalid UTF-8 sequences
-			$text = String::utf8_bad_strip($text);
+			$text = PKPString::utf8_bad_strip($text);
 
 			// convert named entities to numeric entities
-			$text = strtr($text, String::getHTMLEntities());
+			$text = strtr($text, PKPString::getHTMLEntities());
 		}
 
 		// strip any invalid ASCII control characters
-		$text = String::utf8_strip_ascii_ctrl($text);
+		$text = PKPString::utf8_strip_ascii_ctrl($text);
 
 		if (!xml_parse($parser, $text, true)) {
 			$this->addError(xml_error_string(xml_get_error_code($parser)));
@@ -81,7 +83,6 @@ class XMLParser {
 		$this->destroyParser($parser);
 		if (isset($handler)) {
 			$handler->destroy();
-			unset($handler);
 		}
 		return $result;
 	}
@@ -137,28 +138,28 @@ class XMLParser {
 		while (!$wrapper->eof() && ($data = $wrapper->read()) !== false) {
 
 			// if the string contains non-UTF8 characters, convert it to UTF-8 for parsing
-			if ( Config::getVar('i18n', 'charset_normalization') == 'On' && !String::utf8_compliant($data) ) {
+			if ( Config::getVar('i18n', 'charset_normalization') == 'On' && !PKPString::utf8_compliant($data) ) {
 
-				$utf8_last = String::substr($data, String::strlen($data) - 1);
+				$utf8_last = PKPString::substr($data, PKPString::strlen($data) - 1);
 
 				// if the string ends in a "bad" UTF-8 character, maybe it's truncated
-				while (!$wrapper->eof() && String::utf8_bad_find($utf8_last) === 0) {
+				while (!$wrapper->eof() && PKPString::utf8_bad_find($utf8_last) === 0) {
 					// read another chunk of data
 					$data .= $wrapper->read();
-					$utf8_last = String::substr($data, String::strlen($data) - 1);
+					$utf8_last = PKPString::substr($data, PKPString::strlen($data) - 1);
 				}
 
-				$data = String::utf8_normalize($data);
+				$data = PKPString::utf8_normalize($data);
 
 				// strip any invalid UTF-8 sequences
-				$data = String::utf8_bad_strip($data);
+				$data = PKPString::utf8_bad_strip($data);
 
 				// convert named entities to numeric entities
-				$data = strtr($data, String::getHTMLEntities());
+				$data = strtr($data, PKPString::getHTMLEntities());
 			}
 
 			// strip any invalid ASCII control characters
-			$data = String::utf8_strip_ascii_ctrl($data);
+			$data = PKPString::utf8_strip_ascii_ctrl($data);
 
 			if ($dataCallback) call_user_func($dataCallback, 'parse', $wrapper, $data);
 			if (!xml_parse($parser, $data, $wrapper->eof())) {
@@ -168,11 +169,10 @@ class XMLParser {
 
 		if ($dataCallback) call_user_func($dataCallback, 'close', $wrapper);
 		$wrapper->close();
-		$result =& $this->handler->getResult();
+		$result = $this->handler->getResult();
 		$this->destroyParser($parser);
 		if (isset($handler)) {
 			$handler->destroy();
-			unset($handler);
 		}
 		return $result;
 	}
@@ -278,9 +278,8 @@ class XMLParser {
 	 * Destroy XML parser.
 	 * @param $parser resource
 	 */
-	function destroyParser(&$parser) {
+	function destroyParser($parser) {
 		xml_parser_free($parser);
-		unset($parser);
 	}
 
 	/**
@@ -289,7 +288,6 @@ class XMLParser {
 	function destroy() {
 		// Set magic_quotes_runtime back to original setting
 		if ($this->magicQuotes) set_magic_quotes_runtime($this->magicQuotes);
-		unset($this);
 	}
 
 }
@@ -302,20 +300,27 @@ class XMLParserHandler {
 
 	/**
 	 * Callback function to act as the start element handler.
+	 * @param $parser XMLParser
+	 * @param $tag string
+	 * @param $attributes array
 	 */
-	function startElement(&$parser, $tag, $attributes) {
+	function startElement($parser, $tag, $attributes) {
 	}
 
 	/**
 	 * Callback function to act as the end element handler.
+	 * @param $parser XMLParser
+	 * @param $tag string
 	 */
-	function endElement(&$parser, $tag) {
+	function endElement($parser, $tag) {
 	}
 
 	/**
 	 * Callback function to act as the character data handler.
+	 * @param $parser XMLParser
+	 * @param $data string
 	 */
-	function characterData(&$parser, $data) {
+	function characterData($parser, $data) {
 	}
 
 	/**
@@ -323,10 +328,8 @@ class XMLParserHandler {
 	 * The format of this object is specific to the handler.
 	 * @return mixed
 	 */
-	function &getResult() {
-		// Default: Return null (must be by ref).
-		$nullVar = null;
-		return $nullVar;
+	function getResult() {
+		return null;
 	}
 }
 

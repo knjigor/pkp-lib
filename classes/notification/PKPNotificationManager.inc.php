@@ -3,7 +3,8 @@
 /**
  * @file classes/notification/PKPNotificationManager.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPNotificationManager
@@ -13,109 +14,82 @@
  * @brief Class for Notification Manager.
  */
 
+import('lib.pkp.classes.notification.PKPNotificationOperationManager');
+import('lib.pkp.classes.workflow.WorkflowStageDAO');
 
-import('classes.notification.Notification');
-
-class PKPNotificationManager {
+class PKPNotificationManager extends PKPNotificationOperationManager {
 	/**
 	 * Constructor.
 	 */
 	function PKPNotificationManager() {
-	}
-
-	/**
-	 * Construct a set of notifications and return them as a formatted string
-	 * @param $request PKPRequest
-	 * @param $userId int
-	 * @param $level int optional
-	 * @param $contextId int optional
-	 * @param $rangeInfo object optional
-	 * @param $notificationTemplate string optional Template to use for constructing an individual notification for display
-	 * @return object DAOResultFactory containing matching Notification objects
-	 */
-	function getFormattedNotificationsForUser(&$request, $userId, $level = NOTIFICATION_LEVEL_NORMAL, $contextId = null, $rangeInfo = null, $notificationTemplate = 'notification/notification.tpl') {
-		$notificationDao =& DAORegistry::getDAO('NotificationDAO');
-		$notifications = $notificationDao->getByUserId($userId, $level, null, $contextId, $rangeInfo);
-
-		return $this->formatNotifications($request, $notifications, $notificationTemplate);
-	}
-
-	/*
-	 * Return a string of formatted notifications for display
-	 * @param $request PKPRequest
-	 * @param $notifications object DAOResultFactory
-	 * @param $notificationTemplate string optional Template to use for constructing an individual notification for display
-	 * @return string
-	 */
-	function formatNotifications(&$request, $notifications, $notificationTemplate = 'notification/notification.tpl') {
-		$notificationString = '';
-
-		// Build out the notifications based on their associated objects and format into a string
-		while($notification =& $notifications->next()) {
-			$notificationString .= $this->formatNotification($request, $notification, $notificationTemplate);
-			unset($notification);
-		}
-
-		return $notificationString;
-	}
-
-	/**
-	 * Return a fully formatted notification for display
-	 * @param $request PKPRequest
-	 * @param $notification object Notification
-	 * @return string
-	 */
-	function formatNotification(&$request, $notification, $notificationTemplate = 'notification/notification.tpl') {
-		$templateMgr =& TemplateManager::getManager();
-
-		// Set the date read if it isn't already set
-		if (!$notification->getDateRead()) {
-			$notificationDao =& DAORegistry::getDAO('NotificationDAO');
-			$dateRead = $notificationDao->setDateRead($notification->getId());
-			$notification->setDateRead($dateRead);
-		}
-
-		$templateMgr->assign('notificationDateCreated', $notification->getDateCreated());
-		$templateMgr->assign('notificationId', $notification->getId());
-		$templateMgr->assign('notificationContents',$this->getNotificationContents($request, $notification));
-		$templateMgr->assign('notificationTitle',$this->getNotificationTitle($notification));
-		$templateMgr->assign('notificationStyleClass', $this->getStyleClass($notification));
-		$templateMgr->assign('notificationIconClass', $this->getIconClass($notification));
-		$templateMgr->assign('notificationDateRead', $notification->getDateRead());
-		if($notification->getLevel() != NOTIFICATION_LEVEL_TRIVIAL) {
-			$templateMgr->assign('notificationUrl', $this->getNotificationUrl($request, $notification));
-		}
-
-		$user =& $request->getUser();
-		$templateMgr->assign('isUserLoggedIn', $user);
-
-		return $templateMgr->fetch($notificationTemplate);
+		parent::PKPNotificationOperationManager();
 	}
 
 	/**
 	 * Construct a URL for the notification based on its type and associated object
-	 * @param $request PKPRequest
-	 * @param $notification Notification
-	 * @return string
+	 * @copydoc PKPNotificationOperationManager::getNotificationContents()
 	 */
-	function getNotificationUrl(&$request, &$notification) {
-		return false;
+	public function getNotificationUrl($request, $notification) {
+		$url = parent::getNotificationUrl($request, $notification);
+		$dispatcher = Application::getDispatcher();
+		$contextDao = Application::getContextDAO();
+		$context = $contextDao->getById($notification->getContextId());
+
+		switch ($notification->getType()) {
+			case NOTIFICATION_TYPE_COPYEDIT_ASSIGNMENT:
+			case NOTIFICATION_TYPE_LAYOUT_ASSIGNMENT:
+			case NOTIFICATION_TYPE_INDEX_ASSIGNMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_SUBMISSION && is_numeric($notification->getAssocId()));
+				return $dispatcher->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', 'access', $notification->getAssocId());
+			case NOTIFICATION_TYPE_REVIEWER_COMMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_REVIEW_ASSIGNMENT && is_numeric($notification->getAssocId()));
+				$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
+				$reviewAssignment = $reviewAssignmentDao->getById($notification->getAssocId());
+				$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+				$operation = $reviewAssignment->getStageId()==WORKFLOW_STAGE_ID_INTERNAL_REVIEW?WORKFLOW_STAGE_PATH_INTERNAL_REVIEW:WORKFLOW_STAGE_PATH_EXTERNAL_REVIEW;
+				return $dispatcher->url($request, ROUTE_PAGE, $context->getPath(), 'workflow', $operation, $reviewAssignment->getSubmissionId());
+			case NOTIFICATION_TYPE_REVIEW_ASSIGNMENT:
+				$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
+				$reviewAssignment = $reviewAssignmentDao->getById($notification->getAssocId());
+				return $dispatcher->url($request, ROUTE_PAGE, $context->getPath(), 'reviewer', 'submission', $reviewAssignment->getSubmissionId());
+			case NOTIFICATION_TYPE_NEW_ANNOUNCEMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_ANNOUNCEMENT);
+				$announcementDao = DAORegistry::getDAO('AnnouncementDAO'); /* @var $announcementDao AnnouncementDAO */
+				$announcement = $announcementDao->getById($notification->getAssocId()); /* @var $announcement Announcement */
+				$context = $contextDao->getById($announcement->getAssocId());
+				return $dispatcher->url($request, ROUTE_PAGE, $context->getPath(), 'announcement', 'view', array($notification->getAssocId()));
+			case NOTIFICATION_TYPE_CONFIGURE_PAYMENT_METHOD:
+				return __('notification.type.configurePaymentMethod');
+			default:
+				$delegateResult = $this->getByDelegate(
+					$notification->getType(),
+					$notification->getAssocType(),
+					$notification->getAssocId(),
+					__FUNCTION__,
+					array($request, $notification)
+				);
+
+				if ($delegateResult) $url = $delegateResult;
+
+				return $url;
+		}
 	}
 
 	/**
 	 * Return a message string for the notification based on its type
 	 * and associated object.
-	 * @param $request PKPRequest
-	 * @param $notification Notification
-	 * @return string
+	 * @copydoc PKPNotificationOperationManager::getNotificationContents()
 	 */
-	function getNotificationMessage(&$request, &$notification) {
+	public function getNotificationMessage($request, $notification) {
+		$message = parent::getNotificationMessage($request, $notification);
 		$type = $notification->getType();
 		assert(isset($type));
+		$submissionDao = Application::getSubmissionDAO();
 
 		switch ($type) {
 			case NOTIFICATION_TYPE_SUCCESS:
 			case NOTIFICATION_TYPE_ERROR:
+			case NOTIFICATION_TYPE_WARNING:
 				if (!is_null($this->getNotificationSettings($notification->getId()))) {
 					$notificationSettings = $this->getNotificationSettings($notification->getId());
 					return $notificationSettings['contents'];
@@ -136,57 +110,317 @@ class PKPNotificationManager {
 			case NOTIFICATION_TYPE_NEW_ANNOUNCEMENT:
 				assert($notification->getAssocType() == ASSOC_TYPE_ANNOUNCEMENT);
 				return __('notification.type.newAnnouncement');
+			case NOTIFICATION_TYPE_REVIEWER_COMMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_REVIEW_ASSIGNMENT && is_numeric($notification->getAssocId()));
+				$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO'); /* @var $reviewAssignmentDao ReviewAssignmentDAO */
+				$reviewAssignment = $reviewAssignmentDao->getById($notification->getAssocId());
+				$submission = $submissionDao->getById($reviewAssignment->getSubmissionId()); /* @var $submission Submission */
+				return __('notification.type.reviewerComment', array('title' => $submission->getLocalizedTitle()));
+			case NOTIFICATION_TYPE_COPYEDIT_ASSIGNMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_SUBMISSION && is_numeric($notification->getAssocId()));
+				$submission = $submissionDao->getById($notification->getAssocId());
+				return __('notification.type.copyeditorRequest', array('title' => $submission->getLocalizedTitle()));
+			case NOTIFICATION_TYPE_LAYOUT_ASSIGNMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_SUBMISSION && is_numeric($notification->getAssocId()));
+				$submission = $submissionDao->getById($notification->getAssocId());
+				return __('notification.type.layouteditorRequest', array('title' => $submission->getLocalizedTitle()));
+			case NOTIFICATION_TYPE_INDEX_ASSIGNMENT:
+				assert($notification->getAssocType() == ASSOC_TYPE_SUBMISSION && is_numeric($notification->getAssocId()));
+				$submission = $submissionDao->getById($notification->getAssocId());
+				return __('notification.type.indexRequest', array('title' => $submission->getLocalizedTitle()));
+			case NOTIFICATION_TYPE_REVIEW_ASSIGNMENT:
+				return __('notification.type.reviewAssignment');
+			case NOTIFICATION_TYPE_REVIEW_ROUND_STATUS:
+				assert($notification->getAssocType() == ASSOC_TYPE_REVIEW_ROUND && is_numeric($notification->getAssocId()));
+				$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+				$reviewRound = $reviewRoundDao->getById($notification->getAssocId());
+				$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+
+				AppLocale::requireComponents(LOCALE_COMPONENT_APP_EDITOR); // load review round status keys.
+				$user = $request->getUser();
+				$stageAssignments = $stageAssignmentDao->getBySubmissionAndRoleId($reviewRound->getSubmissionId(), ROLE_ID_AUTHOR, null, $user->getId());
+				$isAuthor = $stageAssignments->getCount()>0;
+				$stageAssignments->close();
+				return __($reviewRound->getStatusKey($isAuthor));
 			default:
-				return null;
+				$delegateResult = $this->getByDelegate(
+					$notification->getType(),
+					$notification->getAssocType(),
+					$notification->getAssocId(),
+					__FUNCTION__,
+					array($request, $notification)
+				);
+
+				if ($delegateResult) $message = $delegateResult;
+
+				return $message;
 		}
 	}
 
 	/**
 	 * Using the notification message, construct, if needed, any additional
 	 * content for the notification body. If a specific notification type
-	 * is not defined, it will return the string from getNotificationMessage
-	 * method for that type.
+	 * is not defined, it will return the parent method return value.
 	 * Define a notification type case on this method only if you need to
 	 * present more than just text in notification. If you need to define
 	 * just a locale key, use the getNotificationMessage method only.
-	 * @param $request Request
-	 * @param $notification Notification
-	 * @return String
+	 * @copydoc PKPNotificationOperationManager::getNotificationContents()
 	 */
-	function getNotificationContents(&$request, &$notification) {
+	public function getNotificationContents($request, $notification) {
+		$content = parent::getNotificationContents($request, $notification);
 		$type = $notification->getType();
 		assert(isset($type));
-		$notificationMessage = $this->getNotificationMessage($request, $notification);
 
 		switch ($type) {
 			case NOTIFICATION_TYPE_FORM_ERROR:
-				$templateMgr =& TemplateManager::getManager();
-				$templateMgr->assign('errors', $notificationMessage);
+				$templateMgr = TemplateManager::getManager($request);
+				$templateMgr->assign('errors', $content);
 				return $templateMgr->fetch('controllers/notification/formErrorNotificationContent.tpl');
-				break;
+			case NOTIFICATION_TYPE_ERROR:
+				if (is_array($content)) {
+					$templateMgr->assign('errors', $content);
+					return $templateMgr->fetch('controllers/notification/errorNotificationContent.tpl');
+				} else {
+					return $content;
+				}
 			default:
-				return $notificationMessage;
+				$delegateResult = $this->getByDelegate(
+					$notification->getType(),
+					$notification->getAssocType(),
+					$notification->getAssocId(),
+					__FUNCTION__,
+					array($request, $notification)
+				);
+
+				if ($delegateResult) $content = $delegateResult;
+				return $content;
 		}
 	}
 
 	/**
-	 * Helper function to get a translated string from a notification with parameters
-	 * @param $key string
-	 * @param $notificationId int
-	 * @return String
+	 * @copydoc PKPNotificationOperationManager::getNotificationContents()
 	 */
-	function _getTranslatedKeyWithParameters($key, $notificationId) {
-		$params = $this->getNotificationSettings($notificationId);
-		return __($key, $this->getParamsForCurrentLocale($params));
+	public function getNotificationTitle($notification) {
+		$title = parent::getNotificationTitle($notification);
+		$type = $notification->getType();
+		assert(isset($type));
+
+		switch ($type) {
+			case NOTIFICATION_TYPE_REVIEW_ROUND_STATUS:
+				$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+				$reviewRound = $reviewRoundDao->getById($notification->getAssocId());
+				return __('notification.type.roundStatusTitle', array('round' => $reviewRound->getRound()));
+			case NOTIFICATION_TYPE_FORM_ERROR:
+				return __('form.errorsOccurred');
+			default:
+				$delegateResult = $this->getByDelegate(
+					$notification->getType(),
+					$notification->getAssocType(),
+					$notification->getAssocId(),
+					__FUNCTION__,
+					array($notification)
+				);
+
+				if ($delegateResult) $title = $delegateResult;
+				return $title;
+		}
 	}
 
+	/**
+	 * @copydoc PKPNotificationOperationManager::getNotificationContents()
+	 */
+	public function getStyleClass($notification) {
+		$styleClass = parent::getStyleClass($notification);
+		switch ($notification->getType()) {
+			case NOTIFICATION_TYPE_SUCCESS: return NOTIFICATION_STYLE_CLASS_SUCCESS;
+			case NOTIFICATION_TYPE_WARNING: return NOTIFICATION_STYLE_CLASS_WARNING;
+			case NOTIFICATION_TYPE_ERROR: return NOTIFICATION_STYLE_CLASS_ERROR;
+			case NOTIFICATION_TYPE_INFORMATION: return NOTIFICATION_STYLE_CLASS_INFORMATION;
+			case NOTIFICATION_TYPE_FORBIDDEN: return NOTIFICATION_STYLE_CLASS_FORBIDDEN;
+			case NOTIFICATION_TYPE_HELP: return NOTIFICATION_STYLE_CLASS_HELP;
+			case NOTIFICATION_TYPE_FORM_ERROR: return NOTIFICATION_STYLE_CLASS_FORM_ERROR;
+			case NOTIFICATION_TYPE_REVIEW_ROUND_STATUS:	return NOTIFICATION_STYLE_CLASS_INFORMATION;
+			default:
+				$delegateResult = $this->getByDelegate(
+					$notification->getType(),
+					$notification->getAssocType(),
+					$notification->getAssocId(),
+					__FUNCTION__,
+					array($notification)
+				);
+				if ($delegateResult) $styleClass = $delegateResult;
+				return $styleClass;
+		}
+	}
+
+	/**
+	 * @copydoc PKPNotificationOperationManager::getNotificationContents()
+	 */
+	public function getIconClass($notification) {
+		$iconClass = parent::getIconClass($notification);
+		switch ($notification->getType()) {
+			case NOTIFICATION_TYPE_SUCCESS: return 'notifyIconSuccess';
+			case NOTIFICATION_TYPE_WARNING: return 'notifyIconWarning';
+			case NOTIFICATION_TYPE_ERROR: return 'notifyIconError';
+			case NOTIFICATION_TYPE_INFORMATION: return 'notifyIconInfo';
+			case NOTIFICATION_TYPE_FORBIDDEN: return 'notifyIconForbidden';
+			case NOTIFICATION_TYPE_HELP: return 'notifyIconHelp';
+			default:
+				$delegateResult = $this->getByDelegate(
+					$notification->getType(),
+					$notification->getAssocType(),
+					$notification->getAssocId(),
+					__FUNCTION__,
+					array($notification)
+				);
+				if ($delegateResult) $iconClass = $delegateResult;
+				return $iconClass;
+		}
+	}
+
+	/**
+	 * @copydoc PKPNotificationOperationManager::isVisibleToAllUsers()
+	 */
+	public function isVisibleToAllUsers($notificationType, $assocType, $assocId) {
+		$isVisible = parent::isVisibleToAllUsers($notificationType, $assocType, $assocId);
+		switch ($notificationType) {
+			case NOTIFICATION_TYPE_REVIEW_ROUND_STATUS:
+			case NOTIFICATION_TYPE_APPROVE_SUBMISSION:
+			case NOTIFICATION_TYPE_VISIT_CATALOG:
+			case NOTIFICATION_TYPE_CONFIGURE_PAYMENT_METHOD:
+				$isVisible = true;
+				break;
+			default:
+				$delegateResult = $this->getByDelegate(
+					$notificationType,
+					$assocType,
+					$assocId,
+					__FUNCTION__,
+					array($notificationType, $assocType, $assocId)
+				);
+				if (!is_null($delegateResult)) $isVisible = $delegateResult;
+				break;
+		}
+		return $isVisible;
+	}
+
+	/**
+	 * Update notifications by type using a delegate. If you want to be able to use
+	 * this method to update notifications associated with a certain type, you need
+	 * to first create a manager delegate and define it in getMgrDelegate() method.
+	 * @param $request PKPRequest
+	 * @param $notificationTypes array The type(s) of the notification(s) to
+	 * be updated.
+	 * @param $userIds array|null The notification user(s) id(s), or null for all.
+	 * @param $assocType int ASSOC_TYPE_... The notification associated object type.
+	 * @param $assocId int The notification associated object id.
+	 * @return mixed Return false if no operation is executed or the last operation
+	 * returned value.
+	 */
+	final public function updateNotification($request, $notificationTypes, $userIds, $assocType, $assocId) {
+		$returner = false;
+		foreach ($notificationTypes as $type) {
+			$managerDelegate = $this->getMgrDelegate($type, $assocType, $assocId);
+			if (!is_null($managerDelegate) && is_a($managerDelegate, 'NotificationManagerDelegate')) {
+				$returner = $managerDelegate->updateNotification($request, $userIds, $assocType, $assocId);
+			} else {
+				assert(false);
+			}
+		}
+
+		return $returner;
+	}
+
+
+	//
+	// Protected methods
+	//
+	/**
+	 * Get the notification manager delegate based on the passed notification type.
+	 * @param $notificationType int
+	 * @param $assocType int
+	 * @param $assocId int
+	 * @return mixed Null or NotificationManagerDelegate
+	 */
+	protected function getMgrDelegate($notificationType, $assocType, $assocId) {
+		switch ($notificationType) {
+			case NOTIFICATION_TYPE_SUBMISSION_SUBMITTED:
+			case NOTIFICATION_TYPE_METADATA_MODIFIED:
+			case NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_REQUIRED:
+				assert($assocType == ASSOC_TYPE_SUBMISSION && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.SubmissionNotificationManager');
+				return new SubmissionNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_NEW_QUERY:
+			case NOTIFICATION_TYPE_QUERY_ACTIVITY:
+				import('lib.pkp.classes.notification.managerDelegate.QueryNotificationManager');
+				return new QueryNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_SUBMISSION:
+			case NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EXTERNAL_REVIEW:
+			case NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EDITING:
+			case NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_PRODUCTION:
+				assert($assocType == ASSOC_TYPE_SUBMISSION && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.EditorAssignmentNotificationManager');
+				return new EditorAssignmentNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_EDITOR_DECISION_ACCEPT:
+			case NOTIFICATION_TYPE_EDITOR_DECISION_EXTERNAL_REVIEW:
+			case NOTIFICATION_TYPE_EDITOR_DECISION_PENDING_REVISIONS:
+			case NOTIFICATION_TYPE_EDITOR_DECISION_RESUBMIT:
+			case NOTIFICATION_TYPE_EDITOR_DECISION_DECLINE:
+			case NOTIFICATION_TYPE_EDITOR_DECISION_SEND_TO_PRODUCTION:
+				assert($assocType == ASSOC_TYPE_SUBMISSION && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.EditorDecisionNotificationManager');
+				return new EditorDecisionNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_PENDING_INTERNAL_REVISIONS:
+			case NOTIFICATION_TYPE_PENDING_EXTERNAL_REVISIONS:
+				assert($assocType == ASSOC_TYPE_SUBMISSION && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.PendingRevisionsNotificationManager');
+				return new PendingRevisionsNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_ALL_REVISIONS_IN:
+				assert($assocType == ASSOC_TYPE_REVIEW_ROUND && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.review.AllRevisionsInNotificationManager');
+				return new AllRevisionsInNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_ALL_REVIEWS_IN:
+				assert($assocType == ASSOC_TYPE_REVIEW_ROUND && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.review.AllReviewsInNotificationManager');
+				return new AllReviewsInNotificationManager($notificationType);
+			case NOTIFICATION_TYPE_ASSIGN_COPYEDITOR:
+			case NOTIFICATION_TYPE_AWAITING_COPYEDITS:
+			case NOTIFICATION_TYPE_ASSIGN_PRODUCTIONUSER:
+			case NOTIFICATION_TYPE_AWAITING_REPRESENTATIONS:
+				assert($assocType == ASSOC_TYPE_SUBMISSION && is_numeric($assocId));
+				import('lib.pkp.classes.notification.managerDelegate.EditingProductionStatusNotificationManager');
+				return new EditingProductionStatusNotificationManager($notificationType);
+		}
+		return null; // No delegate required, let calling context handle null.
+	}
+
+	/**
+	 * Try to use a delegate to retrieve a notification data that's defined
+	 * by the implementation of the
+	 * @param $request PKPRequest
+	 * @param $notification Notification
+	 * @param $operationName string
+	 */
+	protected function getByDelegate($notificationType, $assocType, $assocId, $operationName, $parameters) {
+		$delegate = $this->getMgrDelegate($notificationType, $assocType, $assocId);
+		if (is_a($delegate, 'NotificationManagerDelegate')) {
+			return call_user_func_array(array($delegate, $operationName), $parameters);
+		} else {
+			return null;
+		}
+	}
+
+
+	//
+	// Private helper methods.
+	//
 	/**
 	 * Return notification settings.
 	 * @param $notificationId int
 	 * @return Array
 	 */
-	function getNotificationSettings($notificationId) {
-		$notificationSettingsDao =& DAORegistry::getDAO('NotificationSettingsDAO'); /* @var $notificationSettingsDao NotificationSettingsDAO */
+	private function getNotificationSettings($notificationId) {
+		$notificationSettingsDao = DAORegistry::getDAO('NotificationSettingsDAO'); /* @var $notificationSettingsDao NotificationSettingsDAO */
 		$notificationSettings = $notificationSettingsDao->getNotificationSettings($notificationId);
 		if (empty($notificationSettings)) {
 			return null;
@@ -196,320 +430,14 @@ class PKPNotificationManager {
 	}
 
 	/**
-	 * Get the notification's title value
-	 * @param $notification
-	 * @return string
+	 * Helper function to get a translated string from a notification with parameters
+	 * @param $key string
+	 * @param $notificationId int
+	 * @return String
 	 */
-	function getNotificationTitle(&$notification) {
-		$type = $notification->getType();
-		assert(isset($type));
-
-		switch ($type) {
-			case NOTIFICATION_TYPE_FORM_ERROR:
-				return __('form.errorsOccurred');
-			default:
-				return __('notification.notification');
-		}
-	}
-
-
-	/**
-	 * Iterate through the localized params for a notification's locale key.
-	 *  For each parameter, return (in preferred order) a value for the user's current locale,
-	 *  a param for the journal's default locale, or the first value (in case the value
-	 *  is not localized)
-	 * @param $params array
-	 * @return array
-	 */
-	function getParamsForCurrentLocale($params) {
-		$locale = AppLocale::getLocale();
-		$primaryLocale = AppLocale::getPrimaryLocale();
-
-		$localizedParams = array();
-		foreach ($params as $name => $value) {
-			if (!is_array($value)) {
-				// Non-localized text
-				$localizedParams[$name] = $value;
-			} elseif (isset($value[$locale])) {
-				// Check if the parameter is in the user's current locale
-				$localizedParams[$name] = $value[$locale];
-			} elseif (isset($value[$primaryLocale])) {
-				// Check if the parameter is in the default site locale
-				$localizedParams[$name] = $value[$primaryLocale];
-			} else {
-				// Otherwise, iterate over all supported locales and return the first match
-				$locales = AppLocale::getSupportedLocales();
-				foreach ($locales as $localeKey) {
-					if (isset($value[$localeKey])) {
-						$localizedParams[$name] = $value[$localeKey];
-					}
-				}
-			}
-		}
-
-		return $localizedParams;
-	}
-
-	/**
-	 * get notification style class
-	 * @param $notification Notification
-	 * @return string
-	 */
-	function getStyleClass(&$notification) {
-		switch ($notification->getType()) {
-			case NOTIFICATION_TYPE_SUCCESS: return 'notifySuccess';
-			case NOTIFICATION_TYPE_WARNING: return 'notifyWarning';
-			case NOTIFICATION_TYPE_ERROR: return 'notifyError';
-			case NOTIFICATION_TYPE_INFORMATION: return 'notifyInfo';
-			case NOTIFICATION_TYPE_FORBIDDEN: return 'notifyForbidden';
-			case NOTIFICATION_TYPE_HELP: return 'notifyHelp';
-			case NOTIFICATION_TYPE_FORM_ERROR: return 'notifyFormError';
-		}
-	}
-
-	/**
-	 * get notification icon style class
-	 * @param $notification Notification
-	 * @return string
-	 */
-	function getIconClass(&$notification) {
-		switch ($notification->getType()) {
-			case NOTIFICATION_TYPE_SUCCESS: return 'notifyIconSuccess';
-			case NOTIFICATION_TYPE_WARNING: return 'notifyIconWarning';
-			case NOTIFICATION_TYPE_ERROR: return 'notifyIconError';
-			case NOTIFICATION_TYPE_INFORMATION: return 'notifyIconInfo';
-			case NOTIFICATION_TYPE_FORBIDDEN: return 'notifyIconForbidden';
-			case NOTIFICATION_TYPE_HELP: return 'notifyIconHelp';
-			default: return 'notifyIconPageAlert';
-		}
-	}
-
-	/**
-	 * Return all notification types that don't need a userId
-	 * to be created or fetched (all users can see them).
-	 * @return array
-	 */
-	function getAllUsersNotificationTypes() {
-		return array();
-	}
-
-	/**
-	 * Create a new notification with the specified arguments and insert into DB
-	 * This is a static method
-	 * @param $request PKPRequest
-	 * @param $userId int (optional)
-	 * @param $notificationType int
-	 * @param $contextId int
-	 * @param $assocType int
-	 * @param $assocId int
-	 * @param $level int
-	 * @param $params array
-	 * @return Notification object
-	 */
-	function createNotification(&$request, $userId = null, $notificationType, $contextId = null, $assocType = null, $assocId = null, $level = NOTIFICATION_LEVEL_NORMAL, $params = null) {
-		// Get set of notifications user does not want to be notified of
-		$notificationSubscriptionSettingsDao =& DAORegistry::getDAO('NotificationSubscriptionSettingsDAO');
-		$blockedNotifications = $notificationSubscriptionSettingsDao->getNotificationSubscriptionSettings('blocked_notification', $userId, (int) $contextId);
-
-		if(!in_array($notificationType, $blockedNotifications)) {
-			$notificationDao =& DAORegistry::getDAO('NotificationDAO');
-			$notification = $notificationDao->newDataObject();
-			$notification->setUserId((int) $userId);
-			$notification->setType((int) $notificationType);
-			$notification->setContextId((int) $contextId);
-			$notification->setAssocType((int) $assocType);
-			$notification->setAssocId((int) $assocId);
-			$notification->setLevel((int) $level);
-
-			$notificationId = $notificationDao->insertObject($notification);
-
-			// Send notification emails
-			if ($notification->getLevel() != NOTIFICATION_LEVEL_TRIVIAL) {
-				$notificationSubscriptionSettingsDao =& DAORegistry::getDAO('NotificationSubscriptionSettingsDAO');
-				$notificationEmailSettings = $notificationSubscriptionSettingsDao->getNotificationSubscriptionSettings('emailed_notification', $userId, (int) $contextId);
-
-				if(in_array($notificationType, $notificationEmailSettings)) {
-					$this->sendNotificationEmail($request, $notification);
-				}
-			}
-
-			if ($params) {
-				$notificationSettingsDao =& DAORegistry::getDAO('NotificationSettingsDAO');
-				foreach($params as $name => $value) {
-					$notificationSettingsDao->updateNotificationSetting($notificationId, $name, $value);
-				}
-			}
-
-			return $notification;
-		}
-	}
-
-	/**
-	 * Create a new notification with the specified arguments and insert into DB
-	 * This is a static method
-	 * @param $userId int
-	 * @param $notificationType int
-	 * @param $params array
-	 * @return Notification object
-	 */
-	function createTrivialNotification($userId, $notificationType = NOTIFICATION_TYPE_SUCCESS, $params = null) {
-		$notificationDao =& DAORegistry::getDAO('NotificationDAO');
-		$notification = $notificationDao->newDataObject();
-		$notification->setUserId($userId);
-		$notification->setContextId(CONTEXT_ID_NONE);
-		$notification->setType($notificationType);
-		$notification->setLevel(NOTIFICATION_LEVEL_TRIVIAL);
-
-		$notificationId = $notificationDao->insertObject($notification);
-
-		if ($params) {
-			$notificationSettingsDao =& DAORegistry::getDAO('NotificationSettingsDAO');
-			foreach($params as $name => $value) {
-				$notificationSettingsDao->updateNotificationSetting($notificationId, $name, $value);
-			}
-		}
-
-		return $notification;
-	}
-
-	/**
-	 * Deletes trivial notifications from database.
-	 * @param array $notifications
-	 */
-	function deleteTrivialNotifications($notifications) {
-		$notificationDao =& DAORegistry::getDAO('NotificationDAO');
-		foreach($notifications as $notification) {
-			// Delete only trivial notifications.
-			if($notification->getLevel() == NOTIFICATION_LEVEL_TRIVIAL) {
-				$notificationDao->deleteById($notification->getId(), $notification->getUserId());
-			}
-		}
-	}
-
-	/**
-	 * General notification data formating.
-	 * @param $request PKPRequest
-	 * @param array $notifications
-	 * @return array
-	 */
-	function formatToGeneralNotification(&$request, &$notifications) {
-		$formattedNotificationsData = array();
-		foreach ($notifications as $notification) { /* @var $notification Notification */
-			$formattedNotificationsData[$notification->getLevel()][$notification->getId()] = array(
-				'pnotify_title' => $this->getNotificationTitle($notification),
-				'pnotify_text' => $this->getNotificationContents($request, $notification),
-				'pnotify_addClass' => $this->getStyleClass($notification),
-				'pnotify_notice_icon' => $this->getIconClass($notification)
-			);
-		}
-
-		return $formattedNotificationsData;
-	}
-
-	/**
-	 * In place notification data formating.
-	 * @param $request PKPRequest
-	 * @param $notifications array
-	 * @return array
-	 */
-	function formatToInPlaceNotification(&$request, &$notifications) {
-		$formattedNotificationsData = null;
-
-		if (!empty($notifications)) {
-			$templateMgr =& TemplateManager::getManager();
-			foreach ((array)$notifications as $notification) {
-				$formattedNotificationsData[$notification->getLevel()][$notification->getId()] = $this->formatNotification($request, $notification, 'controllers/notification/inPlaceNotificationContent.tpl');
-			}
-		}
-
-		return $formattedNotificationsData;
-	}
-
-	/**
-	 * Send an email to a user regarding the notification
-	 * @param $request PKPRequest
-	 * @param $notification object Notification
-	 */
-	function sendNotificationEmail(&$request, $notification) {
-		$userId = $notification->getUserId();
-		$userDao =& DAORegistry::getDAO('UserDAO');
-		$user = $userDao->getUser($userId);
-		AppLocale::requireComponents(LOCALE_COMPONENT_APPLICATION_COMMON);
-
-		import('classes.mail.MailTemplate');
-		$site =& $request->getSite();
-		$mail = new MailTemplate('NOTIFICATION');
-		$mail->setFrom($site->getLocalizedContactEmail(), $site->getLocalizedContactName());
-		$mail->assignParams(array(
-			'notificationContents' => $this->getNotificationContents($request, $notification),
-			'url' => $this->getNotificationUrl($request, $notification),
-			'siteTitle' => $site->getLocalizedTitle()
-		));
-		$mail->addRecipient($user->getEmail(), $user->getFullName());
-		$mail->send();
-	}
-
-	/**
-	 * Send an update to all users on the mailing list
-	 * @param $request PKPRequest
-	 * @param $notification object Notification
-	 */
-	function sendToMailingList(&$request, $notification) {
-		$notificationMailListDao =& DAORegistry::getDAO('NotificationMailListDAO');
-		$mailList = $notificationMailListDao->getMailList($notification->getContextId());
-		AppLocale::requireComponents(LOCALE_COMPONENT_APPLICATION_COMMON);
-
-		foreach ($mailList as $email) {
-			import('classes.mail.MailTemplate');
-			$context =& $request->getContext();
-			$site =& $request->getSite();
-			$router =& $request->getRouter();
-			$dispatcher =& $router->getDispatcher();
-
-			$mail = new MailTemplate('NOTIFICATION_MAILLIST');
-			$mail->setFrom($site->getLocalizedContactEmail(), $site->getLocalizedContactName());
-			$mail->assignParams(array(
-				'notificationContents' => $this->getNotificationContents($request, $notification),
-				'url' => $this->getNotificationUrl($request, $notification),
-				'siteTitle' => $context->getLocalizedTitle(),
-				'unsubscribeLink' => $dispatcher->url($request, ROUTE_PAGE, null, 'notification', 'unsubscribeMailList')
-			));
-			$mail->addRecipient($email);
-			$mail->send();
-		}
-	}
-
-	/**
-	 * Static function to send an email to a mailing list user e.g. regarding signup
-	 * @param $request PKPRequest
-	 * @param $email string
-	 * @param $token string the user's token (for confirming and unsubscribing)
-	 * @param $template string The mail template to use
-	 */
-	function sendMailingListEmail(&$request, $email, $token, $template) {
-		import('classes.mail.MailTemplate');
-		$site = $request->getSite();
-		$router =& $request->getRouter();
-		$dispatcher =& $router->getDispatcher();
-
-		$params = array(
-			'siteTitle' => $site->getLocalizedTitle(),
-			'unsubscribeLink' => $dispatcher->url($request, ROUTE_PAGE, null, 'notification', 'unsubscribeMailList', array($token))
-		);
-
-		if ($template == 'NOTIFICATION_MAILLIST_WELCOME') {
-			$router =& $request->getRouter();
-			$dispatcher =& $router->getDispatcher();
-
-			$confirmLink = $dispatcher->url($request, ROUTE_PAGE, null, 'notification', 'confirmMailListSubscription', array($token));
-			$params["confirmLink"] = $confirmLink;
-		}
-
-		$mail = new MailTemplate($template);
-		$mail->setFrom($site->getLocalizedContactEmail(), $site->getLocalizedContactName());
-		$mail->assignParams($params);
-		$mail->addRecipient($email);
-		$mail->send();
+	private function _getTranslatedKeyWithParameters($key, $notificationId) {
+		$params = $this->getNotificationSettings($notificationId);
+		return __($key, $this->getParamsForCurrentLocale($params));
 	}
 }
 

@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup language
+ * @defgroup language Language
+ * Language and internationalization code.
  */
 
 /**
  * @file classes/language/Language.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Language
@@ -43,7 +45,7 @@ class Language extends DataObject {
 	 * @param $name string
 	 */
 	function setName($name) {
-		return $this->setData('name', $name);
+		$this->setData('name', $name);
 	}
 
 	/**
@@ -59,7 +61,7 @@ class Language extends DataObject {
 	 * @param $code string
 	 */
 	function setCode($code) {
-		return $this->setData('code', $code);
+		$this->setData('code', $code);
 	}
 
 }

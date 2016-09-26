@@ -3,7 +3,8 @@
 /**
  * @file classes/site/SiteDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SiteDAO
@@ -30,17 +31,15 @@ class SiteDAO extends DAO {
 	 */
 	function &getSite() {
 		$site = null;
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM site'
 		);
 
 		if ($result->RecordCount() != 0) {
-			$site =& $this->_returnSiteFromRow($result->GetRowAssoc(false));
+			$site = $this->_returnSiteFromRow($result->GetRowAssoc(false));
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $site;
 	}
 
@@ -58,7 +57,7 @@ class SiteDAO extends DAO {
 	 * @param $callHook boolean
 	 * @return Site
 	 */
-	function &_returnSiteFromRow(&$row, $callHook = true) {
+	function &_returnSiteFromRow($row, $callHook = true) {
 		$site = $this->newDataObject();
 		$site->setRedirect($row['redirect']);
 		$site->setMinPasswordLength($row['min_password_length']);
@@ -117,11 +116,6 @@ class SiteDAO extends DAO {
 				$site->getOriginalStyleFilename()
 			)
 		);
-	}
-
-	function updateSite(&$site) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->updateObject($site);
 	}
 }
 

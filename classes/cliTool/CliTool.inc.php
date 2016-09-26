@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup tools
+ * @defgroup tools Tools
+ * Implements command-line management tools for PKP software.
  */
 
 /**
  * @file classes/cliTool/CliTool.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CommandLineTool
@@ -48,9 +50,9 @@ class CommandLineTool {
 	var $argv;
 
 	function CommandLineTool($argv = array()) {
-		// Initialize the a request object with a page router
-		$application =& PKPApplication::getApplication();
-		$request =& $application->getRequest();
+		// Initialize the request object with a page router
+		$application = PKPApplication::getApplication();
+		$request = $application->getRequest();
 
 		// FIXME: Write and use a CLIRouter here (see classdoc)
 		import('classes.core.PageRouter');
@@ -59,7 +61,7 @@ class CommandLineTool {
 		$request->setRouter($router);
 
 		// Initialize the locale and load generic plugins.
-		AppLocale::initialize();
+		AppLocale::initialize($request);
 		PluginRegistry::loadCategory('generic');
 
 		$this->argv = isset($argv) && is_array($argv) ? $argv : array();

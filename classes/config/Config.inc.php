@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup config
+ * @defgroup config Config
+ * Implements configuration concerns such as the configuration file parser.
  */
 
 /**
  * @file classes/config/Config.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Config
@@ -27,10 +29,10 @@ class Config {
 	 * Retrieve a specified configuration variable.
 	 * @param $section string
 	 * @param $key string
-	 * @param $default string optional
-	 * @return string
+	 * @param $default mixed Optional default if the var doesn't exist
+	 * @return mixed May return boolean (in case of "off"/"on"/etc), numeric, string, or null.
 	 */
-	function getVar($section, $key, $default = null) {
+	static function getVar($section, $key, $default = null) {
 		$configData =& Config::getData();
 		return isset($configData[$section][$key]) ? $configData[$section][$key] : $default;
 	}
@@ -39,7 +41,7 @@ class Config {
 	 * Get the current configuration data.
 	 * @return array the configuration data
 	 */
-	function &getData() {
+	static function &getData() {
 		$configData =& Registry::get('configData', true, null);
 
 		if ($configData === null) {
@@ -56,7 +58,7 @@ class Config {
 	 * The file is assumed to be formatted in php.ini style.
 	 * @return array the configuration data
 	 */
-	function &reloadData() {
+	static function &reloadData() {
 		if (($configData =& ConfigParser::readConfig(Config::getConfigFileName())) === false) {
 			fatalError(sprintf('Cannot read configuration file %s', Config::getConfigFileName()));
 		}
@@ -68,7 +70,7 @@ class Config {
 	 * Set the path to the configuration file.
 	 * @param $configFile string
 	 */
-	function setConfigFileName($configFile) {
+	static function setConfigFileName($configFile) {
 		// Reset the config data
 		$configData = null;
 		Registry::set('configData', $configData);
@@ -81,9 +83,31 @@ class Config {
 	 * Return the path to the configuration file.
 	 * @return string
 	 */
-	function getConfigFileName() {
+	static function getConfigFileName() {
 		return Registry::get('configFile', true, CONFIG_FILE);
 	}
-}
 
+	/**
+	 * Get context base urls from config file.
+	 * @return array Empty array if none is set.
+	 */
+	function &getContextBaseUrls() {
+		$contextBaseUrls =& Registry::get('contextBaseUrls'); // Reference required.
+
+		if (is_null($contextBaseUrls)) {
+			$contextBaseUrls = array();
+			$configData = Config::getData();
+			// Filter the settings.
+			$matches = null;
+			foreach ($configData['general'] as $settingName => $settingValue) {
+				if (preg_match('/base_url\[(.*)\]/', $settingName, $matches)) {
+					$workingContextPath = $matches[1];
+					$contextBaseUrls[$workingContextPath] = $settingValue;
+				}
+			}
+		}
+
+		return $contextBaseUrls;
+	}
+}
 ?>

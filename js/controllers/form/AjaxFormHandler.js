@@ -1,7 +1,8 @@
 /**
  * @file js/controllers/form/AjaxFormHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AjaxFormHandler
@@ -20,9 +21,8 @@
 	 *
 	 * @extends $.pkp.controllers.form.FormHandler
 	 *
-	 * @param {jQuery} $form the wrapped HTML form element.
-	 * @param {Object} options options to be passed
-	 *  into the validator plug-in.
+	 * @param {jQueryObject} $form the wrapped HTML form element.
+	 * @param {Object} options options to configure the AJAX form handler.
 	 */
 	$.pkp.controllers.form.AjaxFormHandler = function($form, options) {
 		options.submitHandler = this.submitForm;
@@ -34,6 +34,16 @@
 	$.pkp.classes.Helper.inherits(
 			$.pkp.controllers.form.AjaxFormHandler,
 			$.pkp.controllers.form.FormHandler);
+
+
+	/**
+	 * Overridden default from FormHandler -- disable form controls
+	 * on AJAX forms by default.
+	 * @protected
+	 * @type {boolean}
+	 */
+	$.pkp.controllers.form.AjaxFormHandler.prototype.
+			disableControlsOnSubmit = true;
 
 
 	//
@@ -52,19 +62,22 @@
 		// This form implementation will post the form,
 		// and act depending on the returned JSON message.
 		var $form = this.getHtmlElement();
+
+		this.disableFormControls();
+
 		$.post($form.attr('action'), $form.serialize(),
 				this.callbackWrapper(this.handleResponse), 'json');
 	};
 
 
 	/**
-	 * Callback to replace a modal's content.
+	 * Callback to replace the element's content.
 	 *
 	 * @private
 	 *
-	 * @param {$jQuery} sourceElement The containing element.
+	 * @param {jQueryObject} sourceElement The containing element.
 	 * @param {Event} event The calling event.
-	 * @param {String} content The content to replace with.
+	 * @param {string} content The content to replace with.
 	 */
 	$.pkp.controllers.form.AjaxFormHandler.prototype.refreshFormHandler_ =
 			function(sourceElement, event, content) {
@@ -93,32 +106,51 @@
 	$.pkp.controllers.form.AjaxFormHandler.prototype.handleResponse =
 			function(formElement, jsonData) {
 
-		jsonData = this.handleJson(jsonData);
-		if (jsonData !== false) {
-			if (jsonData.content === '') {
+		var $form, formSubmittedEvent, processedJsonData;
+
+		processedJsonData = this.handleJson(jsonData);
+		if (processedJsonData !== false) {
+			if (processedJsonData.content === '') {
 				// Notify any nested formWidgets of form submitted event.
-				var formSubmittedEvent = new $.Event('formSubmitted');
+				formSubmittedEvent = new $.Event('formSubmitted');
 				$(this.getHtmlElement()).find('.formWidget').trigger(formSubmittedEvent);
 
 				// Trigger the "form submitted" event.
 				this.trigger('formSubmitted');
-			} else {
-				if (jsonData.reloadContainer !== undefined) {
-					this.trigger('dataChanged');
-					this.trigger('containerReloadRequested', jsonData);
-					return jsonData.status;
+
+				// Fire off any other optional events.
+				this.publishChangeEvents();
+				// re-enable the form control if it was disabled previously.
+				if (this.disableControlsOnSubmit) {
+					this.enableFormControls();
 				}
+			} else {
+				if (/** @type {{reloadContainer: Object}} */ (
+						processedJsonData).reloadContainer !== undefined) {
+					this.trigger('dataChanged');
+					this.trigger('containerReloadRequested', [processedJsonData]);
+					return processedJsonData.status;
+				}
+
 				// Redisplay the form.
-				var $form = this.getHtmlElement();
-				$form.replaceWith(jsonData.content);
+				$form = this.getHtmlElement();
+				$form.replaceWith(processedJsonData.content);
 			}
+		} else {
+			// data was false -- assume errors, re-enable form controls.
+			this.enableFormControls();
 		}
+
 		// Trigger the notify user event, passing this
 		// html element as data.
-		this.trigger('notifyUser', this.getHtmlElement());
+		this.trigger('notifyUser', [this.getHtmlElement()]);
 
-		return jsonData.status;
+		// Hide the form spinner.
+		this.hideSpinner();
+
+		return processedJsonData.status;
 	};
 
+
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

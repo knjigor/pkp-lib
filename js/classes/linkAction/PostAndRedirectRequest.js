@@ -1,7 +1,8 @@
 /**
  * @file js/classes/linkAction/PostAndRedirectRequest.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PostAndRedirectRequest
@@ -20,7 +21,7 @@
 	 *
 	 * @extends $.pkp.classes.linkAction.LinkActionRequest
 	 *
-	 * @param {jQuery} $linkActionElement The element the link
+	 * @param {jQueryObject} $linkActionElement The element the link
 	 *  action was attached to.
 	 * @param {Object} options Configuration of the link action
 	 *  request.
@@ -34,6 +35,18 @@
 			$.pkp.classes.linkAction.PostAndRedirectRequest,
 			$.pkp.classes.linkAction.LinkActionRequest);
 
+	
+	//
+	// Private properties
+	//
+	/**
+	 * Post request response data.
+	 * @private
+	 * @type {?Object}
+	 */
+	$.pkp.classes.linkAction.PostAndRedirectRequest.prototype.
+			postJsonData_ = null;
+
 
 	//
 	// Public methods
@@ -43,31 +56,18 @@
 	 */
 	$.pkp.classes.linkAction.PostAndRedirectRequest.prototype.activate =
 			function(element, event) {
-		var returner = this.parent('activate', element, event);
-		var options = this.getOptions();
-
-		// Create a response handler for the first request (post).
-		var responseHandler = $.pkp.classes.Helper.curry(
-				this.handleResponse_, this);
+		var returner = this.parent('activate', element, event),
+				options = this.getOptions(),
+				// Create a response handler for the first request (post).
+				responseHandler = $.pkp.classes.Helper.curry(
+						this.handleResponse_, this),
+				finishCallback;
 
 		// Post.
-		$.post(options.postUrl, responseHandler, 'json');
+		$.post(/** @type {{postUrl: string}} */ (options).postUrl,
+				responseHandler, 'json');
 
-		// We need to make sure that the finish() method will be called.
-		// While the redirect request is running, user can click again
-		// in the link (if it is still on page). If it happens, the link action
-		// handler will run activate method again and this class will start the
-		// post request. But when the redirect request finishes, it will stop
-		// the post data request, and the responseHandler will never be called.
-		// That's why we can't call the finish() method there.
-		// So we use a timer to give some deactivated time to the link
-		// to minimize double-execution (we can't avoid it totally because
-		// we never know when the redirect request is over).
-		var finishCallback = $.pkp.classes.Helper.curry(
-				this.finishCallback_, this);
-		setTimeout(finishCallback, 2000);
-
-		return returner;
+		return /** @type {boolean} */ (returner);
 	};
 
 
@@ -80,7 +80,12 @@
 	 */
 	$.pkp.classes.linkAction.PostAndRedirectRequest.prototype.finishCallback_ =
 			function() {
+		var $linkActionElement = this.getLinkActionElement(),
+				// Get the link action handler to handle the json response.
+				linkActionHandler = $.pkp.classes.Handler.getHandler($linkActionElement);
+
 		this.finish();
+		linkActionHandler.handleJson(this.postJsonData_);
 	};
 
 
@@ -91,17 +96,38 @@
 	 */
 	$.pkp.classes.linkAction.PostAndRedirectRequest.prototype.handleResponse_ =
 			function(jsonData) {
-		var options = this.getOptions();
-		var $linkActionElement = this.getLinkActionElement();
+		var options = this.getOptions(), timer = null, finishCallback = null;
 
-		// Get the link action handler to handle the json response.
-		var linkActionHandler = $.pkp.classes.Handler.getHandler($linkActionElement);
-		linkActionHandler.handleJson(jsonData);
+		// Save return data to be handled at the finish callback. If
+		// the redirect action loads another page, then the interface
+		// will be updated anyway and any events that could be triggered
+		// by the post response will be useless, so that's ok that the
+		// finish callback is not called in that case, and that the post
+		// json answer is never handled.
+		// If a new page is not loaded, then we have to wait for the redirect
+		// action to start (probably a file download) and only then handle the post
+		// answer, avoiding triggering events that could replace the current link
+		// action element before the redirect request starts.
+		// In a download action, it avoids the activation of the download link
+		// action before the download triggered by the first click starts.
+		this.postJsonData_ = jsonData;
 
-		// Redirect.
-		window.location = options.url;
+		// Redirect, making sure there is no ajax request in progress,
+		// to avoid stoping them.
+		timer = setInterval(function() {
+			if ($.active == 0) {
+				clearInterval(timer);
+				window.location = /** @type {{url: string}} */ (options).url;
+			}
+		},100);
+
+		// When it's a download action, try to avoid double execution.
+		// Not ideal, see issue #247.
+		finishCallback = $.pkp.classes.Helper.curry(
+				this.finishCallback_, this);
+		setTimeout(finishCallback, 2000);
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

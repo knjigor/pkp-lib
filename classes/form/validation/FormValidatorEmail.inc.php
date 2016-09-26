@@ -3,7 +3,8 @@
 /**
  * @file classes/form/validation/FormValidatorEmail.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidatorEmail
@@ -24,10 +25,14 @@ class FormValidatorEmail extends FormValidator {
 	 * @param $type string the type of check, either "required" or "optional"
 	 * @param $message string the error message for validation failures (i18n key)
 	 */
-	function FormValidatorEmail(&$form, $field, $type, $message) {
+	function FormValidatorEmail(&$form, $field, $type = 'optional', $message = 'email.invalid') {
 		$validator = new ValidatorEmail();
 		parent::FormValidator($form, $field, $type, $message, $validator);
 		array_push($form->cssValidation[$field], 'email');
+	}
+
+	function getMessage() {
+		return __($this->_message, array('email' => $this->getFieldValue()));
 	}
 }
 

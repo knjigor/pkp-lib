@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/metadata/FormValidatorPostTest.inc.php
+ * @file tests/classes/form/validation/FormValidatorPostTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FormValidatorPostTest
@@ -14,7 +15,7 @@
  */
 
 
-require_mock_env('lib/pkp/tests/mock');
+require_mock_env('env1');
 
 import('lib.pkp.tests.PKPTestCase');
 import('lib.pkp.classes.form.Form');
@@ -29,6 +30,8 @@ class FormValidatorPostTest extends PKPTestCase {
 		// Instantiate test validator
 		$form = new Form('some template');
 		$validator = new FormValidatorPost($form, 'some.message.key');
+
+		$this->markTestSkipped('Disabled for static invocation of Request.');
 
 		Request::setRequestMethod('POST');
 		self::assertTrue($validator->isValid());

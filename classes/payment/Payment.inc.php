@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup payment
+ * @defgroup payment Payment
+ * Payment handling and processing code.
  */
 
 /**
  * @file classes/payment/Payment.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Payment
@@ -19,23 +21,27 @@
 
 /** DOES NOT inherit from DataObject for the sake of concise serialization */
 class Payment {
-	/** @var $paymentId int payment id */
+	/** @var int payment id */
 	var $paymentId;
 
-	/** @var $amount numeric amount of payment in $currencyCode units */
+	/** @var numeric amount of payment in $currencyCode units */
 	var $amount;
 
-	/** @var $currencyCode string ISO 4217 alpha currency code */
+	/** @var string ISO 4217 alpha currency code */
 	var $currencyCode;
 
-	/** @var $userId int user ID of customer making payment */
+	/** @var int user ID of customer making payment */
 	var $userId;
 
-	/** @var $assocId int association ID for payment */
+	/** @var int association ID for payment */
 	var $assocId;
 
 	/**
 	 * Constructor
+	 * @param $amount number
+	 * @param $currencyCode string
+	 * @param $userId int
+	 * @param $assocId int optional
 	 */
 	function Payment($amount = null, $currencyCode = null, $userId = null, $assocId = null) {
 		$this->amount = $amount;
@@ -52,11 +58,6 @@ class Payment {
 		return $this->paymentId;
 	}
 
-	function getPaymentId() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getId();
-	}
-
 	/**
 	 * Set the id of payment
 	 * @param $paymentId int
@@ -64,11 +65,6 @@ class Payment {
 	 */
 	function setId($paymentId) {
 		return $this->paymentId = $paymentId;
-	}
-
-	function setPaymentId($paymentId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->setId($paymentId);
 	}
 
 	/**

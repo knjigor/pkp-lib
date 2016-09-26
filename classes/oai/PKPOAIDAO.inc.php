@@ -3,7 +3,8 @@
 /**
  * @file classes/oai/PKPOAIDAO.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPOAIDAO
@@ -15,9 +16,9 @@
 
 import('lib.pkp.classes.oai.OAI');
 
-class PKPOAIDAO extends DAO {
+abstract class PKPOAIDAO extends DAO {
 
- 	/** @var $oai OAI parent OAI object */
+ 	/** @var OAI parent OAI object */
  	var $oai;
 
  	/**
@@ -31,7 +32,7 @@ class PKPOAIDAO extends DAO {
 	 * Set parent OAI object.
 	 * @param JournalOAI
 	 */
-	function setOAI(&$oai) {
+	function setOAI($oai) {
 		$this->oai = $oai;
 	}
 
@@ -50,7 +51,7 @@ class PKPOAIDAO extends DAO {
 	function getEarliestDatestamp($selectStatement, $setIds = array()) {
 		$params = $this->getOrderedRecordParams(null, $setIds);
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			$selectStatement . ' FROM mutex m ' .
 			$this->getRecordJoinClause(null, $setIds) . ' ' .
 			$this->getAccessibleRecordWhereClause(),
@@ -65,8 +66,6 @@ class PKPOAIDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $timestamp;
 	}
 
@@ -81,7 +80,7 @@ class PKPOAIDAO extends DAO {
 	function recordExists($dataObjectId, $setIds = array()) {
 		$params = $this->getOrderedRecordParams($dataObjectId, $setIds);
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT	COUNT(*)
 			FROM mutex m ' .
 			$this->getRecordJoinClause($dataObjectId, $setIds) . ' ' .
@@ -92,8 +91,6 @@ class PKPOAIDAO extends DAO {
 		$returner = $result->fields[0] == 1;
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -105,10 +102,10 @@ class PKPOAIDAO extends DAO {
 	 * only inside the specified set.
 	 * @return OAIRecord
 	 */
-	function &getRecord($dataObjectId, $setIds = array()) {
+	function getRecord($dataObjectId, $setIds = array()) {
 		$params = $this->getOrderedRecordParams($dataObjectId, $setIds);
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			$this->getRecordSelectStatement() . ' FROM mutex m ' .
 			$this->getRecordJoinClause($dataObjectId, $setIds) . ' ' .
 			$this->getAccessibleRecordWhereClause(),
@@ -117,13 +114,11 @@ class PKPOAIDAO extends DAO {
 
 		$returner = null;
 		if ($result->RecordCount() != 0) {
-			$row =& $result->GetRowAssoc(false);
-			$returner =& $this->_returnRecordFromRow($row);
+			$row = $result->GetRowAssoc(false);
+			$returner = $this->_returnRecordFromRow($row);
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -140,23 +135,21 @@ class PKPOAIDAO extends DAO {
 	 * @param $total int
 	 * @return array OAIRecord
 	 */
-	function &getRecords($setIds, $from, $until, $set, $offset, $limit, &$total) {
+	function getRecords($setIds, $from, $until, $set, $offset, $limit, &$total) {
 		$records = array();
 
-		$result =& $this->_getRecordsRecordSet($setIds, $from, $until, $set);
+		$result = $this->_getRecordsRecordSet($setIds, $from, $until, $set);
 
 		$total = $result->RecordCount();
 
 		$result->Move($offset);
 		for ($count = 0; $count < $limit && !$result->EOF; $count++) {
-			$row =& $result->GetRowAssoc(false);
-			$records[] =& $this->_returnRecordFromRow($row);
-			$result->moveNext();
+			$row = $result->GetRowAssoc(false);
+			$records[] = $this->_returnRecordFromRow($row);
+			$result->MoveNext();
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $records;
 	}
 
@@ -173,23 +166,21 @@ class PKPOAIDAO extends DAO {
 	 * @param $total int
 	 * @return array OAIIdentifier
 	 */
-	function &getIdentifiers($setIds, $from, $until, $set, $offset, $limit, &$total) {
+	function getIdentifiers($setIds, $from, $until, $set, $offset, $limit, &$total) {
 		$records = array();
 
-		$result =& $this->_getRecordsRecordSet($setIds, $from, $until, $set);
+		$result = $this->_getRecordsRecordSet($setIds, $from, $until, $set);
 
 		$total = $result->RecordCount();
 
 		$result->Move($offset);
 		for ($count = 0; $count < $limit && !$result->EOF; $count++) {
-			$row =& $result->GetRowAssoc(false);
-			$records[] =& $this->_returnIdentifierFromRow($row);
-			$result->moveNext();
+			$row = $result->GetRowAssoc(false);
+			$records[] = $this->_returnIdentifierFromRow($row);
+			$result->MoveNext();
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $records;
 	}
 
@@ -210,8 +201,8 @@ class PKPOAIDAO extends DAO {
 	 * Retrieve a resumption token.
 	 * @return OAIResumptionToken
 	 */
-	function &getToken($tokenId) {
-		$result =& $this->retrieve(
+	function getToken($tokenId) {
+		$result = $this->retrieve(
 			'SELECT * FROM oai_resumption_tokens WHERE token = ?',
 			array($tokenId)
 		);
@@ -220,13 +211,11 @@ class PKPOAIDAO extends DAO {
 			$token = null;
 
 		} else {
-			$row =& $result->getRowAssoc(false);
+			$row = $result->getRowAssoc(false);
 			$token = new OAIResumptionToken($row['token'], $row['record_offset'], unserialize($row['params']), $row['expire']);
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $token;
 	}
 
@@ -235,18 +224,17 @@ class PKPOAIDAO extends DAO {
 	 * @param $token OAIResumptionToken
 	 * @return OAIResumptionToken
 	 */
-	function &insertToken(&$token) {
+	function insertToken($token) {
 		do {
 			// Generate unique token ID
 			$token->id = md5(uniqid(mt_rand(), true));
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT COUNT(*) FROM oai_resumption_tokens WHERE token = ?',
 				array($token->id)
 			);
 			$val = $result->fields[0];
 
 			$result->Close();
-			unset($result);
 		} while($val != 0);
 
 		$this->update(
@@ -315,9 +303,7 @@ class PKPOAIDAO extends DAO {
 	 *
 	 * @return string
 	 */
-	function getRecordSelectStatement() {
-		assert(false);
-	}
+	abstract function getRecordSelectStatement();
 
 	/**
 	 * Return the string defining the JOIN part of an sql
@@ -332,9 +318,7 @@ class PKPOAIDAO extends DAO {
 	 * @param $set string
 	 * @return string
 	 */
-	function getRecordJoinClause($dataObjectId = null, $setIds = array(), $set = null) {
-		assert(false);
-	}
+	abstract function getRecordJoinClause($dataObjectId = null, $setIds = array(), $set = null);
 
 	/**
 	 * Return the string defining the WHERE part of
@@ -343,9 +327,7 @@ class PKPOAIDAO extends DAO {
 	 * Must be implemented by subclasses.
 	 * @return string
 	 */
-	function getAccessibleRecordWhereClause() {
-		assert(false);
-	}
+	abstract function getAccessibleRecordWhereClause();
 
 	/**
 	 * Return the string defining the WHERE part of
@@ -357,9 +339,7 @@ class PKPOAIDAO extends DAO {
 	 * @param $until int/string *nix timestamp or ISO datetime string
 	 * @return string
 	 */
-	function getDateRangeWhereClause($from, $until) {
-		assert(false);
-	}
+	abstract function getDateRangeWhereClause($from, $until);
 
 	/**
 	 * Set application specific data to OAIRecord and OAIIdentifier objects.
@@ -371,9 +351,7 @@ class PKPOAIDAO extends DAO {
 	 * OAIRecord data can be set.
 	 * @return OAIIdentifier/OAIRecord
 	 */
-	function &setOAIData($record, &$row, $isRecord) {
-		assert(false);
-	}
+	abstract function setOAIData($record, $row, $isRecord);
 
 
 	//
@@ -384,9 +362,9 @@ class PKPOAIDAO extends DAO {
 	 * @param $row array
 	 * @return OAIRecord
 	 */
-	function &_returnRecordFromRow(&$row) {
+	function _returnRecordFromRow($row) {
 		$record = new OAIRecord();
-		$record =& $this->_doCommonOAIFromRowOperations($record, $row);
+		$record = $this->_doCommonOAIFromRowOperations($record, $row);
 
 		HookRegistry::call('OAIDAO::_returnRecordFromRow', array(&$record, &$row));
 
@@ -398,9 +376,9 @@ class PKPOAIDAO extends DAO {
 	 * @param $row array
 	 * @return OAIIdentifier
 	 */
-	function &_returnIdentifierFromRow(&$row) {
+	function _returnIdentifierFromRow($row) {
 		$record = new OAIIdentifier();
-		$record =& $this->_doCommonOAIFromRowOperations($record, $row);
+		$record = $this->_doCommonOAIFromRowOperations($record, $row);
 
 		HookRegistry::call('OAIDAO::_returnIdentifierFromRow', array(&$record, &$row));
 
@@ -413,7 +391,7 @@ class PKPOAIDAO extends DAO {
 	 * @param $row array
 	 * @return OAIRecord/OAIIdentifier
 	 */
-	function &_doCommonOAIFromRowOperations(&$record, &$row) {
+	function _doCommonOAIFromRowOperations($record, $row) {
 		$record->datestamp = OAIUtils::UTCDate(strtotime($this->datetimeFromDB($row['last_modified'])));
 
 		if (isset($row['tombstone_id'])) {
@@ -437,10 +415,10 @@ class PKPOAIDAO extends DAO {
 	 * @param $set string
 	 * @return ADORecordSet
 	 */
-	function &_getRecordsRecordSet($setIds, $from, $until, $set) {
+	function _getRecordsRecordSet($setIds, $from, $until, $set) {
 		$params = $this->getOrderedRecordParams(null, $setIds, $set);
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			$this->getRecordSelectStatement() . ' FROM mutex m ' .
 			$this->getRecordJoinClause(null, $setIds, $set) . ' ' .
 			$this->getAccessibleRecordWhereClause() .

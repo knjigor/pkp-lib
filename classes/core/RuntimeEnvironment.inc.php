@@ -2,7 +2,8 @@
 /**
  * @file classes/core/RuntimeEnvironment.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class RuntimeEnvironment
@@ -91,7 +92,7 @@ class RuntimeEnvironment {
 			$externalProgram = Config::getVar('cli', $requiredProgram);
 			if (!file_exists($externalProgram)) return false;
 			if (function_exists('is_executable')) {
-				if (!is_executable($filename)) return false;
+				if (!is_executable($externalProgram)) return false;
 			}
 		}
 

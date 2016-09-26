@@ -1,13 +1,14 @@
 <?php
 
 /**
- * @defgroup plugins_citationLookup_crossref_filter
+ * @defgroup plugins_citationLookup_crossref_filter CrossRef Citation Filter Plugin
  */
 
 /**
  * @file plugins/citationLookup/crossref/filter/CrossrefNlm30CitationSchemaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CrossrefNlm30CitationSchemaFilter
@@ -29,7 +30,7 @@ class CrossrefNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function CrossrefNlm30CitationSchemaFilter(&$filterGroup) {
+	function CrossrefNlm30CitationSchemaFilter($filterGroup) {
 		$this->setDisplayName('CrossRef');
 
 		// Instantiate the settings of this filter
@@ -74,7 +75,7 @@ class CrossrefNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationLookup.crossref.filter.CrossrefNlm30CitationSchemaFilter';
@@ -85,7 +86,7 @@ class CrossrefNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	// Implement template methods from Filter
 	//
 	/**
-	 * @see Filter::process()
+	 * @copydoc Filter::process()
 	 * @param $citationDescription MetadataDescription
 	 * @return MetadataDescription
 	 */
@@ -111,11 +112,11 @@ class CrossrefNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 		}
 
 		// Call the CrossRef web service
-		if (is_null($resultXml =& $this->callWebService(CROSSREF_WEBSERVICE_URL, $searchParams, XSL_TRANSFORMER_DOCTYPE_STRING)) || String::substr(trim($resultXml), 0, 6) == '<html>') return $nullVar;
+		if (is_null($resultXml =& $this->callWebService(CROSSREF_WEBSERVICE_URL, $searchParams, XSL_TRANSFORMER_DOCTYPE_STRING)) || PKPString::substr(trim($resultXml), 0, 6) == '<html>') return $nullVar;
 
 		// Remove default name spaces from XML as CrossRef doesn't
 		// set them reliably and element names are unique anyway.
-		$resultXml = String::regexp_replace('/ xmlns="[^"]+"/', '', $resultXml);
+		$resultXml = PKPString::regexp_replace('/ xmlns="[^"]+"/', '', $resultXml);
 
 		// Transform and process the web service result
 		if (is_null($metadata =& $this->transformWebServiceResults($resultXml, dirname(__FILE__).DIRECTORY_SEPARATOR.'crossref.xsl'))) return $nullVar;

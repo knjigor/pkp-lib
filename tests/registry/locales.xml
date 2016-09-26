@@ -3,7 +3,8 @@
 <!--
   * locales.xml
   *
-  * Copyright (c) 2003-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2003-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Locales registry file.
@@ -12,7 +13,7 @@
   * (i.e., existing under the locales/ directory)
   -->
 
-<!DOCTYPE locales SYSTEM "../lib/pkp/dtd/locales.dtd">
+<!DOCTYPE locales SYSTEM "../../dtd/locales.dtd">
 
 <locales>
 	<locale key="en_US" name="English" iso639-2b="eng" iso639-3="eng" />

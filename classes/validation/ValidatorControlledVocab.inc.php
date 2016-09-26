@@ -3,7 +3,8 @@
 /**
  * @file classes/validation/ValidatorControlledVocab.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ValidatorControlledVocab
@@ -27,7 +28,7 @@ class ValidatorControlledVocab extends Validator {
 	 */
 	function ValidatorControlledVocab($symbolic, $assocType, $assocId) {
 		parent::Validator();
-		$controlledVocabDao =& DAORegistry::getDAO('ControlledVocabDAO');
+		$controlledVocabDao = DAORegistry::getDAO('ControlledVocabDAO');
 		$controlledVocab = $controlledVocabDao->getBySymbolic($symbolic, $assocType, $assocId);
 		if ($controlledVocab) $this->_acceptedValues = array_keys($controlledVocab->enumerate());
 		else $this->_acceptedValues = array();

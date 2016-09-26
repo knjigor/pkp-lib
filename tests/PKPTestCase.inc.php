@@ -1,12 +1,14 @@
 <?php
 /**
- * @defgroup tests
+ * @defgroup tests Tests
+ * Tests and test framework for unit and integration tests.
  */
 
 /**
  * @file tests/PKPTestCase.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPTestCase
@@ -18,13 +20,13 @@
  */
 
 // Include PHPUnit
-require_once('PHPUnit/Extensions/OutputTestCase.php');
 import('lib.pkp.tests.PKPTestHelper');
 
-// FIXME: PHPUnit_Extensions_OutputTestCase is now deprecated but we have to
-// use it until we upgrade our test server from phpunit 3.4 to at least 3.6.
-abstract class PKPTestCase extends PHPUnit_Extensions_OutputTestCase {
-	private $daoBackup = array(), $registryBackup = array();
+abstract class PKPTestCase extends PHPUnit_Framework_TestCase {
+	private
+		$daoBackup = array(),
+		$registryBackup = array(),
+		$mockedRegistryKeys = array();
 
 	/**
 	 * Override this method if you want to backup/restore
@@ -41,11 +43,11 @@ abstract class PKPTestCase extends PHPUnit_Extensions_OutputTestCase {
 	 * @return array A list of registry keys to backup and restore.
 	 */
 	protected function getMockedRegistryKeys() {
-		return array();
+		return $this->mockedRegistryKeys;
 	}
 
 	/**
-	 * @see PHPUnit_Framework_TestCase::setUp()
+	 * @copydoc PHPUnit_Framework_TestCase::setUp()
 	 */
 	protected function setUp() {
 		$this->setBackupGlobals(true);
@@ -60,7 +62,7 @@ abstract class PKPTestCase extends PHPUnit_Extensions_OutputTestCase {
 			global $ADODB_INCLUDED_LIB;
 			$ADODB_INCLUDED_LIB = 1;
 		}
-		Config::setConfigFileName(dirname(INDEX_FILE_LOCATION). DIRECTORY_SEPARATOR. 'config.inc.php');
+		Config::setConfigFileName(Core::getBaseDir(). DIRECTORY_SEPARATOR. 'config.inc.php');
 
 		// Backup DAOs.
 		foreach($this->getMockedDAOs() as $mockedDao) {
@@ -74,7 +76,7 @@ abstract class PKPTestCase extends PHPUnit_Extensions_OutputTestCase {
 	}
 
 	/**
-	 * @see PHPUnit_Framework_TestCase::tearDown()
+	 * @copydoc PHPUnit_Framework_TestCase::tearDown()
 	 */
 	protected function tearDown() {
 		// Restore registry keys.
@@ -89,7 +91,7 @@ abstract class PKPTestCase extends PHPUnit_Extensions_OutputTestCase {
 	}
 
 	/**
-	 * @see PHPUnit_Framework_TestCase::getActualOutput()
+	 * @copydoc PHPUnit_Framework_TestCase::getActualOutput()
 	 */
 	public function getActualOutput() {
 		// We do not want to see output.
@@ -116,6 +118,55 @@ abstract class PKPTestCase extends PHPUnit_Extensions_OutputTestCase {
 			// Switch the configuration file
 			Config::setConfigFileName($configFile);
 		}
+	}
+
+	/**
+	 * Mock a web request.
+	 *
+	 * For correct timing you have to call this method
+	 * in the setUp() method of a test after calling
+	 * parent::setUp() or in a test method. You can also
+	 * call this method as many times as necessary from
+	 * within your test and you're guaranteed to receive
+	 * a fresh request whenever you call it.
+	 *
+	 * And make sure that you merge any additional mocked
+	 * registry keys with the ones returned from this class.
+	 *
+	 * @param $path string
+	 * @param $userId int
+	 *
+	 * @return Request
+	 */
+	protected function mockRequest($path = 'index/test-page/test-op', $userId = null) {
+		// Back up the default request.
+		if (!isset($this->registryBackup['request'])) {
+			$this->mockedRegistryKeys[] = 'request';
+			$this->registryBackup['request'] = Registry::get('request');
+		}
+
+		// Create a test request.
+		Registry::delete('request');
+		$application = PKPApplication::getApplication();
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$_SERVER['PATH_INFO'] = $path;
+		$request = $application->getRequest();
+		import('classes.core.PageRouter');
+
+		// Test router.
+		$router = new PageRouter();
+		$router->setApplication($application);
+		import('lib.pkp.classes.core.Dispatcher');
+		$dispatcher = new Dispatcher();
+		$dispatcher->setApplication($application);
+		$router->setDispatcher($dispatcher);
+		$request->setRouter($router);
+
+		// Test user.
+		$session = $request->getSession();
+		$session->setUserId($userId);
+
+		return $request;
 	}
 
 

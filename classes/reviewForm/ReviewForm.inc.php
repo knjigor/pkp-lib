@@ -1,13 +1,16 @@
 <?php
 
 /**
- * @defgroup reviewForm
+ * @defgroup reviewForm Review Form
+ * Implements review forms, which are forms that can be created and customized
+ * by the manager and presented to the reviewer in order to assess submissions.
  */
 
 /**
  * @file classes/reviewForm/ReviewForm.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ReviewForm
@@ -47,6 +50,38 @@ class ReviewForm extends DataObject {
 	//
 
 	/**
+	 * Get the number of completed reviews for this review form.
+	 * @return int
+	 */
+	function getCompleteCount() {
+		return $this->getData('completeCount');
+	}
+
+	/**
+	 * Set the number of complete reviews for this review form.
+	 * @param $completeCount int
+	 */
+	function setCompleteCount($completeCount) {
+		$this->setData('completeCount', $completeCount);
+	}
+
+	/**
+	 * Get the number of incomplete reviews for this review form.
+	 * @return int
+	 */
+	function getIncompleteCount() {
+		return $this->getData('incompleteCount');
+	}
+
+	/**
+	 * Set the number of incomplete reviews for this review form.
+	 * @param $incompleteCount int
+	 */
+	function setIncompleteCount($incompleteCount) {
+		$this->setData('incompleteCount', $incompleteCount);
+	}
+
+	/**
 	 * Get the associated type.
 	 * @return int
 	 */
@@ -59,7 +94,7 @@ class ReviewForm extends DataObject {
 	 * @param $assocType int
 	 */
 	function setAssocType($assocType) {
-		return $this->setData('assocType', $assocType);
+		$this->setData('assocType', $assocType);
 	}
 
 	/**
@@ -75,7 +110,7 @@ class ReviewForm extends DataObject {
 	 * @param $assocId int
 	 */
 	function setAssocId($assocId) {
-		return $this->setData('assocId', $assocId);
+		$this->setData('assocId', $assocId);
 	}
 
 	/**
@@ -91,7 +126,7 @@ class ReviewForm extends DataObject {
 	 * @param $sequence float
 	 */
 	function setSequence($sequence) {
-		return $this->setData('sequence', $sequence);
+		$this->setData('sequence', $sequence);
 	}
 
 	/**
@@ -107,7 +142,7 @@ class ReviewForm extends DataObject {
 	 * @param $active int
 	 */
 	function setActive($active) {
-		return $this->setData('active', $active);
+		$this->setData('active', $active);
 	}
 
 	/**
@@ -125,7 +160,7 @@ class ReviewForm extends DataObject {
 	 * @param $locale string
 	 */
 	function setTitle($title, $locale) {
-		return $this->setData('title', $title, $locale);
+		$this->setData('title', $title, $locale);
 	}
 
 	/**
@@ -143,37 +178,7 @@ class ReviewForm extends DataObject {
 	 * @param $locale string
 	 */
 	function setDescription($description, $locale) {
-		return $this->setData('description', $description, $locale);
-	}
-
-	/** DEPRECATED **/
-
-	function getReviewFormTitle() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedTitle();
-	}
-
-	function getReviewFormDescription() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedDescription();
-	}
-
-	/**
-	 * Get the ID of the review form.
-	 * @return int
-	 */
-	function getReviewFormId() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getId();
-	}
-
-	/**
-	 * Set the ID of the review form.
-	 * @param $reviewFormId int
-	 */
-	function setReviewFormId($reviewFormId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->setId($reviewFormId);
+		$this->setData('description', $description, $locale);
 	}
 }
 

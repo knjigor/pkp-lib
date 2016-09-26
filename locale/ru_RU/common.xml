@@ -4,10 +4,11 @@
 <!--
   * locale/ru_RU/common.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the ru_RU (Russian) locale.
+  * Localization strings for the ru_RU (Русский) locale.
   *
   -->
 
@@ -15,7 +16,6 @@
 	<message key="about.aboutSite">О сайте</message>
 	<message key="about.contact">Контакты</message>
 	<message key="about.contact.email">E-mail адрес</message>
-	<message key="about.contact.fax">Факс</message>
 	<message key="about.contact.phone">Телефон</message>
 	<message key="about.contact.principalContact">Главный редактор</message>
 	<message key="about.contact.supportContact">Техподдержка</message>
@@ -53,18 +53,18 @@
 	<message key="common.captchaField">Проверка</message>
 	<message key="common.ccLicense"><![CDATA[
 						 <br /><br />
-						 <a target="_new" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
-							 <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png"/>
+						 <a target="_blank" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
+							 <img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png"/>
 						 </a>
 						 <br/>
-						 This work is licensed under a <a rel="license" target="_new" href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0  License</a>.
+						 This work is licensed under a <a rel="license" target="_blank" href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0  License</a>.
 						 ]]></message>
 					 <message key="common.ccLicense.rt"><![CDATA[
 										<div class="rtBlock">
 										<br />
-										<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a>
+										<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
 										<br />
-										This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new">Creative Commons Attribution 3.0 License</a>.
+										This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank">Creative Commons Attribution 3.0 License</a>.
 									</div>
 	]]></message>
 	<message key="common.changesSaved">Ваши изменения сохранены</message>
@@ -103,6 +103,8 @@
 	<message key="common.fileName">Название файла</message>
 	<message key="common.fileSize">Объем файла</message>
 	<message key="common.fileType">Тип файла</message>
+	<message key="common.file.namingPattern">{$username}, {$userGroup}, {$originalFilename}</message>
+	<message key="common.file.anonymousNamingPattern">{$userGroup}, {$originalFilename}</message>
 	<message key="common.height">Высота</message>
 	<message key="common.homePageHeaderLogo.altText">Логотип Заголовка Домашней Страницы</message>
 	<message key="common.hour">Час</message>
@@ -127,7 +129,6 @@
 	<message key="common.notAvailable">Недоступно</message>
 	<message key="common.note">Примечание</message>
 	<message key="common.notes">Примечания</message>
-	<message key="common.notify">Уведомить</message>
 	<message key="common.off">off</message>
 	<message key="common.on">on</message>
 	<message key="common.options">Опции</message>
@@ -289,7 +290,7 @@
 	<message key="notification.unsubscribeError">При отмене Вашей подписки произошла ошибка. Пожалуйста убедитесь, что почтовый адрес и пароль введены правильно.</message>
 	<message key="notification.unsubscribeSuccess">Ваша подписка успешно прекращена.</message>
 	<message key="search.abstract">Аннотации</message>
-	<message key="search.allFields">Все</message>
+	<message key="search.author">Авторы</message>
 	<message key="search.coverage">Где-когда</message>
 	<message key="search.date">Дата</message>
 	<message key="search.dateFrom">с</message>
@@ -315,4 +316,32 @@
 	<message key="common.preview">Предпросмотр</message>
 	<message key="common.activate">Включить</message>
 	<message key="common.deactivate">Выключить</message>
+	<message key="common.warning">Предупреждение</message>
+	<message key="common.content">Содержание</message>
+	<message key="common.fullscreen">Полноэкранный режим</message>
+	<message key="common.fullscreenOff">Выйти из полноэкранного режима</message>
+	<message key="common.less">Меньше</message>
+	<message key="common.billingAddress">Адрес покупателя (если отличается)</message>
+	<message key="common.more">Больше</message>
+	<message key="common.noMatches">Нет совпадений</message>
+	<message key="common.ok">OK</message>
+	<message key="common.pluginEnabled">Модуль "{$pluginName}" был включен.</message>
+	<message key="common.pluginDisabled">Модуль "{$pluginName}" был выключен.</message>
+	<message key="common.element">Элемент</message>
+	<message key="common.loading">Загрузка...</message>
+	<message key="common.plugins">Модули</message>
+	<message key="email.subjectRequired">Пожалуйста, укажите тему письма.</message>
+	<message key="email.bodyRequired">Пожалуйста, введите текст письма.</message>
+	<message key="form.confirmSubmit">Вы уверены, что хотите отослать эту форму?</message>
+	<message key="form.confirmSubmit.title">Подтвердить</message>
+	<message key="form.emailRequired">Необходимо указать адрес email.</message>
+	<message key="form.dataHasChanged">Данные этой формы были изменены. Продолжить в любом случае?</message>
+	<message key="navigation.access">Пользователи и роли</message>
+	<message key="navigation.admin">Администрация</message>
+	<message key="navigation.browseByAuthor">По автору</message>
+	<message key="navigation.data">Данные</message>
+	<message key="navigation.settings">Настройки</message>
+	<message key="navigation.setup">Установка</message>
+	<message key="navigation.sitemap">Карта сайта</message>
+	<message key="navigation.system">Система</message>
 </locale>

@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/core/PKPPageRouterTest.inc.php
+ * @file tests/classes/core/PKPPageRouterTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPPageRouterTest
@@ -14,7 +15,7 @@
  */
 
 
-require_mock_env('lib/pkp/tests/mock');
+require_mock_env('env1');
 
 import('lib.pkp.classes.core.PKPPageRouter');
 import('lib.pkp.tests.classes.core.PKPRouterTestCase');
@@ -132,7 +133,7 @@ class PKPPageRouterTest extends PKPRouterTestCase {
 			'PATH_INFO' => '/context1/context2/index'
 		);
 		$expectedId = '/context1/context2/index-en_US';
-		self::assertEquals(dirname(INDEX_FILE_LOCATION).'/cache/wc-'.md5($expectedId).'.html', $this->router->getCacheFilename($this->request));
+		self::assertEquals(Core::getBaseDir().'/cache/wc-'.md5($expectedId).'.html', $this->router->getCacheFilename($this->request));
 	}
 
 	/**
@@ -146,7 +147,7 @@ class PKPPageRouterTest extends PKPRouterTestCase {
 			'page' => 'index'
 		);
 		$expectedId = 'something-something-index---en_US';
-		self::assertEquals(dirname(INDEX_FILE_LOCATION).'/cache/wc-'.md5($expectedId).'.html', $this->router->getCacheFilename($this->request));
+		self::assertEquals(Core::getBaseDir().'/cache/wc-'.md5($expectedId).'.html', $this->router->getCacheFilename($this->request));
 	}
 
 	/**

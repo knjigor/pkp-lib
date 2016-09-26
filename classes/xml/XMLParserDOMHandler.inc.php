@@ -3,7 +3,8 @@
 /**
  * @file classes/xml/XMLParserDOMHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XMLParserDOMHandler
@@ -43,8 +44,11 @@ class XMLParserDOMHandler extends XMLParserHandler {
 
 	/**
 	 * Callback function to act as the start element handler.
+	 * @param $parser XMLParser
+	 * @param $tag string
+	 * @param $attributes array
 	 */
-	function startElement(&$parser, $tag, $attributes) {
+	function startElement($parser, $tag, $attributes) {
 		$this->currentData = null;
 		$node = new XMLNode($tag);
 		$node->setAttributes($attributes);
@@ -62,8 +66,10 @@ class XMLParserDOMHandler extends XMLParserHandler {
 
 	/**
 	 * Callback function to act as the end element handler.
+	 * @param $parser XMLParser
+	 * @param $tag string
 	 */
-	function endElement(&$parser, $tag) {
+	function endElement($parser, $tag) {
 		$this->currentNode->setValue($this->currentData);
 		$this->currentNode =& $this->currentNode->getParent();
 		$this->currentData = null;
@@ -71,8 +77,10 @@ class XMLParserDOMHandler extends XMLParserHandler {
 
 	/**
 	 * Callback function to act as the character data handler.
+	 * @param $parser XMLParser
+	 * @param $data string
 	 */
-	function characterData(&$parser, $data) {
+	function characterData($parser, $data) {
 		$this->currentData .= $data;
 	}
 
@@ -80,7 +88,7 @@ class XMLParserDOMHandler extends XMLParserHandler {
 	 * Returns a reference to the root node of the tree representing the document.
 	 * @return XMLNode
 	 */
-	function &getResult() {
+	function getResult() {
 		return $this->rootNode;
 	}
 }

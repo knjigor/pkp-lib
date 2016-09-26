@@ -3,7 +3,8 @@
 /**
  * @file classes/db/DAOResultFactory.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DAOResultFactory
@@ -17,10 +18,10 @@
 import('lib.pkp.classes.core.ItemIterator');
 
 class DAOResultFactory extends ItemIterator {
-	/** The DAO used to create objects */
+	/** @var DAO The DAO used to create objects */
 	var $dao;
 
-	/** The name of the DAO's factory function (to be called with an associative array of values) */
+	/** @var string The name of the DAO's factory function (to be called with an associative array of values) */
 	var $functionName;
 
 	/**
@@ -29,10 +30,10 @@ class DAOResultFactory extends ItemIterator {
 	 */
 	var $idFields;
 
-	/** The ADORecordSet to be wrapped around */
+	/** @var ADORecordSet The ADORecordSet to be wrapped around */
 	var $records;
 
-	/** True iff the resultset was always empty */
+	/** @var boolean True iff the resultset was always empty */
 	var $wasEmpty;
 
 	var $isFirst;
@@ -98,12 +99,12 @@ class DAOResultFactory extends ItemIterator {
 		if (!$this->records->EOF) {
 			$functionName = $this->functionName;
 			$dao =& $this->dao;
-			$row =& $this->records->getRowAssoc(false);
-			$result =& $dao->$functionName($row);
-			if (!$this->records->MoveNext()) $this->_cleanup();
+			$row = $this->records->getRowAssoc(false);
+			$result = $dao->$functionName($row);
+			if (!$this->records->MoveNext()) $this->close();
 			return $result;
 		} else {
-			$this->_cleanup();
+			$this->close();
 			$nullVar = null;
 			return $nullVar;
 		}
@@ -113,7 +114,7 @@ class DAOResultFactory extends ItemIterator {
 	 * Return the next row, with key.
 	 * @return array ($key, $value)
 	 */
-	function &nextWithKey($idField = null) {
+	function nextWithKey($idField = null) {
 		$result =& $this->next();
 		if($idField) {
 			assert(is_a($result, 'DataObject'));
@@ -180,7 +181,7 @@ class DAOResultFactory extends ItemIterator {
 	function eof() {
 		if ($this->records == null) return true;
 		if ($this->records->EOF) {
-			$this->_cleanup();
+			$this->close();
 			return true;
 		}
 		return false;
@@ -195,13 +196,15 @@ class DAOResultFactory extends ItemIterator {
 	}
 
 	/**
-	 * PRIVATE function used internally to clean up the record set.
+	 * Clean up the record set.
 	 * This is called aggressively because it can free resources.
 	 */
-	function _cleanup() {
-		$this->records->close();
-		unset($this->records);
-		$this->records = null;
+	function close() {
+		if ($this->records) {
+			$this->records->close();
+			unset($this->records);
+			$this->records = null;
+		}
 	}
 
 	/**

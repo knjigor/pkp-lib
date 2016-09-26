@@ -4,10 +4,11 @@
 <!--
   * locale/fa_IR/user.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the fa_IR (Persian) locale.
+  * Localization strings for the fa_IR (فارسی) locale.
   *
   -->
 
@@ -22,7 +23,6 @@
 	<message key="user.dateRegistered">تاریخ ثبت نام</message>
 	<message key="user.editMyProfile">ویرایش پروفایل شخصی</message>
 	<message key="user.email">ایمیل</message>
-	<message key="user.fax">فاکس</message>
 	<message key="user.feminine">زن</message>
 	<message key="user.firstName">نام</message>
 	<message key="user.gender">جنس</message>
@@ -76,7 +76,6 @@
 	<message key="user.register.completeForm">این فرم را پر کنید تا برای این مجله ثبت نام کنید</message>
 	<message key="user.register.form.emailExists">آدرس ایمیل انتخاب شده قبلا با آن ثبت نام شده است. (ممکن است قبلا ثبت نام کرده باشید!)</message>
 	<message key="user.register.form.passwordsDoNotMatch">رمز عبور با تکرار آن یکسان نیست</message>
-	<message key="user.register.form.usernameAlphaNumeric">نام کاربری فقط میتواند شامل حروف ، اعداد ، خط فاصله زیرین و خط فاصله باشد و میبایست با یک حرف یا عدد شروع و به یک حرف یا عدد ختم شود.</message>
 	<message key="user.register.form.usernameExists">نام کاربری انتخاب شده در حال حاضر متعلق به دیگری میباشد.</message>
 	<message key="user.register.passwordLengthRestriction">رمز عبور باید حداقل دارای  {$length} حرف باشد.</message>
 	<message key="user.register.registerAs">ثبت نام به عنوان</message>
@@ -102,7 +101,6 @@
 	<message key="user.other">غیره</message>
 	<message key="user.profile.form.urlInvalid">آدرس وارد شده بی اعتبار است. پس از بررسی دوباره امتحان کنید. نکته: http:// را به ابتدای آدرس بیافزائید.</message>
 	<message key="user.affiliation.description">نام مؤسسه، مانند دانشکاه سایمون فریزر</message>
-	<message key="user.confirmEmail">تایید ایمیل</message>
 	<message key="user.gossip">یادداشت خصوصی</message>
 	<message key="user.profile.form.affiliationRequired">وابستیگی سازمانی لازم است</message>
 	<message key="user.register.form.emailsDoNotMatch">فیلدهای حاوی آدرس ایمیل مطابقت ندارند</message>

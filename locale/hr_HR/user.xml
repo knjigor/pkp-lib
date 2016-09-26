@@ -4,7 +4,8 @@
 <!--
   * locale/hr_HR/user.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localization strings for the hr_HR (Hrvatski) locale.
@@ -22,7 +23,6 @@
 	<message key="user.dateRegistered">Datum registracije</message>
 	<message key="user.editMyProfile">Uređivanje mog profila</message>
 	<message key="user.email">E-pošta</message>
-	<message key="user.fax">Fax</message>
 	<message key="user.feminine">Ž</message>
 	<message key="user.firstName">Ime</message>
 	<message key="user.gender">Spol</message>
@@ -74,7 +74,6 @@
 	<message key="user.register.completeForm">Ispunite ovaj formular kako biste se registrirali na ovaj časopis.</message>
 	<message key="user.register.form.emailExists">Odabrana adresa e-pošte već postoji.</message>
 	<message key="user.register.form.passwordsDoNotMatch">Lozinke se ne podudaraju.</message>
-	<message key="user.register.form.usernameAlphaNumeric">Korisničko ime može samo sadržavati slovnobrojčane znakove, podvlačenja i crtice, te mora početi i završiti sa slovnobrojčanim znakom.</message>
 	<message key="user.register.form.usernameExists">Odabrano korisničko ime već postoji.</message>
 	<message key="user.register.passwordLengthRestriction">Lozinka mora imati najmanje {$length} znakova.</message>
 	<message key="user.register.registerAs">Registrirajte se kao</message>

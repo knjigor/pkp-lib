@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/filter/FilterTest.inc.php
+ * @file tests/classes/filter/FilterTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterTest
@@ -30,8 +31,8 @@ class FilterTest extends PKPTestCase {
 		self::assertEquals('Mock_Filter_', substr($mockFilter->getDisplayName(), 0, 12));
 		$mockFilter->setDisplayName('Some other display name');
 		self::assertEquals('Some other display name', $mockFilter->getDisplayName());
-		$mockFilter->setSeq(5);
-		self::assertEquals(5, $mockFilter->getSeq());
+		$mockFilter->setSequence(5);
+		self::assertEquals(5, $mockFilter->getSequence());
 
 		// Test errors
 		$mockFilter->addError('some error message');
@@ -46,7 +47,7 @@ class FilterTest extends PKPTestCase {
 		self::assertEquals(array(), $mockFilter->getErrors());
 
 		// Test type validation.
-		$typeDescriptionFactory =& TypeDescriptionFactory::getInstance();
+		$typeDescriptionFactory = TypeDescriptionFactory::getInstance();
 		$inputTypeDescription = 'class::lib.pkp.tests.classes.filter.TestClass1';
 		$outputTypeDescription = 'class::lib.pkp.tests.classes.filter.TestClass2';
 		self::assertEquals($inputTypeDescription, $mockFilter->getInputType()->getTypeDescription());

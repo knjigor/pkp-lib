@@ -5,7 +5,8 @@
 /**
  * @file js/lib/jquery/plugins/jquery.pkp.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @ingroup js_lib_jquery_plugins
@@ -13,7 +14,6 @@
  * @brief PKP jQuery extensions.
  */
 
-/** @param {jQuery} $ jQuery closure. */
 (function($) {
 
 
@@ -24,7 +24,7 @@
 	 *  and attached to the target HTML element(s).
 	 * @param {Object=} options Parameters to be passed on
 	 *  to the handler.
-	 * @return {jQuery} Selected HTML elements for chaining.
+	 * @return {jQueryObject} Selected HTML elements for chaining.
 	 */
 	$.fn.pkpHandler = function(handlerName, options) {
 		// Go through all selected elements.
@@ -48,8 +48,8 @@
 	 * with a remote source.
 	 * @param {string} url the AJAX endpoint from which to
 	 *  retrieve the HTML to be inserted.
-	 * @param {object} callback function to be called on ajax success.
-	 * @return {jQuery} Selected HTML elements for chaining.
+	 * @param {Object=} callback function to be called on ajax success.
+	 * @return {jQueryObject} Selected HTML elements for chaining.
 	 */
 	$.fn.pkpAjaxHtml = function(url, callback) {
 		var $element = this.first();
@@ -85,4 +85,5 @@
 	};
 
 
+/** @param {jQuery} $ jQuery closure. */
 })(jQuery);

@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/UserRolesRequiredPolicy.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class UserRolesRequiredPolicy
@@ -23,9 +24,9 @@ class UserRolesRequiredPolicy extends AuthorizationPolicy {
 	 *
 	 * @param $request PKPRequest
 	 */
-	function UserRolesRequiredPolicy(&$request) {
+	function UserRolesRequiredPolicy($request) {
 		parent::AuthorizationPolicy();
-		$this->_request =& $request;
+		$this->_request = $request;
 	}
 
 
@@ -36,26 +37,25 @@ class UserRolesRequiredPolicy extends AuthorizationPolicy {
 	 * @see AuthorizationPolicy::effect()
 	 */
 	function effect() {
-		$request =& $this->_request;
-		$user =& $request->getUser();
+		$request = $this->_request;
+		$user = $request->getUser();
 
 		if (!is_a($user, 'User')) {
 			return AUTHORIZATION_DENY;
 		}
 
 		// Get all user roles.
-		$roleDao =& DAORegistry::getDAO('RoleDAO');
+		$roleDao = DAORegistry::getDAO('RoleDAO');
 		$userRoles = $roleDao->getByUserIdGroupedByContext($user->getId());
 
 		// Prepare an array with the context ids of the request.
-		$application =& PKPApplication::getApplication();
+		$application = PKPApplication::getApplication();
 		$contextDepth = $application->getContextDepth();
-		$router =& $request->getRouter();
+		$router = $request->getRouter();
 		$roleContext = array();
 		for ($contextLevel = 1; $contextLevel <= $contextDepth; $contextLevel++) {
-			$context =& $router->getContext($request, $contextLevel);
+			$context = $router->getContext($request, $contextLevel);
 			$roleContext[] = $context?$context->getId():CONTEXT_ID_NONE;
-			unset($context);
 		}
 
 		$contextRoles = $this->_getContextRoles($roleContext, $contextDepth, $userRoles);
@@ -74,7 +74,7 @@ class UserRolesRequiredPolicy extends AuthorizationPolicy {
 	function _getContextRoles($roleContext, $contextDepth, $userRoles) {
 		// Adapt the role context based on the passed role id.
 		$workingRoleContext = $roleContext;
-		$roleDao =& DAORegistry::getDAO('RoleDAO');
+		$roleDao = DAORegistry::getDAO('RoleDAO');
 		$contextRoles = array();
 
 		// Check if user has site level or manager roles.
@@ -86,9 +86,9 @@ class UserRolesRequiredPolicy extends AuthorizationPolicy {
 			}
 			if ($contextDepth == 2 &&
 				array_key_exists(CONTEXT_ID_NONE, $userRoles[$workingRoleContext[0]]) &&
-				array_key_exists($roleDao->getRoleIdFromPath('manager'), $userRoles[$workingRoleContext[0]][CONTEXT_ID_NONE])) {
+				array_key_exists(ROLE_ID_MANAGER, $userRoles[$workingRoleContext[0]][CONTEXT_ID_NONE])) {
 				// This is a main context managerial role (i.e. conference-level).
-				$contextRoles[] = $roleDao->getRoleIdFromPath('manager');
+				$contextRoles[] = ROLE_ID_MANAGER;
 			}
 		} else {
 			// Application has no context.
@@ -123,7 +123,6 @@ class UserRolesRequiredPolicy extends AuthorizationPolicy {
 	function _prepareContextRolesArray($userRoles, $contextRoles = array()) {
 		foreach ($userRoles as $role) {
 			$contextRoles[] = $role->getRoleId();
-			unset($role);
 		}
 		return $contextRoles;
 	}

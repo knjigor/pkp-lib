@@ -3,7 +3,8 @@
 /**
  * @file classes/payment/PaymentManager.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PaymentManager
@@ -15,15 +16,15 @@
  */
 
 class PaymentManager {
-	/** @var $request PKPRequest */
+	/** @var PKPRequest */
 	var $request;
 
 	/**
 	 * Constructor
 	 * @param $request PKPRequest
 	 */
-	function PaymentManager(&$request) {
-		$this->request =& $request;
+	function PaymentManager($request) {
+		$this->request = $request;
 	}
 
 	/**
@@ -32,11 +33,11 @@ class PaymentManager {
 	 * @param $expiryDate date optional
 	 * @return mixed Queued payment ID for new payment, or false if fails
 	 */
-	function queuePayment(&$queuedPayment, $expiryDate = null) {
+	function queuePayment($queuedPayment, $expiryDate = null) {
 		if (!$this->isConfigured()) return false;
 
-		$queuedPaymentDao =& DAORegistry::getDAO('QueuedPaymentDAO');
-		$queuedPaymentId = $queuedPaymentDao->insertQueuedPayment($queuedPayment, $expiryDate);
+		$queuedPaymentDao = DAORegistry::getDAO('QueuedPaymentDAO');
+		$queuedPaymentId = $queuedPaymentDao->insertObject($queuedPayment, $expiryDate);
 
 		// Perform periodic cleanup
 		if (time() % 100 == 0) $queuedPaymentDao->deleteExpiredQueuedPayments();
@@ -91,17 +92,18 @@ class PaymentManager {
 	 * @return QueuedPayment
 	 */
 	function &getQueuedPayment($queuedPaymentId) {
-		$queuedPaymentDao =& DAORegistry::getDAO('QueuedPaymentDAO');
+		$queuedPaymentDao = DAORegistry::getDAO('QueuedPaymentDAO');
 		$queuedPayment =& $queuedPaymentDao->getQueuedPayment($queuedPaymentId);
 		return $queuedPayment;
 	}
 
 	/**
 	 * Fulfill a queued payment
+	 * @param $request PKPRequest
 	 * @param $queuedPayment QueuedPayment
 	 * @return boolean success/failure
 	 */
-	function fulfillQueuedPayment(&$queuedPayment) {
+	function fulfillQueuedPayment($request, &$queuedPayment) {
 		// must be implemented by sub-classes
 		assert(false);
 	}

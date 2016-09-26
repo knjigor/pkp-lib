@@ -3,7 +3,8 @@
 /**
  * @file tests/DatabaseTestCase.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DatabaseTestCase
@@ -31,20 +32,40 @@ abstract class DatabaseTestCase extends PKPTestCase {
 	}
 
 	/**
-	 * @see PHPUnit_Framework_TestCase::setUp()
+	 * @copydoc PHPUnit_Framework_TestCase::setUp()
 	 */
 	protected function setUp() {
+		// Switch off xdebug screaming (there are
+		// errors in adodb...).
+		PKPTestHelper::xdebugScream(false);
+
+		// Make sure we have a db connection (some tests
+		// might close it and that affects the next ones).
+		DBConnection::getInstance()->reconnect();
+
 		// Backup affected tables.
-		PKPTestHelper::backupTables($this->getAffectedTables(), $this);
+		$affectedTables = $this->getAffectedTables();
+		if (is_array($affectedTables)) {
+			PKPTestHelper::backupTables($affectedTables, $this);
+		}
 		parent::setUp();
 	}
 
 	/**
-	 * @see PHPUnit_Framework_TestCase::tearDown()
+	 * @copydoc PHPUnit_Framework_TestCase::tearDown()
 	 */
 	protected function tearDown() {
 		parent::tearDown();
-		PKPTestHelper::restoreTables($this->getAffectedTables(), $this);
+
+		$affectedTables = $this->getAffectedTables();
+		if (is_array($affectedTables)) {
+			PKPTestHelper::restoreTables($this->getAffectedTables(), $this);
+		} elseif ($affectedTables === PKP_TEST_ENTIRE_DB) {
+			PKPTestHelper::restoreDB($this);
+		}
+
+		// Switch xdebug screaming back on.
+		PKPTestHelper::xdebugScream(true);
 	}
 }
 ?>

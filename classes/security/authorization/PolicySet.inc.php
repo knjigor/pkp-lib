@@ -2,7 +2,8 @@
 /**
  * @file classes/security/authorization/PolicySet.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PolicySet
@@ -50,7 +51,7 @@ class PolicySet {
 	 * @param $addToTop boolean whether to insert the new policy
 	 *  to the top of the list.
 	 */
-	function addPolicy(&$policyOrPolicySet, $addToTop = false) {
+	function addPolicy($policyOrPolicySet, $addToTop = false) {
 		assert(is_a($policyOrPolicySet, 'AuthorizationPolicy') || is_a($policyOrPolicySet, 'PolicySet'));
 		if ($addToTop) {
 			array_unshift($this->_policies, $policyOrPolicySet);

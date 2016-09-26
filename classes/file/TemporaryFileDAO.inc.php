@@ -3,7 +3,8 @@
 /**
  * @file classes/file/TemporaryFileDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TemporaryFileDAO
@@ -31,7 +32,7 @@ class TemporaryFileDAO extends DAO {
 	 * @return TemporaryFile
 	 */
 	function &getTemporaryFile($fileId, $userId) {
-		$result =& $this->retrieveLimit(
+		$result = $this->retrieveLimit(
 			'SELECT t.* FROM temporary_files t WHERE t.file_id = ? and t.user_id = ?',
 			array((int) $fileId, (int) $userId),
 			1
@@ -43,8 +44,6 @@ class TemporaryFileDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -61,10 +60,10 @@ class TemporaryFileDAO extends DAO {
 	 * @param $row array
 	 * @return TemporaryFile
 	 */
-	function &_returnTemporaryFileFromRow(&$row) {
+	function _returnTemporaryFileFromRow($row) {
 		$temporaryFile = $this->newDataObject();
 		$temporaryFile->setId($row['file_id']);
-		$temporaryFile->setFileName($row['file_name']);
+		$temporaryFile->setServerFileName($row['file_name']);
 		$temporaryFile->setFileType($row['file_type']);
 		$temporaryFile->setFileSize($row['file_size']);
 		$temporaryFile->setUserId($row['user_id']);
@@ -81,7 +80,7 @@ class TemporaryFileDAO extends DAO {
 	 * @param $temporaryFile TemporaryFile
 	 * @return int
 	 */
-	function insertTemporaryFile(&$temporaryFile) {
+	function insertObject($temporaryFile) {
 		$this->update(
 			sprintf('INSERT INTO temporary_files
 				(user_id, file_name, file_type, file_size, original_file_name, date_uploaded)
@@ -90,14 +89,14 @@ class TemporaryFileDAO extends DAO {
 				$this->datetimeToDB($temporaryFile->getDateUploaded())),
 			array(
 				(int) $temporaryFile->getUserId(),
-				$temporaryFile->getFileName(),
+				$temporaryFile->getServerFileName(),
 				$temporaryFile->getFileType(),
 				(int) $temporaryFile->getFileSize(),
 				$temporaryFile->getOriginalFileName()
 			)
 		);
 
-		$temporaryFile->setId($this->getInsertTemporaryFileId());
+		$temporaryFile->setId($this->getInsertId());
 		return $temporaryFile->getId();
 	}
 
@@ -105,7 +104,7 @@ class TemporaryFileDAO extends DAO {
 	 * Update an existing temporary file.
 	 * @param $temporary TemporaryFile
 	 */
-	function updateObject(&$temporaryFile) {
+	function updateObject($temporaryFile) {
 		$this->update(
 			sprintf('UPDATE temporary_files
 				SET
@@ -118,7 +117,7 @@ class TemporaryFileDAO extends DAO {
 				WHERE file_id = ?',
 				$this->datetimeToDB($temporaryFile->getDateUploaded())),
 			array(
-				$temporaryFile->getFileName(),
+				$temporaryFile->getServerFileName(),
 				$temporaryFile->getFileType(),
 				(int) $temporaryFile->getFileSize(),
 				(int) $temporaryFile->getUserId(),
@@ -128,11 +127,6 @@ class TemporaryFileDAO extends DAO {
 		);
 
 		return $temporaryFile->getId();
-	}
-
-	function updateTemporaryFile(&$temporaryFile) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->updateObject($temporaryFile);
 	}
 
 	/**
@@ -151,10 +145,10 @@ class TemporaryFileDAO extends DAO {
 	 * Delete temporary files by user ID.
 	 * @param $userId int
 	 */
-	function deleteTemporaryFilesByUserId($userId) {
+	function deleteByUserId($userId) {
 		return $this->update(
 			'DELETE FROM temporary_files WHERE user_id = ?',
-			array((int) $userId)
+			(int) $userId
 		);
 	}
 
@@ -164,7 +158,7 @@ class TemporaryFileDAO extends DAO {
 
 		$temporaryFiles = array();
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM temporary_files WHERE date_uploaded < ' . $this->datetimeToDB($expiryThresholdTimestamp)
 		);
 
@@ -174,8 +168,6 @@ class TemporaryFileDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $temporaryFiles;
 	}
 
@@ -183,8 +175,8 @@ class TemporaryFileDAO extends DAO {
 	 * Get the ID of the last inserted temporary file.
 	 * @return int
 	 */
-	function getInsertTemporaryFileId() {
-		return $this->getInsertId('temporary_files', 'file_id');
+	function getInsertId() {
+		return $this->_getInsertId('temporary_files', 'file_id');
 	}
 }
 

@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file classes/user/InterestsEntryDAO.inc.php
+ * @file classes/user/InterestEntryDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class InterestsEntryDAO
@@ -45,17 +46,30 @@ class InterestEntryDAO extends ControlledVocabEntryDAO {
 	 * Retrieve an iterator of controlled vocabulary entries matching a
 	 * particular controlled vocabulary ID.
 	 * @param $controlledVocabId int
+	 * @param $rangeInfo RangeInfo optional range information for result
+	 * @param $filter string Optional filter to match to beginnings of results
 	 * @return object DAOResultFactory containing matching CVE objects
 	 */
-	function getByControlledVocabId($controlledVocabId, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
-			'SELECT cve.* FROM controlled_vocab_entries cve, user_interests ui WHERE cve.controlled_vocab_id = ? AND ui.controlled_vocab_entry_id = cve.controlled_vocab_entry_id ORDER BY seq',
-			array((int) $controlledVocabId),
+	function getByControlledVocabId($controlledVocabId, $rangeInfo = null, $filter = null) {
+		$params = array((int) $controlledVocabId);
+		if ($filter) {
+			$params[] = 'interest';
+			$params[] = $filter . '%';
+		}
+
+		$result = $this->retrieveRange(
+			'SELECT	cve.*
+			FROM	controlled_vocab_entries cve
+				JOIN user_interests ui ON (cve.controlled_vocab_entry_id = ui.controlled_vocab_entry_id)
+				' . ($filter?'JOIN controlled_vocab_entry_settings cves ON (cves.controlled_vocab_entry_id = cve.controlled_vocab_entry_id)':'') . '
+			WHERE cve.controlled_vocab_id = ?
+			' . ($filter?'AND cves.setting_name=? AND cves.setting_value LIKE ?':'') . '
+			GROUP BY cves.controlled_vocab_entry_id ORDER BY seq',
+			$params,
 			$rangeInfo
 		);
 
-		$returner = new DAOResultFactory($result, $this, '_fromRow');
-		return $returner;
+		return new DAOResultFactory($result, $this, '_fromRow');
 	}
 }
 

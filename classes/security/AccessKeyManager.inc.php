@@ -3,7 +3,8 @@
 /**
  * @file classes/security/AccessKeyManager.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AccessKeyManager
@@ -22,7 +23,7 @@ class AccessKeyManager {
 	 * Create a manager for access keys.
 	 */
 	function AccessKeyManager() {
-		$this->accessKeyDao =& DAORegistry::getDAO('AccessKeyDAO');
+		$this->accessKeyDao = DAORegistry::getDAO('AccessKeyDAO');
 		$this->_performPeriodicCleanup();
 	}
 
@@ -40,12 +41,13 @@ class AccessKeyManager {
 	 * If $assocId is specified, it must match the associated ID of the
 	 * key exactly.
 	 * @param $context string The context of the access key
-	 * @param $key string The access key "passcode"
+	 * @param $userId int
+	 * @param $keyHash string The access key "passcode"
 	 * @param $assocId string optional assoc ID to check against the keys in the database
+	 * @return AccessKey
 	 */
-	function &validateKey($context, $userId, $keyHash, $assocId = null) {
-		$accessKey =& $this->accessKeyDao->getAccessKeyByKeyHash($context, $userId, $keyHash, $assocId);
-		return $accessKey;
+	function validateKey($context, $userId, $keyHash, $assocId = null) {
+		return $this->accessKeyDao->getAccessKeyByKeyHash($context, $userId, $keyHash, $assocId);
 	}
 
 	/**
@@ -66,7 +68,7 @@ class AccessKeyManager {
 		$key = Validation::generatePassword();
 		$accessKey->setKeyHash($this->generateKeyHash($key));
 
-		$this->accessKeyDao->insertAccessKey($accessKey);
+		$this->accessKeyDao->insertObject($accessKey);
 
 		return $key;
 	}
@@ -76,7 +78,7 @@ class AccessKeyManager {
 	 */
 	function _performPeriodicCleanup() {
 		if (time() % 100 == 0) {
-			$accessKeyDao =& DAORegistry::getDAO('AccessKeyDAO');
+			$accessKeyDao = DAORegistry::getDAO('AccessKeyDAO');
 			$accessKeyDao->deleteExpiredKeys();
 		}
 	}

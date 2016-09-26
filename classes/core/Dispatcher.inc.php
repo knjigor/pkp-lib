@@ -3,7 +3,8 @@
 /**
  * @file classes/core/Dispatcher.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Dispatcher
@@ -26,6 +27,9 @@ class Dispatcher {
 	/** @var PKPRouter */
 	var $_router;
 
+	/** @var PKPRequest Used for a callback hack - NOT GENERALLY SET. */
+	var $_requestCallbackHack;
+
 	/**
 	 * Get the application
 	 * @return PKPApplication
@@ -38,8 +42,8 @@ class Dispatcher {
 	 * Set the application
 	 * @param $application PKPApplication
 	 */
-	function setApplication(&$application) {
-		$this->_application =& $application;
+	function setApplication($application) {
+		$this->_application = $application;
 	}
 
 	/**
@@ -81,7 +85,7 @@ class Dispatcher {
 	 * handler method.
 	 * @param $request PKPRequest
 	 */
-	function dispatch(&$request) {
+	function dispatch($request) {
 		// Make sure that we have at least one router configured
 		$routerNames = $this->getRouterNames();
 		assert(count($routerNames) > 0);
@@ -111,9 +115,10 @@ class Dispatcher {
 
 		// Can we serve a cached response?
 		if ($router->isCacheable($request)) {
+			$this->_requestCallbackHack =& $request;
 			if (Config::getVar('cache', 'web_cache')) {
 				if ($this->_displayCached($router, $request)) exit(); // Success
-				ob_start(array(&$this, '_cacheContent'));
+				ob_start(array($this, '_cacheContent'));
 			}
 		} else {
 			if (isset($_SERVER['HTTP_X_MOZ']) && $_SERVER['HTTP_X_MOZ'] == 'prefetch') {
@@ -123,7 +128,7 @@ class Dispatcher {
 			}
 		}
 
-		AppLocale::initialize();
+		AppLocale::initialize($request);
 		PluginRegistry::loadCategory('generic', true);
 
 		$router->route($request);
@@ -142,7 +147,7 @@ class Dispatcher {
 	 * @param $escape boolean Whether or not to escape ampersands for this URL; default false.
 	 * @return string the URL
 	 */
-	function url(&$request, $shortcut, $newContext = null, $handler = null, $op = null, $path = null,
+	function url($request, $shortcut, $newContext = null, $handler = null, $op = null, $path = null,
 				$params = null, $anchor = null, $escape = false) {
 		// Instantiate the requested router
 		assert(isset($this->_routerNames[$shortcut]));
@@ -189,7 +194,7 @@ class Dispatcher {
 	 * Display the request contents from cache.
 	 * @param $router PKPRouter
 	 */
-	function _displayCached(&$router, &$request) {
+	function _displayCached($router, $request) {
 		$filename = $router->getCacheFilename($request);
 		if (!file_exists($filename)) return false;
 
@@ -223,8 +228,8 @@ class Dispatcher {
 	 */
 	function _cacheContent($contents) {
 		assert(is_a($this->_router, 'PKPRouter'));
-		// FIXME: #6807 getCacheFilename expects a $request variable.
-		$filename = $this->_router->getCacheFilename();
+		if ($contents == '') return $contents; // Do not cache empties
+		$filename = $this->_router->getCacheFilename($this->_requestCallbackHack);
 		$fp = fopen($filename, 'w');
 		if ($fp) {
 			fwrite($fp, mktime() . ':' . $contents);

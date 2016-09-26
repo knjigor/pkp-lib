@@ -2,7 +2,8 @@
 /**
  * @file classes/filter/FilterHelper.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterHelper
@@ -13,14 +14,16 @@
 
 class FilterHelper {
 	/**
+	 * @verbatim
 	 * Helper method that installs filter groups based on
 	 * the given XML node which represents a <filterGroups>
 	 * element.
+	 * @endverbatim
 	 * @param $filterGroupsNode XMLNode
 	 */
 	function installFilterGroups($filterGroupsNode) {
 		// Install filter groups.
-		$filterGroupDao =& DAORegistry::getDAO('FilterGroupDAO'); /* @var $filterGroupDao FilterGroupDAO */
+		$filterGroupDao = DAORegistry::getDAO('FilterGroupDAO'); /* @var $filterGroupDao FilterGroupDAO */
 		import('lib.pkp.classes.filter.FilterGroup');
 
 		foreach ($filterGroupsNode->getChildren() as $filterGroupNode) { /* @var $filterGroupNode XMLNode */
@@ -48,16 +51,18 @@ class FilterHelper {
 	}
 
 	/**
+	 * @verbatim
 	 * Helper method that configures and optionally
 	 * installs a filter based on the given XML node
 	 * which represents a <filter> element.
+	 * @endverbatim
 	 * @param $filterNode XMLNode
 	 * @param $persist boolean whether to install the filter
 	 * @return PersistableFilter the installed filter.
 	 */
 	function &configureFilter($filterNode, $persist = true) {
 		// Install filters.
-		$filterDao =& DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
+		$filterDao = DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
 
 		$filterGroupSymbolic = $filterNode->getAttribute('inGroup');
 		$filterClassName = $filterNode->getAttribute('class');
@@ -66,7 +71,7 @@ class FilterHelper {
 		// We have to include the filter class before going on
 		// so that all required constants are defined before they
 		// might be used in settings.
-		if (String::regexp_match('/^[a-zA-Z0-9.]+$/', $filterClassName)) {
+		if (PKPString::regexp_match('/^[a-zA-Z0-9.]+$/', $filterClassName)) {
 			import($filterClassName);
 		}
 
@@ -119,7 +124,7 @@ class FilterHelper {
 		}
 
 		// Configure (and optionally install) the filter.
-		$installedFilter =& $filterDao->configureObject($filterClassName, $filterGroupSymbolic, $settings, $isTemplate, 0, $subFilters, $persist);
+		$installedFilter = $filterDao->configureObject($filterClassName, $filterGroupSymbolic, $settings, $isTemplate, 0, $subFilters, $persist);
 		assert(is_a($installedFilter, 'PersistableFilter'));
 
 		return $installedFilter;
@@ -146,7 +151,7 @@ class FilterHelper {
 		if (is_a($filterA, 'CompositeFilter')) {
 			// Compare sub-filters of composite filters.
 			foreach($filterBSubfilters as $filterBSubfilter) { /* @var $filterBSubfilter PersistableFilter */
-				$seq = $filterBSubfilter->getSeq();
+				$seq = $filterBSubfilter->getSequence();
 				$filterASubfilter =& $filterA->getFilter($seq);
 				if (get_class($filterASubfilter) != get_class($filterBSubfilter)) {
 					return false;
@@ -176,8 +181,10 @@ class FilterHelper {
 	}
 
 	/**
+	 * @verbatim
 	 * Helper method that extracts filter settings
 	 * from the children of a <filter> element.
+	 * @endverbatim
 	 * @param $settingNode XMLNode
 	 * @return $setting array a key-value pair.
 	 */

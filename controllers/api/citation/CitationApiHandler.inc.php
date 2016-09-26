@@ -1,16 +1,17 @@
 <?php
 /**
- * @defgroup controllers_api_citation
+ * @defgroup controllers_api_citation Citation API controller
  */
 
 /**
- * @file controllers/api/user/CitationApiHandler.inc.php
+ * @file controllers/api/citation/CitationApiHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CitationApiHandler
- * @ingroup controllers_api_user
+ * @ingroup controllers_api_citation
  *
  * @brief Class defining the headless API for backend citation manipulation.
  */
@@ -31,9 +32,9 @@ class CitationApiHandler extends PKPHandler {
 	// Implement template methods from PKPHandler
 	//
 	/**
-	 * @see PKPHandler::authorize()
+	 * @copydoc PKPHandler::authorize()
 	 */
-	function authorize(&$request, $args, $roleAssignments) {
+	function authorize($request, &$args, $roleAssignments) {
 		import('lib.pkp.classes.security.authorization.PKPProcessAccessPolicy');
 		$this->addPolicy(new PKPProcessAccessPolicy($request, $args, 'checkAllCitations'));
 		return parent::authorize($request, $args, $roleAssignments);
@@ -57,7 +58,7 @@ class CitationApiHandler extends PKPHandler {
 	 * @param $args array
 	 * @param $request PKPRequest
 	 */
-	function checkAllCitations($args, &$request) {
+	function checkAllCitations($args, $request) {
 		// This is potentially a long running request. So
 		// give us unlimited execution time.
 		ini_set('max_execution_time', 0);
@@ -66,8 +67,8 @@ class CitationApiHandler extends PKPHandler {
 		$processId = $args['authToken'];
 
 		// Run until all citations have been checked.
-		$processDao =& DAORegistry::getDAO('ProcessDAO');
-		$citationDao =& DAORegistry::getDAO('CitationDAO');
+		$processDao = DAORegistry::getDAO('ProcessDAO');
+		$citationDao = DAORegistry::getDAO('CitationDAO');
 		do {
 			// Check that the process lease has not expired.
 			$continue = $processDao->canContinue($processId);

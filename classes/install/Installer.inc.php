@@ -3,7 +3,8 @@
 /**
  * @file classes/install/Installer.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Installer
@@ -98,7 +99,7 @@ class Installer {
 
 		// Give the HookRegistry the opportunity to override this
 		// method or alter its parameters.
-		if (!HookRegistry::call('Installer::Installer', array(&$this, &$descriptor, &$params))) {
+		if (!HookRegistry::call('Installer::Installer', array($this, &$descriptor, &$params))) {
 			$this->descriptor = $descriptor;
 			$this->params = $params;
 			$this->actions = array();
@@ -119,11 +120,7 @@ class Installer {
 	 * Destroy / clean-up after the installer.
 	 */
 	function destroy() {
-		if (isset($this->dataXMLParser)) {
-			$this->dataXMLParser->destroy();
-		}
-
-		HookRegistry::call('Installer::destroy', array(&$this));
+		HookRegistry::call('Installer::destroy', array($this));
 	}
 
 	/**
@@ -134,8 +131,8 @@ class Installer {
 		$this->log('pre-install');
 		if (!isset($this->dbconn)) {
 			// Connect to the database.
-			$conn =& DBConnection::getInstance();
-			$this->dbconn =& $conn->getDBConn();
+			$conn = DBConnection::getInstance();
+			$this->dbconn = $conn->getDBConn();
 
 			if (!$conn->isConnected()) {
 				$this->setError(INSTALLER_ERROR_DB, $this->dbconn->errorMsg());
@@ -145,8 +142,8 @@ class Installer {
 
 		if (!isset($this->currentVersion)) {
 			// Retrieve the currently installed version
-			$versionDao =& DAORegistry::getDAO('VersionDAO');
-			$this->currentVersion =& $versionDao->getCurrentVersion();
+			$versionDao = DAORegistry::getDAO('VersionDAO');
+			$this->currentVersion = $versionDao->getCurrentVersion();
 		}
 
 		if (!isset($this->locale)) {
@@ -163,7 +160,7 @@ class Installer {
 		}
 
 		$result = true;
-		HookRegistry::call('Installer::preInstall', array(&$this, &$result));
+		HookRegistry::call('Installer::preInstall', array($this, &$result));
 
 		return $result;
 	}
@@ -204,14 +201,14 @@ class Installer {
 	function postInstall() {
 		$this->log('post-install');
 		$result = true;
-		HookRegistry::call('Installer::postInstall', array(&$this, &$result));
+		HookRegistry::call('Installer::postInstall', array($this, &$result));
 		return $result;
 	}
 
 
 	/**
 	 * Record message to installation log.
-	 * @var $message string
+	 * @param $message string
 	 */
 	function log($message) {
 		if (isset($this->logger)) {
@@ -243,7 +240,7 @@ class Installer {
 
 		$versionString = $installTree->getAttribute('version');
 		if (isset($versionString)) {
-			$this->newVersion =& Version::fromString($versionString);
+			$this->newVersion = Version::fromString($versionString);
 		} else {
 			$this->newVersion = $this->currentVersion;
 		}
@@ -254,7 +251,7 @@ class Installer {
 
 		$result = $this->getErrorType() == 0;
 
-		HookRegistry::call('Installer::parseInstaller', array(&$this, &$result));
+		HookRegistry::call('Installer::parseInstaller', array($this, &$result));
 		return $result;
 	}
 
@@ -263,7 +260,7 @@ class Installer {
 	 * @return boolean
 	 */
 	function executeInstaller() {
-		$this->log(sprintf('version: %s', $this->newVersion->getVersionString()));
+		$this->log(sprintf('version: %s', $this->newVersion->getVersionString(false)));
 		foreach ($this->actions as $action) {
 			if (!$this->executeAction($action)) {
 				return false;
@@ -271,7 +268,7 @@ class Installer {
 		}
 
 		$result = true;
-		HookRegistry::call('Installer::executeInstaller', array(&$this, &$result));
+		HookRegistry::call('Installer::executeInstaller', array($this, &$result));
 
 		return $result;
 	}
@@ -282,14 +279,14 @@ class Installer {
 	 */
 	function updateVersion() {
 		if ($this->newVersion->compare($this->currentVersion) > 0) {
-			$versionDao =& DAORegistry::getDAO('VersionDAO');
+			$versionDao = DAORegistry::getDAO('VersionDAO');
 			if (!$versionDao->insertVersion($this->newVersion)) {
 				return false;
 			}
 		}
 
 		$result = true;
-		HookRegistry::call('Installer::updateVersion', array(&$this, &$result));
+		HookRegistry::call('Installer::updateVersion', array($this, &$result));
 
 		return $result;
 	}
@@ -303,7 +300,7 @@ class Installer {
 	 * Parse children nodes in the install descriptor.
 	 * @param $installTree XMLNode
 	 */
-	function parseInstallNodes(&$installTree) {
+	function parseInstallNodes($installTree) {
 		foreach ($installTree->getChildren() as $node) {
 			switch ($node->getName()) {
 				case 'schema':
@@ -327,7 +324,7 @@ class Installer {
 	 * Add an installer action from the descriptor.
 	 * @param $node XMLNode
 	 */
-	function addInstallAction(&$node) {
+	function addInstallAction($node) {
 		$fileName = $node->getAttribute('file');
 
 		if (!isset($fileName)) {
@@ -369,7 +366,7 @@ class Installer {
 
 				require_once './lib/pkp/lib/adodb/adodb-xmlschema.inc.php';
 				$schemaXMLParser = new adoSchema($this->dbconn);
-				$dict =& $schemaXMLParser->dict;
+				$dict = $schemaXMLParser->dict;
 				$dict->SetCharSet($this->dbconn->charSet);
 				$sql = $schemaXMLParser->parseSchema($fileName);
 				$schemaXMLParser->destroy();
@@ -400,14 +397,22 @@ class Installer {
 				}
 				break;
 			case 'code':
-				$this->log(sprintf('code: %s %s::%s', isset($action['file']) ? $action['file'] : 'Installer', isset($action['attr']['class']) ? $action['attr']['class'] : 'Installer', $action['attr']['function']));
+				$condition = isset($action['attr']['condition'])?$action['attr']['condition']:null;
+				$includeAction = true;
+				if ($condition) {
+					$funcName = create_function('$installer,$action', $condition);
+					$includeAction = $funcName($this, $action);
+				}
+				$this->log(sprintf('code: %s %s::%s' . ($includeAction?'':' (skipped)'), isset($action['file']) ? $action['file'] : 'Installer', isset($action['attr']['class']) ? $action['attr']['class'] : 'Installer', $action['attr']['function']));
+				if (!$includeAction) return true; // Condition not met; skip the action.
+
 				if (isset($action['file'])) {
 					require_once($action['file']);
 				}
 				if (isset($action['attr']['class'])) {
 					return call_user_func(array($action['attr']['class'], $action['attr']['function']), $this, $action['attr']);
 				} else {
-					return call_user_func(array(&$this, $action['attr']['function']), $this, $action['attr']);
+					return call_user_func(array($this, $action['attr']['function']), $this, $action['attr']);
 				}
 				break;
 			case 'note':
@@ -421,7 +426,7 @@ class Installer {
 
 	/**
 	 * Execute an SQL statement.
-	 * @var $sql mixed
+	 * @param $sql mixed
 	 * @return boolean
 	 */
 	function executeSQL($sql) {
@@ -482,7 +487,7 @@ class Installer {
 	 * Return currently installed version.
 	 * @return Version
 	 */
-	function &getCurrentVersion() {
+	function getCurrentVersion() {
 		return $this->currentVersion;
 	}
 
@@ -490,7 +495,7 @@ class Installer {
 	 * Return new version after installation.
 	 * @return Version
 	 */
-	function &getNewVersion() {
+	function getNewVersion() {
 		return $this->newVersion;
 	}
 
@@ -564,7 +569,7 @@ class Installer {
 	/**
 	 * Set the error type and messgae.
 	 * @param $type int
-	 * @param $msg string
+	 * @param $msg string Text message (INSTALLER_ERROR_DB) or locale key (otherwise)
 	 */
 	function setError($type, $msg) {
 		$this->errorType = $type;
@@ -573,9 +578,9 @@ class Installer {
 
 	/**
 	 * Set the logger for this installer.
-	 * @var $logger Logger
+	 * @param $logger Logger
 	 */
-	function setLogger(&$logger) {
+	function setLogger($logger) {
 		$this->logger = $logger;
 	}
 
@@ -585,7 +590,7 @@ class Installer {
 	 * @return boolean
 	 */
 	function clearDataCache() {
-		$cacheManager =& CacheManager::getManager();
+		$cacheManager = CacheManager::getManager();
 		$cacheManager->flush(null, CACHE_TYPE_FILE);
 		$cacheManager->flush(null, CACHE_TYPE_OBJECT);
 		return true;
@@ -593,9 +598,9 @@ class Installer {
 
 	/**
 	 * Set the current version for this installer.
-	 * @var $version Version
+	 * @param $version Version
 	 */
-	function setCurrentVersion(&$version) {
+	function setCurrentVersion($version) {
 		$this->currentVersion = $version;
 	}
 
@@ -607,7 +612,7 @@ class Installer {
 	 * 		'locales' => 'en_US,fr_CA,...'
 	 */
 	function installEmailTemplate($installer, $attr) {
-		$emailTemplateDao =& DAORegistry::getDAO('EmailTemplateDAO');
+		$emailTemplateDao = DAORegistry::getDAO('EmailTemplateDAO');
 		$emailTemplateDao->installEmailTemplates($emailTemplateDao->getMainEmailTemplatesFilename(), false, $attr['key']);
 		foreach (explode(',', $attr['locales']) as $locale) {
 			$emailTemplateDao->installEmailTemplateData($emailTemplateDao->getMainEmailTemplateDataFilename($locale), false, $attr['key']);
@@ -625,7 +630,7 @@ class Installer {
 
 		// Parse the filter configuration.
 		$xmlParser = new XMLParser();
-		$tree =& $xmlParser->parse($filterConfigFile);
+		$tree = $xmlParser->parse($filterConfigFile);
 
 		// Validate the filter configuration.
 		if (!$tree) {
@@ -640,13 +645,13 @@ class Installer {
 		}
 
 		// Are there any filter groups to be installed?
-		$filterGroupsNode =& $tree->getChildByName('filterGroups');
+		$filterGroupsNode = $tree->getChildByName('filterGroups');
 		if (is_a($filterGroupsNode, 'XMLNode')) {
 			$filterHelper->installFilterGroups($filterGroupsNode);
 		}
 
 		// Are there any filters to be installed?
-		$filtersNode =& $tree->getChildByName('filters');
+		$filtersNode = $tree->getChildByName('filters');
 		if (is_a($filtersNode, 'XMLNode')) {
 			foreach ($filtersNode->getChildren() as $filterNode) { /* @var $filterNode XMLNode */
 				$filterHelper->configureFilter($filterNode);
@@ -655,8 +660,6 @@ class Installer {
 
 		// Get rid of the parser.
 		$xmlParser->destroy();
-		unset($xmlParser);
-
 		return true;
 	}
 
@@ -668,8 +671,9 @@ class Installer {
 	 * @return boolean
 	 */
 	function columnExists($tableName, $columnName) {
-		$siteDao =& DAORegistry::getDAO('SiteDAO');
-		$dict = NewDataDictionary($siteDao->getDataSource());
+		$siteDao = DAORegistry::getDAO('SiteDAO');
+		$dataSource = $siteDao->getDataSource();
+		$dict = NewDataDictionary($dataSource);
 
 		// Make sure the table exists
 		$tables = $dict->MetaTables('TABLES', false);
@@ -691,8 +695,9 @@ class Installer {
 	 * @return boolean
 	 */
 	function tableExists($tableName) {
-		$siteDao =& DAORegistry::getDAO('SiteDAO');
-		$dict = NewDataDictionary($siteDao->getDataSource());
+		$siteDao = DAORegistry::getDAO('SiteDAO');
+		$dataSource = $siteDao->getDataSource();
+		$dict = NewDataDictionary($dataSource);
 
 		// Check whether the table exists.
 		$tables = $dict->MetaTables('TABLES', false);
@@ -705,7 +710,7 @@ class Installer {
 	 * @return boolean
 	 */
 	function addPluginVersions() {
-		$versionDao =& DAORegistry::getDAO('VersionDAO');
+		$versionDao = DAORegistry::getDAO('VersionDAO');
 		import('lib.pkp.classes.site.VersionCheck');
 		$fileManager = new FileManager();
 		$categories = PluginRegistry::getCategories();
@@ -717,7 +722,7 @@ class Installer {
 					$versionFile = $plugin->getPluginPath() . '/version.xml';
 
 					if ($fileManager->fileExists($versionFile)) {
-						$versionInfo =& VersionCheck::parseVersionXML($versionFile);
+						$versionInfo = VersionCheck::parseVersionXML($versionFile);
 						$pluginVersion = $versionInfo['version'];
 					} else {
 						$pluginVersion = new Version(
@@ -737,6 +742,17 @@ class Installer {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Fail the upgrade.
+	 * @param $installer Installer
+	 * @param $attr array Attributes
+	 * @return boolean
+	 */
+	function abort($installer, $attr) {
+		$installer->setError(INSTALLER_ERROR_GENERAL, $attr['message']);
+		return false;
 	}
 }
 

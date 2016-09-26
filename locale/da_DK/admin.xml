@@ -4,10 +4,11 @@
 <!--
   * locale/da_DK/admin.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the da_DK (Danish) locale.
+  * Localization strings for the da_DK (Dansk) locale.
   *
   -->
 
@@ -80,4 +81,7 @@
 	<message key="admin.version.updateAvailable">Der findes en opdateret version</message>
 	<message key="admin.version.upToDate">Systemet er opdateret</message>
 	<message key="admin.version">Version</message>
+	<message key="admin.settings">Indstillinger</message>
+	<message key="admin.settings.siteTheme">Website tema</message>
+	<message key="admin.siteSetup">Website opsætning</message>
 </locale>

@@ -3,7 +3,8 @@
 /**
  * @file classes/core/VirtualArrayIterator.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class VirtualArrayIterator
@@ -17,19 +18,19 @@
 import('lib.pkp.classes.core.ItemIterator');
 
 class VirtualArrayIterator extends ItemIterator {
-	/** @var $theArray array The array of contents of this iterator. */
+	/** @var array The array of contents of this iterator. */
 	var $theArray;
 
-	/** @var $itemsPerPage int Number of items to iterate through on this page */
+	/** @var int Number of items to iterate through on this page */
 	var $itemsPerPage;
 
-	/** @var $page int The current page. */
+	/** @var int The current page. */
 	var $page;
 
-	/** @var $count int The total number of items. */
+	/** @var int The total number of items. */
 	var $count;
 
-	/** @var $wasEmpty boolean Whether or not the iterator was empty from the start */
+	/** @var boolean Whether or not the iterator was empty from the start */
 	var $wasEmpty;
 
 	/**
@@ -54,6 +55,19 @@ class VirtualArrayIterator extends ItemIterator {
 	}
 
 	/**
+	 * Factory Method.
+	 * Extracts the appropriate page items from the whole array and
+	 * calls the constructor.
+	 * @param $wholeArray array The whole array of items
+	 * @param $rangeInfo int The number of items per page
+	 * @return object VirtualArrayIterator
+	 */
+	static function factory($wholeArray, $rangeInfo) {
+		if ($rangeInfo->isValid()) $slicedArray = array_slice($wholeArray, $rangeInfo->getCount() * ($rangeInfo->getPage()-1), $rangeInfo->getCount(), true);
+		return new VirtualArrayIterator($slicedArray, count($wholeArray), $rangeInfo->getPage(), $rangeInfo->getCount());
+	}
+
+	/**
 	 * Return the next item in the iterator.
 	 * @return object
 	 */
@@ -62,7 +76,7 @@ class VirtualArrayIterator extends ItemIterator {
 			$nullVar = null;
 			return $nullVar;
 		}
-		$value =& current($this->theArray);
+		$value = current($this->theArray);
 		if (next($this->theArray)==null) {
 			$this->theArray = null;
 		}
@@ -73,7 +87,7 @@ class VirtualArrayIterator extends ItemIterator {
 	 * Return the next item in the iterator, with key.
 	 * @return array (key, value)
 	 */
-	function &nextWithKey() {
+	function nextWithKey() {
 		$key = key($this->theArray);
 		$value = $this->next();
 		return array($key, $value);
@@ -152,6 +166,9 @@ class VirtualArrayIterator extends ItemIterator {
 	 * array_slice, but we can't assume everyone has that.
 	 * FIXME: Reconcile this against the dupe in ArrayItemIterator.
 	 * @see http://ca3.php.net/manual/en/function.array-slice.php
+	 * @param $array Array
+	 * @param $offset int
+	 * @param $len int
 	 */
 	function array_slice_key($array, $offset, $len=-1) {
 		if (!is_array($array)) return false;

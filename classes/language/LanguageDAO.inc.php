@@ -3,7 +3,8 @@
 /**
  * @file classes/language/LanguageDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class LanguageDAO
@@ -36,9 +37,9 @@ class LanguageDAO extends DAO {
 		$cache =& Registry::get('languageCache-'.$locale, true, null);
 		if ($cache === null) {
 			$cacheManager = CacheManager::getManager();
-			$cache =& $cacheManager->getFileCache(
+			$cache = $cacheManager->getFileCache(
 				'languages', $locale,
-				array(&$this, '_cacheMiss')
+				array($this, '_cacheMiss')
 			);
 			$cacheTime = $cache->getCacheTime();
 			if ($cacheTime !== null && $cacheTime < filemtime($this->getLanguageFilename($locale))) {
@@ -49,7 +50,7 @@ class LanguageDAO extends DAO {
 		return $cache;
 	}
 
-	function _cacheMiss(&$cache, $id) {
+	function _cacheMiss($cache, $id) {
 		$allLanguages =& Registry::get('allLanguages-'.$cache->cacheId, true, null);
 		if ($allLanguages === null) {
 			// Add a locale load to the debug notes.
@@ -100,10 +101,9 @@ class LanguageDAO extends DAO {
 	 * @param $locale string
 	 * @return Language
 	 */
-	function &getLanguageByCode($code, $locale = null) {
-		$cache =& $this->_getCache($locale);
-		$returner =& $this->_returnLanguageFromRow($code, $cache->get($code));
-		return $returner;
+	function getLanguageByCode($code, $locale = null) {
+		$cache = $this->_getCache($locale);
+		return $this->_returnLanguageFromRow($code, $cache->get($code));
 	}
 
 	/**
@@ -111,11 +111,11 @@ class LanguageDAO extends DAO {
 	 * @param $locale string an optional locale to use
 	 * @return array of Languages
 	 */
-	function &getLanguages($locale = null) {
-		$cache =& $this->_getCache($locale);
+	function getLanguages($locale = null) {
+		$cache = $this->_getCache($locale);
 		$returner = array();
 		foreach ($cache->getContents() as $code => $entry) {
-			$returner[] =& $this->_returnLanguageFromRow($code, $entry);
+			$returner[] = $this->_returnLanguageFromRow($code, $entry);
 		}
 		return $returner;
 	}
@@ -125,13 +125,13 @@ class LanguageDAO extends DAO {
 	 * @param $locale an optional locale to use
 	 * @return array of Languages names
 	 */
-	function &getLanguageNames($locale = null) {
-		$cache =& $this->_getCache($locale);
+	function getLanguageNames($locale = null) {
+		$cache = $this->_getCache($locale);
 		$returner = array();
-		$cacheContents =& $cache->getContents();
+		$cacheContents = $cache->getContents();
 		if (is_array($cacheContents)) {
-			foreach ($cache->getContents() as $code => $entry) {
-				$returner[] =& $entry[0];
+			foreach ($cache->getContents() as $entry) {
+				$returner[] = $entry[0];
 			}
 		}
 		return $returner;

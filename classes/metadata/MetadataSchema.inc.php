@@ -1,13 +1,17 @@
 <?php
 
 /**
- * @defgroup metadata
+ * @defgroup metadata Metadata
+ * Implements the metadata framework, which allows for the flexible description
+ * of objects in many schemas, and conversion of metadata from one schema to
+ * another.
  */
 
 /**
  * @file classes/metadata/MetadataSchema.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataSchema

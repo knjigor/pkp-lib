@@ -3,7 +3,8 @@
 /**
  * @file classes/cache/CacheManager.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @ingroup cache
@@ -12,7 +13,6 @@
  * @brief Provides cache management functions.
  *
  */
-
 
 import('lib.pkp.classes.cache.FileCache');
 
@@ -24,7 +24,7 @@ class CacheManager {
 	 * Get the static instance of the cache manager.
 	 * @return object CacheManager
 	 */
-	function &getManager() {
+	static function getManager() {
 		$manager =& Registry::get('cacheManager', true, null);
 		if ($manager === null) {
 			$manager = new CacheManager();
@@ -39,17 +39,15 @@ class CacheManager {
 	 * @param $fallback callback
 	 * @return object FileCache
 	 */
-	function &getFileCache($context, $cacheId, $fallback) {
-		$returner = new FileCache(
+	function getFileCache($context, $cacheId, $fallback) {
+		return new FileCache(
 			$context, $cacheId, $fallback,
 			$this->getFileCachePath()
 		);
-		return $returner;
 	}
 
-	function &getObjectCache($context, $cacheId, $fallback) {
-		$returner =& $this->getCache($context, $cacheId, $fallback, CACHE_TYPE_OBJECT);
-		return $returner;
+	function getObjectCache($context, $cacheId, $fallback) {
+		return $this->getCache($context, $cacheId, $fallback, CACHE_TYPE_OBJECT);
 	}
 
 	function getCacheImplementation($type) {
@@ -68,7 +66,7 @@ class CacheManager {
 	 * @param $type string Type of cache: CACHE_TYPE_...
 	 * @return object Cache
 	 */
-	function &getCache($context, $cacheId, $fallback, $type = CACHE_TYPE_FILE) {
+	function getCache($context, $cacheId, $fallback, $type = CACHE_TYPE_FILE) {
 		switch ($this->getCacheImplementation($type)) {
 			case 'xcache':
 				import('lib.pkp.classes.cache.XCacheCache');
@@ -92,7 +90,7 @@ class CacheManager {
 				break;
 			case '': // Provide a default if not specified
 			case 'file':
-				$cache =& $this->getFileCache($context, $cacheId, $fallback);
+				$cache = $this->getFileCache($context, $cacheId, $fallback);
 				break;
 			case 'none':
 				import('lib.pkp.classes.cache.GenericCache');
@@ -101,7 +99,7 @@ class CacheManager {
 				);
 				break;
 			default:
-				die ("Unknown cache type \"$cacheType\"!\n");
+				die ("Unknown cache type \"$type\"!\n");
 				break;
 		}
 		return $cache;
@@ -111,7 +109,7 @@ class CacheManager {
 	 * Get the path in which file caches will be stored.
 	 * @return string The full path to the file cache directory
 	 */
-	function getFileCachePath() {
+	static function getFileCachePath() {
 		return Core::getBaseDir() . DIRECTORY_SEPARATOR . 'cache';
 	}
 
@@ -127,14 +125,14 @@ class CacheManager {
 			case 'xcache':
 			case 'apc':
 			case 'memcache':
-				$junkCache =& $this->getCache($context, null, null);
+				$junkCache = $this->getCache($context, null, null);
 				$junkCache->flush();
 				break;
 			case 'file':
 				$filePath = $this->getFileCachePath();
 				$files = glob($filePath . DIRECTORY_SEPARATOR . 'fc-' . (isset($context)?$context . '-':'') . '*.php');
 				foreach ($files as $file) {
-					unlink ($file);
+					@unlink ($file);
 				}
 				break;
 			case '':

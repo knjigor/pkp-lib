@@ -3,7 +3,8 @@
 /**
  * @file classes/plugins/PluginRegistry.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PluginRegistry
@@ -26,7 +27,7 @@ class PluginRegistry {
 	 * arrays by category.
 	 * @param $category String the name of the category to retrieve
 	 */
-	function &getPlugins($category = null) {
+	static function &getPlugins($category = null) {
 		$plugins =& Registry::get('plugins');
 		if ($category !== null) return $plugins[$category];
 		return $plugins;
@@ -35,10 +36,10 @@ class PluginRegistry {
 	/**
 	 * Get all plugins in a single array.
 	 */
-	function &getAllPlugins() {
+	static function &getAllPlugins() {
 		$plugins =& PluginRegistry::getPlugins();
 		$allPlugins = array();
-		if (is_array($plugins)) foreach ($plugins as $category => $list) {
+		if (is_array($plugins)) foreach ($plugins as $list) {
 			if (is_array($list)) $allPlugins += $list;
 		}
 		return $allPlugins;
@@ -51,9 +52,7 @@ class PluginRegistry {
 	 * @param $path The path the plugin was found in
 	 * @return boolean True IFF the plugin was registered successfully
 	 */
-	function register($category, &$plugin, $path) {
-		// Normalize plugin name to lower case for
-		// PHP4 compatibility in case we use class names here.
+	static function register($category, &$plugin, $path) {
 		$pluginName = $plugin->getName();
 		$plugins =& PluginRegistry::getPlugins();
 		if (!$plugins) $plugins = array();
@@ -75,7 +74,7 @@ class PluginRegistry {
 	 * @param $category String category name
 	 * @param $name String plugin name
 	 */
-	function &getPlugin ($category, $name) {
+	static function &getPlugin($category, $name) {
 		$plugins =& PluginRegistry::getPlugins();
 		$plugin = @$plugins[$category][$name];
 		return $plugin;
@@ -93,14 +92,14 @@ class PluginRegistry {
 	 *  (e.g. when executing CLI commands). Then the main context
 	 *  can be given as an explicit ID.
 	 */
-	function &loadCategory ($category, $enabledOnly = false, $mainContextId = null) {
+	static function &loadCategory ($category, $enabledOnly = false, $mainContextId = null) {
 		$plugins = array();
 		$categoryDir = PLUGINS_PREFIX . $category;
 		if (!is_dir($categoryDir)) return $plugins;
 
 		if ($enabledOnly && Config::getVar('general', 'installed')) {
 			// Get enabled plug-ins from the database.
-			$application =& PKPApplication::getApplication();
+			$application = PKPApplication::getApplication();
 			$products =& $application->getEnabledProducts('plugins.'.$category, $mainContextId);
 			foreach ($products as $product) {
 				$file = $product->getProduct();
@@ -140,6 +139,11 @@ class PluginRegistry {
 
 		// Return the list of successfully-registered plugins.
 		$plugins =& PluginRegistry::getPlugins($category);
+
+		// Fire a hook after all plugins of a category have been loaded, so they
+		// are able to interact if required
+		HookRegistry::call('PluginRegistry::categoryLoaded::' . $category, array(&$plugins));
+
 		return $plugins;
 	}
 
@@ -151,7 +155,7 @@ class PluginRegistry {
 	 * @param $pathName string
 	 * @return object
 	 */
-	function &loadPlugin($category, $pathName) {
+	static function &loadPlugin($category, $pathName) {
 		$pluginPath = PLUGINS_PREFIX . $category . '/' . $pathName;
 		$plugin = null;
 		if (!file_exists($pluginPath . '/index.php')) return $plugin;
@@ -173,8 +177,8 @@ class PluginRegistry {
 	 *
 	 * @return array
 	 */
-	function getCategories() {
-		$application =& PKPApplication::getApplication();
+	static function getCategories() {
+		$application = PKPApplication::getApplication();
 		$categories = $application->getPluginCategories();
 		HookRegistry::call('PluginRegistry::getCategories', array(&$categories));
 		return $categories;
@@ -184,7 +188,7 @@ class PluginRegistry {
 	 * Load all plugins in the system and return them in a single array.
 	 * @param $enabledOnly boolean load only enabled plug-ins
 	 */
-	function &loadAllPlugins($enabledOnly = false) {
+	static function &loadAllPlugins($enabledOnly = false) {
 		// Retrieve and register categories (order is significant).
 		foreach (PluginRegistry::getCategories() as $category) {
 			PluginRegistry::loadCategory($category, $enabledOnly);
@@ -208,7 +212,7 @@ class PluginRegistry {
 	 * @param $classToCheck string set null to maintain pre-2.3.x backwards compatibility
 	 * @return Plugin
 	 */
-	function &_instantiatePlugin($category, $categoryDir, $file, $classToCheck = null) {
+	static function &_instantiatePlugin($category, $categoryDir, $file, $classToCheck = null) {
 		if(!is_null($classToCheck) && !preg_match('/[a-zA-Z0-9]+/', $file)) fatalError('Invalid product name "'.$file.'"!');
 
 		$pluginPath = "$categoryDir/$file";

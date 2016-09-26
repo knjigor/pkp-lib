@@ -1,13 +1,11 @@
 /**
  * @defgroup js_controllers_linkAction
  */
-// Create the linkAction namespace.
-jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
-
 /**
  * @file js/controllers/linkAction/LinkActionHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class LinkActionHandler
@@ -19,16 +17,21 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
  */
 (function($) {
 
+	/** @type {Object} */
+	jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
+
+
 
 	/**
 	 * @constructor
 	 *
 	 * @extends $.pkp.classes.Handler
 	 *
-	 * @param {jQuery} $handledElement The clickable element
+	 * @param {jQueryObject} $handledElement The clickable element
 	 *  the link action will be attached to.
-	 * @param {Object} options Configuration of the link action
-	 *  handler. The object must contain the following elements:
+	 * @param {{actionRequest, actionRequestOptions, actionResponseOptions}} options
+	 *  Configuration of the link action handler. The object must contain the
+	 *  following elements:
 	 *  - actionRequest: The action to be executed when the link
 	 *                   action is being activated.
 	 *  - actionRequestOptions: Configuration of the action request.
@@ -49,18 +52,13 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 			// If none, the link action element id is
 			// not using the unique function, so we
 			// can consider it static.
-			this.staticId_ = $handledElement.attr('id');
+			this.staticId_ = /** @type {string} */ $handledElement.attr('id');
 		}
 
 		// Instantiate the link action request.
 		if (!options.actionRequest || !options.actionRequestOptions) {
-			throw Error(['The "actionRequest" and "actionRequestOptions"',
+			throw new Error(['The "actionRequest" and "actionRequestOptions"',
 				'settings are required in a LinkActionHandler'].join(''));
-		}
-
-		// Bind the handler for image preview.
-		if ($handledElement.hasClass('image')) {
-			this.bind('mouseover', this.imagePreviewHandler_);
 		}
 
 		// Configure the callback called when the link
@@ -90,6 +88,9 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 		// the notify user event.
 		this.bind('dataChanged', this.dataChangedHandler_);
 
+		// Re-enable submit buttons when a modal is closed
+		this.bind('pkpModalClose', this.removeDisabledAttribute_);
+
 		if (options.selfActivate) {
 			this.trigger('click');
 		}
@@ -115,7 +116,7 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 	 * The part of this HTML element id that's static, not
 	 * changing after a refresh.
 	 * @private
-	 * @type {string}
+	 * @type {?string}
 	 */
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
 			staticId_ = null;
@@ -126,7 +127,7 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 	//
 	/**
 	 * Get the static id part of the HTML element id.
-	 * @return {string} Non-unique part of HTML element id.
+	 * @return {?string} Non-unique part of HTML element id.
 	 */
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
 			getStaticId = function() {
@@ -134,29 +135,13 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 	};
 
 
-	//
-	// Private methods
-	//
 	/**
-	 * Preview an image when hovering over its link in the grid.
-	 *
-	 * @private
-	 *
-	 * @param {HTMLElement} sourceElement The element that
-	 *  issued the event.
-	 * @param {Event} event The triggering event.
+	 * Get the link url.
+	 * @return {?string} Link url.
 	 */
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
-			imagePreviewHandler_ = function(sourceElement, event) {
-
-		// Use the jQuery imagepreview plug-in to show the image.
-		var $sourceElement = $(sourceElement);
-		$sourceElement.imgPreview({
-			preloadImages: false,
-			imgCSS: {
-				width: '300px'
-			}
-		});
+			getUrl = function() {
+		return this.linkActionRequest_.getUrl();
 	};
 
 
@@ -178,8 +163,7 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 		// while the link action is executing. We will not disable
 		// if this link action have a null action request. In that
 		// case, the action request is handled by some parent widget.
-		if (this.linkActionRequest_.objectName_ !=
-				'$.pkp.classes.linkAction.NullAction') {
+		if (this.linkActionRequest_.shouldDebounce()) {
 			this.disableLink();
 		}
 
@@ -206,9 +190,17 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 	 */
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
 			enableLink = function() {
-		var $linkActionElement = $(this.getHtmlElement());
-		$linkActionElement.removeClass('ui-state-disabled');
-		var actionRequestUrl = this.linkActionRequest_.getUrl();
+		var $linkActionElement, actionRequestUrl;
+
+		$linkActionElement = $(this.getHtmlElement());
+
+		// only remove the disabled state if it is not a submit button.
+		// we let FormHandler remove that after a form is submitted.
+		if (!this.getHtmlElement().is(':submit')) {
+			this.removeDisabledAttribute_();
+		}
+
+		actionRequestUrl = this.getUrl();
 		if (this.getHtmlElement().is('a') && actionRequestUrl) {
 			$linkActionElement.attr('href', actionRequestUrl);
 		}
@@ -223,7 +215,7 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
 			disableLink = function() {
 		var $linkActionElement = $(this.getHtmlElement());
-		$linkActionElement.addClass('ui-state-disabled');
+		$linkActionElement.attr('disabled', 'disabled');
 		if (this.getHtmlElement().is('a')) {
 			$linkActionElement.attr('href', '#');
 		}
@@ -236,19 +228,41 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 	// Private methods.
 	//
 	/**
-	 * Handle the changed data event.
+	 * Remove the 'disabled' CSS class for the linkActionElement.
 	 * @private
 	 */
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
-			dataChangedHandler_ = function() {
+			removeDisabledAttribute_ = function() {
 
-		this.trigger('notifyUser', this.getHtmlElement());
+		var $linkActionElement = $(this.getHtmlElement());
+		$linkActionElement.removeAttr('disabled');
+	};
+
+
+	/**
+	 * Handle the changed data event.
+	 * @private
+	 *
+	 * @param {jQueryObject} callingElement The calling html element.
+	 * @param {Event} event The event object (dataChanged).
+	 * @param {Object} eventData Event data.
+	 */
+	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
+			dataChangedHandler_ = function(callingElement, event, eventData) {
+
+		if (this.getHtmlElement().parents('.pkp_controllers_grid').length === 0) {
+			// We might want to redirect this data changed event to a grid.
+			// Trigger another event so parent widgets can handle this
+			// redirection.
+			this.trigger('redirectDataChangedToGrid', [eventData]);
+		}
+		this.trigger('notifyUser', [this.getHtmlElement()]);
 	};
 
 
 	/**
 	 * Click event handler used to avoid any action request.
-	 * @return {Boolean} Always returns false.
+	 * @return {boolean} Always returns false.
 	 * @private
 	 */
 	$.pkp.controllers.linkAction.LinkActionHandler.prototype.
@@ -258,4 +272,4 @@ jQuery.pkp.controllers.linkAction = jQuery.pkp.controllers.linkAction || { };
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

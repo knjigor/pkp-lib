@@ -3,7 +3,8 @@
 /**
  * @file classes/filter/FilterGroupDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterGroupDAO
@@ -61,18 +62,16 @@ class FilterGroupDAO extends DAO {
 	 * @return FilterGroup
 	 */
 	function &getObjectById($filterGroupId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 				'SELECT * FROM filter_groups'.
 				' WHERE filter_group_id = ?', $filterGroupId);
 
 		$filterGroup = null;
 		if ($result->RecordCount() != 0) {
-			$filterGroup =& $this->_fromRow($result->GetRowAssoc(false));
+			$filterGroup = $this->_fromRow($result->GetRowAssoc(false));
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $filterGroup;
 	}
 
@@ -82,18 +81,16 @@ class FilterGroupDAO extends DAO {
 	 * @return FilterGroup
 	 */
 	function &getObjectBySymbolic($filterGroupSymbolic) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 				'SELECT * FROM filter_groups'.
 				' WHERE symbolic = ?', $filterGroupSymbolic);
 
 		$filterGroup = null;
 		if ($result->RecordCount() != 0) {
-			$filterGroup =& $this->_fromRow($result->GetRowAssoc(false));
+			$filterGroup = $this->_fromRow($result->GetRowAssoc(false));
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $filterGroup;
 	}
 
@@ -102,7 +99,7 @@ class FilterGroupDAO extends DAO {
 	 * @param $filterGroup FilterGroup
 	 */
 	function updateObject(&$filterGroup) {
-		$returner = $this->update(
+		$this->update(
 			'UPDATE	filter_groups
 			SET	symbolic = ?,
 				display_name = ?,
@@ -127,7 +124,7 @@ class FilterGroupDAO extends DAO {
 	 * @return boolean
 	 */
 	function deleteObject(&$filterGroup) {
-		$filterDao =& DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
+		$filterDao = DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
 
 		// Check whether there are still templates saved for this filter group.
 		$filterTemplates = $filterDao->getObjectsByGroup($filterGroup->getSymbolic(), null, true, false);
@@ -175,7 +172,7 @@ class FilterGroupDAO extends DAO {
 	 * @return int
 	 */
 	function getInsertId() {
-		return parent::getInsertId('filter_groups', 'filter_group_id');
+		return parent::_getInsertId('filter_groups', 'filter_group_id');
 	}
 
 	/**
@@ -197,7 +194,7 @@ class FilterGroupDAO extends DAO {
 	 * @param $row array
 	 * @return FilterGroup
 	 */
-	function &_fromRow(&$row) {
+	function _fromRow($row) {
 		// Instantiate the filter group.
 		$filterGroup = $this->newDataObject();
 

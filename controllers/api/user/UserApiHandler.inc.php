@@ -1,12 +1,13 @@
 <?php
 /**
- * @defgroup controllers_api_user
+ * @defgroup controllers_api_user User API controller
  */
 
 /**
  * @file controllers/api/user/UserApiHandler.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class UserApiHandler
@@ -34,13 +35,13 @@ class UserApiHandler extends PKPHandler {
 	// Implement template methods from PKPHandler
 	//
 	/**
-	 * @see PKPHandler::authorize()
+	 * @copydoc PKPHandler::authorize()
 	 */
-	function authorize(&$request, $args, $roleAssignments) {
+	function authorize($request, &$args, $roleAssignments) {
 		import('lib.pkp.classes.security.authorization.PKPSiteAccessPolicy');
 		$this->addPolicy(new PKPSiteAccessPolicy(
 			$request,
-			array('updateUserMessageState'),
+			array('updateUserMessageState', 'suggestUsername'),
 			SITE_ACCESS_ALL_ROLES
 		));
 		return parent::authorize($request, $args, $roleAssignments);
@@ -55,16 +56,16 @@ class UserApiHandler extends PKPHandler {
 	 * displayed or not.
 	 * @param $args array
 	 * @param $request PKPRequest
-	 * @return string a JSON message
+	 * @return JSONMessage JSON object
 	 */
-	function updateUserMessageState($args, &$request) {
+	function updateUserMessageState($args, $request) {
 		// Exit with a fatal error if request parameters are missing.
 		if (!(isset($args['setting-name'])) && isset($args['setting-value'])) {
 			fatalError('Required request parameter "setting-name" or "setting-value" missing!');
 		}
 
 		// Retrieve the user from the session.
-		$user =& $request->getUser();
+		$user = $request->getUser();
 		assert(is_a($user, 'User'));
 
 		// Validate the setting.
@@ -89,13 +90,27 @@ class UserApiHandler extends PKPHandler {
 		}
 
 		// Persist the validated setting.
-		$userSettingsDao =& DAORegistry::getDAO('UserSettingsDAO');
+		$userSettingsDao = DAORegistry::getDAO('UserSettingsDAO');
 		$userSettingsDao->updateSetting($user->getId(), $settingName, $settingValue, $settingType);
 
 		// Return a success message.
-		$json = new JSONMessage(true);
-		return $json->getString();
+		return new JSONMessage(true);
+	}
 
+
+	/**
+	 * Get a suggested username, making sure it's not already used.
+	 * @param $args array
+	 * @param $request PKPRequest
+	 * @return JSONMessage JSON object
+	 */
+	function suggestUsername($args, $request) {
+		$suggestion = Validation::suggestUsername(
+			$request->getUserVar('firstName'),
+			$request->getUserVar('lastName')
+		);
+
+		return new JSONMessage(true, $suggestion);
 	}
 
 	/**

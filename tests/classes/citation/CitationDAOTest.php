@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/citation/CitationDAOTest.inc.php
+ * @file tests/classes/citation/CitationDAOTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CitationDAOTest
@@ -54,12 +55,12 @@ class CitationDAOTest extends DatabaseTestCase {
 		$sourceDescription = new MetadataDescription($citationSchemaName, ASSOC_TYPE_CITATION);
 		$sourceDescription->setDisplayName('test');
 		$sourceDescription->addStatement('article-title', $value = 'a simple source description', 'en_US');
-		$sourceDescription->setSeq(0);
+		$sourceDescription->setSequence(0);
 
 		$citation = new Citation('raw citation');
 		$citation->setAssocType(ASSOC_TYPE_ARTICLE);
 		$citation->setAssocId(999999);
-		$citation->setSeq(50);
+		$citation->setSequence(50);
 		$citation->addSourceDescription($sourceDescription);
 		$citation->injectMetadata($citationDescription);
 
@@ -82,7 +83,7 @@ class CitationDAOTest extends DatabaseTestCase {
 		self::assertEquals($citation, $citationById);
 
 		$citationsByAssocIdDaoFactory = $citationDao->getObjectsByAssocId(ASSOC_TYPE_ARTICLE, 999999);
-		$citationsByAssocId =& $citationsByAssocIdDaoFactory->toArray();
+		$citationsByAssocId = $citationsByAssocIdDaoFactory->toArray();
 		self::assertEquals(1, count($citationsByAssocId));
 		// Fix state differences for comparison.
 		$citationsByAssocId[0]->_extractionAdaptersLoaded = true;
@@ -103,7 +104,7 @@ class CitationDAOTest extends DatabaseTestCase {
 		$updatedCitation->setId($citationId);
 		$updatedCitation->setAssocType(ASSOC_TYPE_ARTICLE);
 		$updatedCitation->setAssocId(999998);
-		$updatedCitation->setSeq(50);
+		$updatedCitation->setSequence(50);
 		$updatedCitation->addSourceDescription($sourceDescription);
 		$updatedCitation->injectMetadata($citationDescription);
 

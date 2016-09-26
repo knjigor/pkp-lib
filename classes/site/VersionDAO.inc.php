@@ -3,7 +3,8 @@
 /**
  * @file classes/site/VersionDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class VersionDAO
@@ -43,7 +44,7 @@ class VersionDAO extends DAO {
 		// a product version anyway.
 		$returner = null;
 		if (!$isPlugin) {
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT * FROM versions WHERE current = 1'
 			);
 			// If we only have one current version then this must be
@@ -53,12 +54,13 @@ class VersionDAO extends DAO {
 				$oldVersion =& $this->_returnVersionFromRow($result->GetRowAssoc(false));
 				if (isset($oldVersion)) $returner =& $oldVersion;
 			}
+			$result->Close();
 		}
 
 		if (!$returner) {
 			// From here on we can assume that we have the product type
 			// and product columns available in the versions table.
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT * FROM versions WHERE current = 1 AND product_type = ? AND product = ?',
 				array($productType, $product)
 			);
@@ -71,8 +73,6 @@ class VersionDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -91,7 +91,7 @@ class VersionDAO extends DAO {
 			$product = $application->getName();
 		}
 
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM versions WHERE product_type = ? AND product = ? ORDER BY date_installed DESC',
 			array($productType, $product)
 		);
@@ -102,8 +102,6 @@ class VersionDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $versions;
 	}
 
@@ -112,7 +110,7 @@ class VersionDAO extends DAO {
 	 * @param $row array
 	 * @return Version
 	 */
-	function &_returnVersionFromRow(&$row) {
+	function &_returnVersionFromRow($row) {
 		$version = new Version(
 			$row['major'],
 			$row['minor'],
@@ -144,7 +142,8 @@ class VersionDAO extends DAO {
 			// Find out whether the last installed version is the same as the
 			// one to be inserted.
 			$versionHistory =& $this->getVersionHistory($version->getProductType(), $version->getProduct());
-			$oldVersion =& array_pop($versionHistory);
+
+			$oldVersion =& array_shift($versionHistory);
 			if ($oldVersion) {
 				if ($version->compare($oldVersion) == 0) {
 					// The old and the new current versions are the same so we need
@@ -156,7 +155,7 @@ class VersionDAO extends DAO {
 					$this->update('UPDATE versions SET current = 0 WHERE current = 1 AND product = ?', $version->getProduct());
 				} else {
 					// We do not support downgrades.
-					fatalError('You are trying to downgrade the product "'.$version->getProduct().'" from version ['.$oldVersion->getVersionString().'] to version ['.$version->getVersionString().']. Downgrades are not supported.');
+					fatalError('You are trying to downgrade the product "'.$version->getProduct().'" from version ['.$oldVersion->getVersionString(false).'] to version ['.$version->getVersionString(false).']. Downgrades are not supported.');
 				}
 			}
 		}
@@ -220,36 +219,31 @@ class VersionDAO extends DAO {
 	 * @return array
 	 */
 	function &getCurrentProducts($context) {
+
+		$contextColumn = Application::getPluginSettingsContextColumnName();
 		if (count($context)) {
-			// Construct the where clause for the plugin settings
-			// context.
-			$contextNames = array_keys($context);
-			foreach ($contextNames as $contextLevel => $contextName) {
-				// Transform from camel case to ..._...
-				String::regexp_match_all('/[A-Z][a-z]*/', ucfirst($contextName), $words);
-				$contextNames[$contextLevel] = strtolower(implode('_', $words[0]));
-			}
-			$contextWhereClause = 'AND (('.implode('_id = ? AND ', $contextNames).'_id = ?) OR v.sitewide = 1)';
+			assert(count($context)==1); // Context depth > 1 no longer supported here.
+			$contextWhereClause = 'AND (' . $contextColumn . ' = ? OR v.sitewide = 1)';
 		} else {
 			$contextWhereClause = '';
 		}
 
-		$result =& $this->retrieve(
-				'SELECT v.*
-				 FROM versions v LEFT JOIN plugin_settings ps ON
-					lower(v.product_class_name) = ps.plugin_name
-					AND ps.setting_name = \'enabled\' '.$contextWhereClause.'
-				 WHERE v.current = 1 AND (ps.setting_value = \'1\' OR v.lazy_load <> 1)', $context, false);
+		$result = $this->retrieve(
+			'SELECT v.*
+			FROM versions v LEFT JOIN plugin_settings ps ON
+				lower(v.product_class_name) = ps.plugin_name
+				AND ps.setting_name = \'enabled\' '.$contextWhereClause.'
+			WHERE v.current = 1 AND (ps.setting_value = \'1\' OR v.lazy_load <> 1)',
+			$context, false
+		);
 
 		$productArray = array();
 		while(!$result->EOF) {
-			$row =& $result->getRowAssoc(false);
+			$row = $result->getRowAssoc(false);
 			$productArray[$row['product_type']][$row['product']] =& $this->_returnVersionFromRow($row);
 			$result->MoveNext();
 		}
 		$result->_close();
-		unset($result);
-
 		return $productArray;
 	}
 

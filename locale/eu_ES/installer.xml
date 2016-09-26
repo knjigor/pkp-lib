@@ -4,10 +4,11 @@
 <!--
   * locale/eu_ES/installer.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the eu_ES (Basque (Euskara)) locale.
+  * Localization strings for the eu_ES (Euskara) locale.
   *
   -->
 
@@ -21,12 +22,10 @@
 	<message key="installer.clientCharsetInstructions">Arakatzaileetara bidaltzen eta arakatzaileetatik jasotzen diren datuetan erabiltzeko kodeketa.</message>
 	<message key="installer.configFileError"><![CDATA[<tt>config.inc.php</tt>konfigurazio-fitxategia ez dago edo ezin da irakurri.]]></message>
 	<message key="installer.connectionCharset">Konexioko karaktere-jokoa</message>
-	<message key="installer.connectionCharsetInstructions">Datu-basera bidaltzen eta datu-basetik jasotzen diren datuetan erabiltzeko kodeketa. Bezeroaren karaktere-joko bera izan beharko luke. Kontuan izan, gaitasun hau MySQL >= 4.1.1 edo PostgreSQL >= 7.1 bertsioek bakarrik eskaintzen dutela. Hautatu "Ez da aplikagarria" zure datu-base zerbitzariak eskakizunak betetzen ez baditu.</message>
 	<message key="installer.contentsOfConfigFile">Konfigurazio-fitxategiaren edukia</message>
 	<message key="installer.createDatabase">Sortu datu-base berria</message>
 	<message key="installer.createDatabaseInstructions">Aukera hau erabili ahal izateko, zure datu-base sistemak datu-baseak urrunetik sortzea onartu behar du eta zure erabiltzaile-kontuak datu-base berriak sortzeko baimena izan behar du. Aukera hau hautatuta instalazioak huts egiten badu, eskuz sortu beharko duzu datu-basea zure zerbitzarian eta instalatzailea berriro exekutatu, aukera hori desgaituta.</message>
 	<message key="installer.databaseCharset">Datu-basearen karaktere-jokoa</message>
-	<message key="installer.databaseCharsetInstructions">Datu-basean gordetako datuekin erabiltzeko kodeketa. Kontuan izan, gaitasun hau MySQL >= 4.1.1 edo PostgreSQL >= 7.1 bertsioek bakarrik eskaintzen dutela. Hautatu "Ez da aplikagarria" zure datu-base zerbitzariak eskakizunak betetzen ez baditu.</message>
 	<message key="installer.databaseDriver">Datu-basearen kontrolatzailea</message>
 	<message key="installer.databaseDriverInstructions"><![CDATA[<strong>Kortxete artean dauden datu-base kontrolatzaileek ez du ematen behar den PHP hedapena kargatuta daukatenik eta, hautatzen badira, instalazioak huts egingo du segurutik.</strong><br />Goian zerrendatutako euskarri gabeko kontrolatzaileak xede akademikoetarako soilik zerrendatzen dira, normalean ez dute funtzionatuko.]]></message>
 	<message key="installer.databaseHost">Ostalaria</message>
@@ -35,7 +34,6 @@
 	<message key="installer.databasePassword">Pasahitza</message>
 	<message key="installer.databaseSettings">Datu-basearen ezarpenak</message>
 	<message key="installer.databaseUsername">Erabiltzaile-izena</message>
-	<message key="installer.encryptionInstructions">SHA1 gomendatzen da, zure sistemak onartzen badu (PHP >= 4.3.0 behar du).</message>
 	<message key="installer.encryption">Pasahitza enkriptatzeko algoritmoa</message>
 	<message key="installer.filesDir">Kargak egiteko direktorioa</message>
 	<message key="installer.fileSettings">Fitxategi-ezarpenak</message>
@@ -59,13 +57,13 @@
 	<message key="installer.installParseDBFileError"><![CDATA[Errorea datu-basea instalatzeko <tt>{$file}</tt> fitxategia analizatzean.]]></message>
 	<message key="installer.locale">Localea</message>
 	<message key="installer.localeSettings">Localearen ezarpenak</message>
-	<message key="installer.miscSettings">Hainbat ezarpen</message>
 	<message key="installer.oaiRepositoryIdInstructions"><![CDATA[Metadatuak Biltzeko <a href="http://www.openarchives.org/" target="_blank">Open Archives Initiative</a> Protocol for Metadata Harvesting protokoloaren bidez gune honetan indexatutako metadatuen erregistroak identifikatzeko erabiltzen da identifikatzaile uniboko hau.]]></message>
 	<message key="installer.oaiRepositoryId">OAI gordailu-identifikatzailea</message>
 	<message key="installer.publicFilesDirError">Fitxategi publikoen direktorioa ez dago edo ez da idazgarria.</message>
 	<message key="installer.releaseNotes">Bertsio-oharrak</message>
 	<message key="installer.securitySettings">Segurtasun-ezarpenak</message>
-	<message key="installer.skipFilesDir">Ez sortu azpidirektoriorik (eskuzko instalazioan bakarrik da baliagarria)</message>
 	<message key="installer.installParseEmailTemplatesFileError"><![CDATA[Errorea <tt>{$file}</tt> txantiloia analizatzean.]]></message>
 	<message key="installer.locale.maybeIncomplete">Markatutako lokalak osatu gabe egon daitezke.</message>
+	<message key="installer.oaiSettings">OAI ezarpenak</message>
+	<message key="installer.installParseFilterConfigFileError"><![CDATA[Errorea <tt>{$file}</tt> iragazki konfigurazio fitxategia analizatzean.]]></message>
 </locale>

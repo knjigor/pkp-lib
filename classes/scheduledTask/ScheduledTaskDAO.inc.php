@@ -1,13 +1,16 @@
 <?php
 
 /**
- * @defgroup scheduledTask
+ * @defgroup scheduledTask Scheduled Tasks
+ * Implements a scheduled task mechanism allowing for the periodic execution
+ * of maintenance tasks, notification, etc.
  */
 
 /**
  * @file classes/scheduledTask/ScheduledTaskDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ScheduledTaskDAO
@@ -34,7 +37,7 @@ class ScheduledTaskDAO extends DAO {
 	 * @return int
 	 */
 	function getLastRunTime($className) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT last_run FROM scheduled_tasks WHERE class_name = ?',
 			array($className)
 		);
@@ -46,30 +49,29 @@ class ScheduledTaskDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
 	/**
 	 * Update a scheduled task's last run time.
 	 * @param $className string
-	 * @param $timestamp int optional, if omitted the current time is used
+	 * @param $timestamp int optional, if omitted the current time is used.
+	 * @return int
 	 */
 	function updateLastRunTime($className, $timestamp = null) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT COUNT(*) FROM scheduled_tasks WHERE class_name = ?',
 			array($className)
 		);
 
 		if (isset($result->fields[0]) && $result->fields[0] != 0) {
 			if (isset($timestamp)) {
-				$returner = $this->update(
+				$this->update(
 					'UPDATE scheduled_tasks SET last_run = ' . $this->datetimeToDB($timestamp) . ' WHERE class_name = ?',
 					array($className)
 				);
 			} else {
-				$returner = $this->update(
+				$this->update(
 					'UPDATE scheduled_tasks SET last_run = NOW() WHERE class_name = ?',
 					array($className)
 				);
@@ -77,13 +79,13 @@ class ScheduledTaskDAO extends DAO {
 
 		} else {
 			if (isset($timestamp)) {
-				$returner = $this->update(
+				$this->update(
 					sprintf('INSERT INTO scheduled_tasks (class_name, last_run)
 					VALUES (?, %s)', $this->datetimeToDB($timestamp)),
 					array($className)
 				);
 			} else {
-				$returner = $this->update(
+				$this->update(
 					'INSERT INTO scheduled_tasks (class_name, last_run)
 					VALUES (?, NOW())',
 					array($className)
@@ -92,9 +94,7 @@ class ScheduledTaskDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
-		return $returner;
+		return $this->getAffectedRows();
 	}
 }
 

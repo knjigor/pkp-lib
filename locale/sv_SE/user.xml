@@ -4,10 +4,11 @@
 <!--
   * locale/sv_SE/user.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the sv_SE (Swedish) locale.
+  * Localization strings for the sv_SE (Svenska) locale.
   *
   -->
 
@@ -22,7 +23,6 @@
 	<message key="user.dateRegistered">Datum för registrering</message>
 	<message key="user.editMyProfile">Redigera Min profil</message>
 	<message key="user.email">E-post</message>
-	<message key="user.fax">Fax</message>
 	<message key="user.feminine">F</message>
 	<message key="user.firstName">Förnamn</message>
 	<message key="user.gender">Kön</message>
@@ -76,7 +76,6 @@
 	<message key="user.register.completeForm">Fyll i formuläret för att registrera dig hos den här tidskriften.</message>
 	<message key="user.register.form.emailExists">Vald E-postadress används redan.</message>
 	<message key="user.register.form.passwordsDoNotMatch">Lösenorden matchar inte.</message>
-	<message key="user.register.form.usernameAlphaNumeric">Användarnamnet får endast innehålla alfanumeriska tecken, understreck (_), bindestreck (-), och måste inledas samt avslutas med ett alfanumeriskt tecken.</message>
 	<message key="user.register.form.usernameExists">Det valda användarnamnet används redan av en annan användare.</message>
 	<message key="user.register.passwordLengthRestriction">Lösenordet måste minst innehålla {$length} tecken.</message>
 	<message key="user.register.registerAs">Registrera som</message>

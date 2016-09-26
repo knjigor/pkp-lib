@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_metadata_dc11_schema
+ * @defgroup plugins_metadata_dc11_schema Dublin Core 1.1 Metadata Format Schema
  */
 
 /**
  * @file plugins/metadata/dc11/schema/PKPDc11Schema.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPDc11Schema
@@ -27,12 +27,12 @@ class PKPDc11Schema extends MetadataSchema {
 	 * Constructor
 	 * @param $appSpecificAssocType integer
 	 */
-	function PKPDc11Schema($appSpecificAssocType) {
+	function PKPDc11Schema($appSpecificAssocType, $classname = 'plugins.metadata.dc11.schema.Dc11Schema') {
 		// Configure the meta-data schema.
 		parent::MetadataSchema(
 			'dc-1.1',
 			'dc',
-			'plugins.metadata.dc11.schema.Dc11Schema',
+			$classname,
 			$appSpecificAssocType
 		);
 

@@ -1,14 +1,11 @@
 /**
  * @defgroup js_classes_linkAction
  */
-// Define the namespace
-$.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
-
-
 /**
  * @file js/classes/linkAction/LinkActionRequest.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class LinkActionRequest
@@ -18,11 +15,17 @@ $.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
  */
 (function($) {
 
+	/** @type {Object} */
+	$.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
+
+
 
 	/**
 	 * @constructor
 	 *
-	 * @param {jQuery} $linkActionElement The element the link
+	 * @extends $.pkp.classes.ObjectProxy
+	 *
+	 * @param {jQueryObject} $linkActionElement The element the link
 	 *  action was attached to.
 	 * @param {Object} options Configuration of the link action
 	 *  request.
@@ -53,7 +56,7 @@ $.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
 	/**
 	 * The element the link action was attached to.
 	 * @protected
-	 * @type {Object}
+	 * @type {jQueryObject}
 	 */
 	$.pkp.classes.linkAction.LinkActionRequest.prototype.
 			$linkActionElement = null;
@@ -106,7 +109,7 @@ $.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
 
 	/**
 	 * Get the link action request url.
-	 * @return {mixed} string or null.
+	 * @return {?string} The link action request url.
 	 */
 	$.pkp.classes.linkAction.LinkActionRequest.prototype.getUrl =
 			function() {
@@ -132,7 +135,7 @@ $.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
 
 	/**
 	 * Retrieve the element the link action was attached to.
-	 * @return {Object} The element the link action was attached to.
+	 * @return {jQueryObject} The element the link action was attached to.
 	 */
 	$.pkp.classes.linkAction.LinkActionRequest.prototype.
 			getLinkActionElement = function() {
@@ -141,5 +144,15 @@ $.pkp.classes.linkAction = $.pkp.classes.linkAction || {};
 	};
 
 
-	/** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+	/**
+	 * Determine whether or not the link action should be debounced.
+	 * @return {boolean} Whether or not to debounce the link action.
+	 */
+	$.pkp.classes.linkAction.LinkActionRequest.prototype.
+			shouldDebounce = function() {
+		return true;
+	};
+
+
+/** @param {jQuery} $ jQuery closure. */
+}(jQuery));

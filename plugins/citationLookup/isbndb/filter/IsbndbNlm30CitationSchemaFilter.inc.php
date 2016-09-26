@@ -1,13 +1,14 @@
 <?php
 
 /**
- * @defgroup plugins_citationLookup_isbndb_filter
+ * @defgroup plugins_citationLookup_isbndb_filter ISBNDB Filter Plugin
  */
 
 /**
  * @file plugins/citationLookup/isbndb/filter/IsbndbNlm30CitationSchemaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class IsbndbNlm30CitationSchemaFilter
@@ -27,7 +28,7 @@ class IsbndbNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function IsbndbNlm30CitationSchemaFilter(&$filterGroup) {
+	function IsbndbNlm30CitationSchemaFilter($filterGroup) {
 		// Instantiate the settings of this filter
 		$apiKeySetting = new FilterSetting('apiKey',
 				'metadata.filters.isbndb.settings.apiKey.displayName',
@@ -57,7 +58,7 @@ class IsbndbNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	 * @return boolean
 	 */
 	function isValidIsbn($isbn) {
-		return is_string($isbn) && is_numeric($isbn) && String::strlen($isbn) == 13;
+		return is_string($isbn) && is_numeric($isbn) && PKPString::strlen($isbn) == 13;
 	}
 }
 ?>

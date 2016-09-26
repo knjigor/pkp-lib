@@ -3,7 +3,8 @@
 /**
  * @file classes/citation/TemplateBasedReferencesListFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TemplateBasedReferencesListFilter
@@ -21,7 +22,7 @@ class TemplateBasedReferencesListFilter extends TemplateBasedFilter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function TemplateBasedReferencesListFilter(&$filterGroup) {
+	function TemplateBasedReferencesListFilter($filterGroup) {
 		// Add the persistable filter settings.
 		import('lib.pkp.classes.filter.FilterSetting');
 		$this->addSetting(new FilterSetting('citationOutputFilterName', null, null));
@@ -51,13 +52,12 @@ class TemplateBasedReferencesListFilter extends TemplateBasedFilter {
 	 * used to transform citations.
 	 * @return TemplateBasedFilter
 	 */
-	function &getCitationOutputFilterInstance() {
+	function getCitationOutputFilterInstance() {
 		$citationOutputFilterName = $this->getData('citationOutputFilterName');
 		assert(!is_null($citationOutputFilterName));
 		list($inputTypeDescription, $outputTypeDescription) = $this->getCitationOutputFilterTypeDescriptions();
-		$filterGroup =& PersistableFilter::tempGroup($inputTypeDescription, $outputTypeDescription);
-		$citationOutputFilter =& instantiate($citationOutputFilterName, 'TemplateBasedFilter', null, null, $filterGroup);
-		return $citationOutputFilter;
+		$filterGroup = PersistableFilter::tempGroup($inputTypeDescription, $outputTypeDescription);
+		return instantiate($citationOutputFilterName, 'TemplateBasedFilter', null, null, $filterGroup);
 	}
 
 
@@ -85,29 +85,25 @@ class TemplateBasedReferencesListFilter extends TemplateBasedFilter {
 	 * @param $request Request
 	 * @param $locale AppLocale
 	 */
-	function addTemplateVars(&$templateMgr, &$submission, &$request, &$locale) {
-		// Retrieve assoc type and id of the submission.
-		$assocId = $submission->getId();
-		$assocType = $submission->getAssocType();
-
+	function addTemplateVars($templateMgr, $submission, $request, &$locale) {
 		// Retrieve approved citations for this assoc object.
-		$citationDao =& DAORegistry::getDAO('CitationDAO');
-		$citationResults =& $citationDao->getObjectsByAssocId($assocType, $assocId, CITATION_APPROVED);
-		$citations =& $citationResults->toAssociativeArray('seq');
+		$citationDao = DAORegistry::getDAO('CitationDAO');
+		$citationResults = $citationDao->getObjectsByAssocId(ASSOC_TYPE_SUBMISSION, $submission->getId(), CITATION_APPROVED);
+		$citations = $citationResults->toAssociativeArray('seq');
 
 		// Create citation output for these citations.
-		$metadataSchema =& $this->getMetadataSchema();
+		$metadataSchema = $this->getMetadataSchema();
 		assert(is_a($metadataSchema, 'MetadataSchema'));
 		$citationOutputFilter = $this->getCitationOutputFilterInstance();
 		$citationsOutput = array();
 		foreach($citations as $seq => $citation) {
-			$citationMetadata =& $citation->extractMetadata($metadataSchema);
+			$citationMetadata = $citation->extractMetadata($metadataSchema);
 			$citationsOutput[$seq] = $citationOutputFilter->execute($citationMetadata);
 		}
 
 		// Add citation mark-up and submission to template.
-		$templateMgr->assign_by_ref('citationsOutput', $citationsOutput);
-		$templateMgr->assign_by_ref('submission', $submission);
+		$templateMgr->assign('citationsOutput', $citationsOutput);
+		$templateMgr->assign('submission', $submission);
 	}
 }
 ?>

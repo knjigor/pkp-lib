@@ -4,14 +4,14 @@
 <!--
   * locale/it_IT/admin.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the it_IT (Italiano) locale.
-  *
+  * Localization strings.
   -->
 
-<locale name="it_IT" full_name = "Italiano">
+<locale name="it_IT" full_name="Italiano">
 	<message key="admin.adminFunctions">Funzioni di amministrazione</message>
 	<message key="admin.auth.confirmDelete">Sei sicuro di voler cancellare permanentemente questa fonte di autenticazione?</message>
 	<message key="admin.auth.create">Crea una fonte di autenticazione</message>
@@ -80,4 +80,7 @@
 	<message key="admin.version.updateAvailable"><![CDATA[&Egrave; disponibile una versione aggiornata]]></message>
 	<message key="admin.version.upToDate">Il tuo sistema è aggiornato</message>
 	<message key="admin.version">Versione</message>
+	<message key="admin.settings">Impostazioni</message>
+	<message key="admin.settings.siteTheme">Tema del sito</message>
+	<message key="admin.siteSetup">Setup del sito</message>
 </locale>

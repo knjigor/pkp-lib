@@ -1,18 +1,19 @@
 <?php
 
 /**
- * @defgroup plugins_citationLookup_worldcat_filter
+ * @defgroup plugins_citationLookup_worldcat_filter WorldCat Citation Lookup Filter
  */
 
 /**
  * @file plugins/citationLookup/worldcat/filter/WorldcatNlm30CitationSchemaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class WorldcatNlm30CitationSchemaFilter
  * @ingroup plugins_citationLookup_worldcat_filter
- * @see CitationMangager
+ * @see CitationManager
  *
  * @brief Citation lookup filter that uses the OCLC Worldcat Search API
  *  and xISBN services to search for book citation metadata.
@@ -35,7 +36,7 @@ class WorldcatNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function WorldcatNlm30CitationSchemaFilter(&$filterGroup) {
+	function WorldcatNlm30CitationSchemaFilter($filterGroup) {
 		$this->setDisplayName('WorldCat');
 
 		// Instantiate the settings of this filter
@@ -64,7 +65,7 @@ class WorldcatNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationLookup.worldcat.filter.WorldcatNlm30CitationSchemaFilter';
@@ -94,7 +95,7 @@ class WorldcatNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 			if (is_null($result = $this->callWebService(WORLDCAT_WEBSERVICE_SEARCH, $searchParams, XSL_TRANSFORMER_DOCTYPE_STRING))) return $nullVar;
 
 			// parse the OCLC numbers from search results
-			String::regexp_match_all('/id="itemid_(\d+)"/', $result, $matches);
+			PKPString::regexp_match_all('/id="itemid_(\d+)"/', $result, $matches);
 			if (!empty($matches[1])) break;
 		}
 
@@ -144,7 +145,7 @@ class WorldcatNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 		if (is_null($resultDOM = $this->callWebService(WORLDCAT_WEBSERVICE_OCLC.urlencode($oclcId), $lookupParams))) return $nullVar;
 
 		// Extract ISBN from response
-		$oclcnumNodes =& $resultDOM->getElementsByTagName('oclcnum');
+		$oclcnumNodes = $resultDOM->getElementsByTagName('oclcnum');
 		$oclcnumFirstNode = $oclcnumNodes->item(0);
 
 		if (isset($oclcnumFirstNode)) {
@@ -169,12 +170,12 @@ class WorldcatNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 		// FIXME: Use MARC parsed author field in XSL rather than full name
 
 		// Clean non-numerics from ISBN
-		if (!empty($metadata['isbn'])) $metadata['isbn'] = String::regexp_replace('/[^\dX]*/', '', $metadata['isbn']);
+		if (!empty($metadata['isbn'])) $metadata['isbn'] = PKPString::regexp_replace('/[^\dX]*/', '', $metadata['isbn']);
 
 		// Clean non-numerics from issued date (year)
 		if (!empty($metadata['date'])) {
-			$metadata['date'] = String::regexp_replace('/,.*/', ', ', $metadata['date']);
-			$metadata['date'] = String::regexp_replace('/[^\d{4}]/', '', $metadata['date']);
+			$metadata['date'] = PKPString::regexp_replace('/,.*/', ', ', $metadata['date']);
+			$metadata['date'] = PKPString::regexp_replace('/[^\d{4}]/', '', $metadata['date']);
 		}
 
 		$citationDescription =& $this->getNlm30CitationDescriptionFromMetadataArray($metadata);
@@ -197,7 +198,7 @@ class WorldcatNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
 		if (is_null($resultDOM = $this->callWebService(WORLDCAT_WEBSERVICE_XISBN.urlencode($isbn), $lookupParams))) return $nullVar;
 
 		// Extract metadata from response
-		$recordNodes =& $resultDOM->getElementsByTagName('isbn');
+		$recordNodes = $resultDOM->getElementsByTagName('isbn');
 		if (is_null($recordNode = $recordNodes->item(0))) return $nullVar;
 
 		$metadata['isbn'] = $isbn;

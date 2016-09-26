@@ -1,7 +1,8 @@
 {**
  * citationExport.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Formatted citation export
@@ -13,7 +14,7 @@
 				{$errorMessage}
 			</div>
 		{else}
-			<script type="text/javascript">
+			<script>
 				<!--
 				$(function() {ldelim}
 					// Activate the export filter selection drop-down boxes.
@@ -62,6 +63,7 @@
 				// -->
 			</script>
 			<form class="pkp_form" id="exportCitationForm" method="post" action="">
+				{csrf}
 				<br />
 				<p>
 					<p>{translate key="submission.citations.editor.export.filterSelectionDescription"}</p>

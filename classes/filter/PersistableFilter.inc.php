@@ -2,7 +2,8 @@
 /**
  * @file classes/filter/PersistableFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PersistableFilter
@@ -64,7 +65,7 @@ class PersistableFilter extends Filter {
 	 *
 	 * @param $filterGroup FilterGroup
 	 */
-	function PersistableFilter(&$filterGroup) {
+	function PersistableFilter($filterGroup) {
 		// Check and set the filter group.
 		assert(is_a($filterGroup, 'FilterGroup'));
 		$this->_filterGroup =& $filterGroup;
@@ -264,7 +265,7 @@ class PersistableFilter extends Filter {
 	 * @param $inputType string
 	 * @param $outputType string
 	 */
-	function tempGroup($inputType, $outputType) {
+	static function tempGroup($inputType, $outputType) {
 		$temporaryGroup = new FilterGroup();
 		$temporaryGroup->setSymbolic(FILTER_GROUP_TEMPORARY_ONLY);
 		$temporaryGroup->setInputType($inputType);

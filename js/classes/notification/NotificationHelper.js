@@ -1,14 +1,11 @@
 /**
  * @defgroup js_classes_notification
  */
-// Define the namespace
-$.pkp.classes.notification = $.pkp.classes.notification || {};
-
-
 /**
  * @file js/classes/notification/NotificationHelper.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class NotificationHelper
@@ -18,7 +15,16 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
  */
 (function($) {
 
-	$.pkp.classes.notification.NotificationHelper = function() {};
+	/** @type {Object} */
+	$.pkp.classes.notification = $.pkp.classes.notification || {};
+
+
+
+	/**
+	 * @constructor
+	 */
+	$.pkp.classes.notification.NotificationHelper = function() {
+	};
 
 
 	//
@@ -53,11 +59,25 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 	 *
 	 * @param {$.pkp.classes.Handler} handler The widget handler that is
 	 * handling the notify user event.
-	 * @param {HTMLElement} triggerElement The element that triggered the
+	 * @param {HTMLElement|Object} triggerElement The element that triggered the
 	 * notify user event.
 	 */
 	$.pkp.classes.notification.NotificationHelper.redirectNotifyUserEvent =
 			function(handler, triggerElement) {
+
+		// Get the selector for a notification element.
+		var $notificationSelector = '.pkp_notification',
+				$handledElement,
+				trivialAlreadyHandled,
+				$pageNotificationElements,
+				possibleNotificationWidgets,
+				i, length,
+				notificationsData,
+				$accordionContainer,
+				$element,
+				$elementParents, parentHandler,
+				j, parentsLength, $elementParentWidget;
+
 
 		// Sometimes the notification handler will bubble up
 		// the notifyUser event when in place notifications are
@@ -67,20 +87,18 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 		// cases, just bubble up again the event until it gets the right
 		// handler (the site handler).
 		if (triggerElement.content !== undefined) {
-			var notificationsData = triggerElement;
-			handler.getHtmlElement().parent().trigger('notifyUser', notificationsData);
+			notificationsData = triggerElement;
+			handler.getHtmlElement().parent().trigger(
+					'notifyUser', [notificationsData]);
 			return; // no need to do any other event redirection.
 		}
 
-		// Get the selector for a notification element.
-		var $notificationSelector = '.pkp_notification';
-
 		// Get the html element of the handler.
-		var $handledElement = handler.getHtmlElement();
+		$handledElement = handler.getHtmlElement();
 
 		// If the trigger element is inside a grid, let the site
 		// handler show TRIVIAL notifications.
-		var trivialAlreadyHandled = false;
+		trivialAlreadyHandled = false;
 		if (!(handler instanceof $.pkp.controllers.SiteHandler)) {
 			if ($(triggerElement).parents('.pkp_controllers_grid').length > 0) {
 				$handledElement.parent().trigger('notifyUser');
@@ -89,17 +107,14 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 		}
 
 		// Find all notification elements inside the handled element.
-		var $pageNotificationElements = $($notificationSelector, $handledElement);
+		$pageNotificationElements = $($notificationSelector, $handledElement);
 
 		// Create a variable to store all possible notification widgets
 		// that can notify this event.
-		var possibleNotificationWidgets = [];
+		possibleNotificationWidgets = [];
 
-		var i, length;
 		for (i = 0, length = $pageNotificationElements.length; i < length; i++) {
-
-			// Get one page notification element.
-			var $element = $($pageNotificationElements[i]);
+			$element = $($pageNotificationElements[i]);
 
 			// If it is inside a hidden parent, get next element.
 			if ($element.parents(':hidden').length > 0) {
@@ -110,12 +125,11 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 			// FIXME If we use a class to identify pkp widgets, we can avoid
 			// this code duplication from the get handler method in Handler class,
 			// unnecessary access to the element data and unnecessary loop.
-			var $elementParents = $element.parents();
-			var j, parentsLength, $elementParentWidget;
+			$elementParents = $element.parents();
 			for (j = 0, parentsLength = $elementParents.length;
 					j < parentsLength; j++) {
-				handler = $($elementParents[j]).data('pkp.handler');
-				if ((handler instanceof $.pkp.classes.Handler)) {
+				parentHandler = $($elementParents[j]).data('pkp.handler');
+				if ((parentHandler instanceof $.pkp.classes.Handler)) {
 					$elementParentWidget = $($elementParents[j]);
 					break;
 				}
@@ -123,16 +137,16 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 
 			// If the element that triggered the event is inside of
 			// this widget or is the widget...
-			if ($elementParentWidget.has(triggerElement).length ||
-					$elementParentWidget[0] == triggerElement) {
+			if ($elementParentWidget.has(triggerElement[0]).length ||
+					$elementParentWidget[0] === triggerElement[0]) {
 
 				// If it is inside an accordion container, and this accordion container
 				// doesn't also contain the element that triggered the event, get other
 				// element.
 				if ($element.parents('.ui-accordion:first').length > 0) {
-					var $accordionContainer = $element.parents('.ui-accordion:first');
+					$accordionContainer = $element.parents('.ui-accordion:first');
 
-					if (!$accordionContainer.has(triggerElement)) {
+					if (!$accordionContainer.has(triggerElement[0])) {
 						continue;
 					}
 				}
@@ -144,12 +158,13 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 
 		// Check if we found a notification element.
 		if (possibleNotificationWidgets.length) {
-			// Use the last element of the array, its the closest notification
-			// widget related to the element that triggered the action.
-			var elementKey = possibleNotificationWidgets.length - 1;
 
-			// Show in place notification to user.
-			possibleNotificationWidgets[elementKey].triggerHandler('notifyUser');
+			// Trigger all in place notification widgets found, from the
+			// closest to the element that triggered the action to the top.
+			for (i = possibleNotificationWidgets.length - 1; i > -1; i--) {
+				// Show in place notification to user.
+				possibleNotificationWidgets[i].triggerHandler('notifyUser');
+			}
 		} else {
 			if (!trivialAlreadyHandled) {
 				// Bubble up the notify user event so the site can handle the
@@ -160,5 +175,5 @@ $.pkp.classes.notification = $.pkp.classes.notification || {};
 	};
 
 
-	/** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+/** @param {jQuery} $ jQuery closure. */
+}(jQuery));

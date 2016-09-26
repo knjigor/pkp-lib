@@ -3,7 +3,8 @@
 /**
  * @file classes/plugins/HookRegistry.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class HookRegistry
@@ -16,9 +17,22 @@
 class HookRegistry {
 	/**
 	 * Get the current set of hook registrations.
+	 * @param $hookName string Name of hook to optionally return
+	 * @return mixed Array of all hooks or just those attached to $hookName, or
+	 *   null if nothing has been attached to $hookName
 	 */
-	function &getHooks() {
+	static function &getHooks($hookName = null) {
 		$hooks =& Registry::get('hooks', true, array());
+
+		if ($hookName) {
+			if (isset($hooks[$hookName])) {
+				$hook =& $hooks[$hookName];
+			} else {
+				$hook = null;
+			}
+			return $hook;
+		}
+
 		return $hooks;
 	}
 
@@ -26,18 +40,18 @@ class HookRegistry {
 	 * Set the hooks table for the given hook name to the supplied array
 	 * of callbacks.
 	 * @param $hookName string Name of hook to set
-	 * @param $hooks array Array of callbacks for this hook
+	 * @param $callbacks array Array of callbacks for this hook
 	 */
-	function setHooks($hookName, $hooks) {
+	static function setHooks($hookName, $callbacks) {
 		$hooks =& HookRegistry::getHooks();
-		$hooks[$hookName] =& $hooks;
+		$hooks[$hookName] =& $callbacks;
 	}
 
 	/**
 	 * Clear hooks registered against the given name.
 	 * @param $hookName string Name of hook
 	 */
-	function clear($hookName) {
+	static function clear($hookName) {
 		$hooks =& HookRegistry::getHooks();
 		unset($hooks[$hookName]);
 		return $hooks;
@@ -48,7 +62,7 @@ class HookRegistry {
 	 * @param $hookName string Name of hook to register against
 	 * @param $callback object Callback pseudotype
 	 */
-	function register($hookName, $callback) {
+	static function register($hookName, $callback) {
 		$hooks =& HookRegistry::getHooks();
 		if (!isset($hooks[$hookName])) {
 			$hooks[$hookName] = array();
@@ -67,12 +81,17 @@ class HookRegistry {
 	 * @param $args string Hooks are called with this as the second param
 	 * @return mixed
 	 */
-	function call($hookName, $args = null) {
-		// Remember the called hooks for testing.
-		$calledHooks =& HookRegistry::getCalledHooks();
-		$calledHooks[] = array(
-			$hookName, $args
-		);
+	static function call($hookName, $args = null) {
+		// Called only by Unit Test
+		// The implementation is a bit quirky as this has to work when
+		// executed statically.
+		if (self::rememberCalledHooks(true)) {
+			// Remember the called hooks for testing.
+			$calledHooks =& HookRegistry::getCalledHooks();
+			$calledHooks[] = array(
+				$hookName, $args
+			);
+		}
 
 		$hooks =& HookRegistry::getHooks();
 		if (!isset($hooks[$hookName])) {
@@ -92,13 +111,42 @@ class HookRegistry {
 	//
 	// Methods required for testing only.
 	//
-	function resetCalledHooks() {
+	/**
+	 * Set/query the flag that triggers storing of
+	 * called hooks.
+	 * @param $askOnly boolean When set to true, the flag will not
+	 *   be changed but only returned.
+	 * @param $updateTo boolean When $askOnly is set to 'true' then
+	 *   this parameter defines the value of the flag.
+	 * @return boolean The current value of the flag.
+	 */
+	static function rememberCalledHooks($askOnly = false, $updateTo = true) {
+		static $rememberCalledHooks = false;
+		if (!$askOnly) {
+			$rememberCalledHooks = $updateTo;
+		}
+		return $rememberCalledHooks;
+	}
+
+	/**
+	 * Switch off the function to store hooks and delete all stored hooks.
+	 * Always call this after using otherwise we get a severe memory.
+	 * @param $leaveAlive boolean Set this to true if you only want to
+	 *   delete hooks stored so far but if you want to record future
+	 *   hook calls, too.
+	 */
+	static function resetCalledHooks($leaveAlive = false) {
+		if (!$leaveAlive) HookRegistry::rememberCalledHooks(false, false);
 		$calledHooks =& HookRegistry::getCalledHooks();
 		$calledHooks = array();
 	}
 
-	function &getCalledHooks() {
-		static $calledHooks;
+	/**
+	 * Return a reference to the stored hooks.
+	 * @return array
+	 */
+	static function &getCalledHooks() {
+		static $calledHooks = array();
 		return $calledHooks;
 	}
 }

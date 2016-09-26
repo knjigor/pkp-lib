@@ -3,7 +3,8 @@
 /**
  * @file classes/db/DBConnection.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class DBConnection
@@ -51,7 +52,7 @@ class DBConnection {
 			$this->initDefaultDBConnection();
 		} else {
 			$args = func_get_args();
-			call_user_func_array(array(&$this, 'initCustomDBConnection'), $args);
+			call_user_func_array(array($this, 'initCustomDBConnection'), $args);
 		}
 	}
 
@@ -83,14 +84,14 @@ class DBConnection {
 	 * @param $username string
 	 * @param $password string
 	 * @param $databaseName string
-	 * @param $persistent boolean use persistent connections (default true)
+	 * @param $persistent boolean use persistent connections (default false)
 	 * @param $connectionCharset string character set to use for the connection (default none)
 	 * @param $connectOnInit boolean establish database connection on initiation (default true)
 	 * @param $debug boolean enable verbose debug output (default false)
 	 * @param $forceNew boolean force a new connection (default false)
 	 * @return boolean
 	 */
-	function initCustomDBConnection($driver, $host, $username, $password, $databaseName, $persistent = true, $connectionCharset = false, $connectOnInit = true, $debug = false, $forceNew = false) {
+	function initCustomDBConnection($driver, $host, $username, $password, $databaseName, $persistent = false, $connectionCharset = false, $connectOnInit = true, $debug = false, $forceNew = false) {
 		$this->driver = $driver;
 		$this->host = $host;
 		$this->username = $username;
@@ -112,7 +113,7 @@ class DBConnection {
 	function initConn() {
 		require_once('lib/pkp/lib/adodb/adodb.inc.php');
 
-		$this->dbconn =& ADONewConnection($this->driver);
+		$this->dbconn = ADONewConnection($this->driver);
 
 		if ($this->connectOnInit) {
 			return $this->connect();
@@ -210,7 +211,7 @@ class DBConnection {
 	 * @param $setInstance DBConnection
 	 * @return DBConnection
 	 */
-	function &getInstance($setInstance = null) {
+	static function getInstance($setInstance = null) {
 		$instance =& Registry::get('dbInstance', true, null);
 
 		if (isset($setInstance)) {
@@ -226,8 +227,8 @@ class DBConnection {
 	 * Return a reference to a single static instance of the database connection.
 	 * @return ADONewConnection
 	 */
-	function &getConn() {
-		$conn =& DBConnection::getInstance();
+	static function &getConn() {
+		$conn = DBConnection::getInstance();
 		return $conn->getDBConn();
 	}
 
@@ -237,31 +238,6 @@ class DBConnection {
 	 */
 	function getDriver() {
 		return $this->driver;
-	}
-
-	/**
-	 * Log a SQL query and execution time in the PKPProfiler debug log
-	 * @param $sql string SQL statement being run
-	 * @param $start string a float representing the unix microtime the query started
-	 */
-	function logQuery($sql, $start, $params = array()) {
-		if (!Config::getVar('debug', 'show_stats')) return;
-
-		$queries =& Registry::get('queries', true, array());
-
-		// re-combine the SQL into a prepared statement
-		$preparedSql = '';
-		foreach(explode('?',$sql) as $key => $val) {
-			if (isset($params[$key])) {
-				$preparedSql .= $val.$params[$key];
-			}
-		}
-
-		$query = array(
-				'sql' => $preparedSql,
-				'time' => (Core::microtime() - $start)*1000
-			);
-		array_push($queries, $query);
 	}
 }
 

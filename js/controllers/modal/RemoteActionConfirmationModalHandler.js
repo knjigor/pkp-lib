@@ -1,7 +1,8 @@
 /**
  * @file js/controllers/modal/RemoteActionConfirmationModalHandler.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class RemoteActionConfirmationModalHandler
@@ -17,7 +18,7 @@
 	 *
 	 * @extends $.pkp.controllers.modal.ConfirmationModalHandler
 	 *
-	 * @param {jQuery} $handledElement The clickable element
+	 * @param {jQueryObject} $handledElement The clickable element
 	 *  the modal will be attached to.
 	 * @param {Object} options Non-default options to configure
 	 *  the modal.
@@ -38,6 +39,9 @@
 		// Configure the remote action (URL) to be called when
 		// the modal closes.
 		this.remoteAction_ = options.remoteAction;
+
+		// Store the CSRF token for inclusion in the request.
+		this.csrfToken_ = options.csrfToken;
 	};
 	$.pkp.classes.Helper.inherits(
 			$.pkp.controllers.modal.RemoteActionConfirmationModalHandler,
@@ -57,10 +61,21 @@
 			remoteAction_ = null;
 
 
+	/**
+	 * A CSRF token to be included in request parameters.
+	 * @private
+	 * @type {?string}
+	 */
+	$.pkp.controllers.modal.RemoteActionConfirmationModalHandler.prototype.
+			csrfToken_ = null;
+
+
 	//
 	// Protected methods
 	//
-	/** @inheritDoc */
+	/**
+	 * @inheritDoc
+	 */
 	$.pkp.controllers.modal.RemoteActionConfirmationModalHandler.prototype.
 			checkOptions = function(options) {
 
@@ -85,11 +100,14 @@
 	 *
 	 * @param {HTMLElement} dialogElement The element the
 	 *  dialog was created on.
+	 * @param {Event} event The click event.
 	 */
 	$.pkp.controllers.modal.RemoteActionConfirmationModalHandler.prototype.
-			modalConfirm = function(dialogElement) {
+			modalConfirm = function(dialogElement, event) {
+		event.preventDefault();
 
 		$.post(this.remoteAction_,
+				{csrfToken: this.csrfToken_},
 				this.callbackWrapper(this.remoteResponse), 'json');
 	};
 
@@ -103,12 +121,13 @@
 	$.pkp.controllers.modal.RemoteActionConfirmationModalHandler.prototype.
 			remoteResponse = function(ajaxOptions, jsonData) {
 
-		jsonData = this.parent('remoteResponse', ajaxOptions, jsonData);
-		if (jsonData !== false) {
+		var processedJsonData = this.parent('remoteResponse', ajaxOptions, jsonData);
+		if (processedJsonData !== false) {
 			this.modalClose(ajaxOptions);
 		}
+		return false;
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

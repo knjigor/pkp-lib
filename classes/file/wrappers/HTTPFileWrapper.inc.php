@@ -3,7 +3,8 @@
 /**
  * @file classes/file/wrappers/HTTPFileWrapper.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @package file.wrappers
@@ -73,7 +74,7 @@ class HTTPFileWrapper extends FileWrapper {
 			}
 		}
 
-		if (!($this->fp = fsockopen($host, $port, $errno, $errstr)))
+		if (!($this->fp = fsockopen($host, $port)))
 			return false;
 
 		$additionalHeadersString = '';
@@ -120,7 +121,7 @@ class HTTPFileWrapper extends FileWrapper {
 		// Thanks to php dot net at NOSPAM dot juamei dot com
 		// See http://www.php.net/manual/en/function.parse-url.php
 		if (! is_array($parsed)) return false;
-		$uri = isset($parsed['scheme']) ? $parsed['scheme'].':'.((strtolower($parsed['scheme']) == 'mailto') ? '':'//'): '';
+		$uri = isset($parsed['scheme']) ? $parsed['scheme'].':'.((strtolower_codesafe($parsed['scheme']) == 'mailto') ? '':'//'): '';
 		$uri .= isset($parsed['user']) ? $parsed['user'].($parsed['pass']? ':'.$parsed['pass']:'').'@':'';
 		$uri .= isset($parsed['host']) ? $parsed['host'] : '';
 		$uri .= isset($parsed['port']) ? ':'.$parsed['port'] : '';

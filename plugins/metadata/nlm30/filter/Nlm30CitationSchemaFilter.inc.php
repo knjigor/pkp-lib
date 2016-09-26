@@ -3,7 +3,8 @@
 /**
  * @file plugins/metadata/nlm30/filter/Nlm30CitationSchemaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaFilter
@@ -160,7 +161,7 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 
 		// Extract the year from the publication date
 		$year = (string)$citationDescription->getStatement('date');
-		$year = (String::strlen($year) > 4 ? String::substr($year, 0, 4) : $year);
+		$year = (PKPString::strlen($year) > 4 ? PKPString::substr($year, 0, 4) : $year);
 
 		// Retrieve ISBN
 		$isbn = (string)$citationDescription->getStatement('isbn');
@@ -182,7 +183,7 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 		}
 
 		// Remove empty or duplicate searches
-		$searchStrings = array_map(array('String', 'trimPunctuation'), $searchStrings);
+		$searchStrings = array_map(array('PKPString', 'trimPunctuation'), $searchStrings);
 		$searchStrings = array_unique($searchStrings);
 		$searchStrings = arrayClean($searchStrings);
 
@@ -204,6 +205,11 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 		$result =& $xmlWebService->call($webServiceRequest);
 
 		if (is_null($result)) {
+			// Add a flag for cases where the web service call failed because of their problems.
+			if ($xmlWebService->getLastResponseStatus() >= 500 || $xmlWebService->getLastResponseStatus() <= 599) {
+				$this->setData('serverError', true);
+			}
+
 			// Construct a helpful error message including
 			// the offending webservice url for get requests.
 			$webserviceUrl = $url;
@@ -269,7 +275,7 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 	 */
 	function &postProcessMetadataArray(&$preliminaryNlm30Array) {
 		// Clean array
-		$preliminaryNlm30Array =& arrayClean($preliminaryNlm30Array);
+		$preliminaryNlm30Array = arrayClean($preliminaryNlm30Array);
 
 		// Trim punctuation
 		$preliminaryNlm30Array =& $this->_recursivelyTrimPunctuation($preliminaryNlm30Array);
@@ -396,11 +402,11 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 			// Extract publisher-name from publisher-loc if we don't have a
 			// publisher-name in the parsing result.
 			if (empty($metadata['publisher-name'])) {
-				$metadata['publisher-name'] = String::regexp_replace('/.*:([^,]+),?.*/', '\1', $metadata['publisher-loc']);
+				$metadata['publisher-name'] = PKPString::regexp_replace('/.*:([^,]+),?.*/', '\1', $metadata['publisher-loc']);
 			}
 
 			// Remove publisher-name from publisher-loc
-			$metadata['publisher-loc'] = String::regexp_replace('/^(.+):.*/', '\1', $metadata['publisher-loc']);
+			$metadata['publisher-loc'] = PKPString::regexp_replace('/^(.+):.*/', '\1', $metadata['publisher-loc']);
 
 			// Check that publisher-name and location are not the same
 			if (!empty($metadata['publisher-name']) && $metadata['publisher-name'] == $metadata['publisher-loc']) unset($metadata['publisher-name']);
@@ -415,7 +421,7 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 		// Clean the result
 		foreach(array('publisher-name', 'publisher-loc') as $publisherProperty) {
 			if (isset($metadata[$publisherProperty])) {
-				$metadata[$publisherProperty] = String::trimPunctuation($metadata[$publisherProperty]);
+				$metadata[$publisherProperty] = PKPString::trimPunctuation($metadata[$publisherProperty]);
 			}
 		}
 
@@ -497,7 +503,7 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 
 			// String scalars will be trimmed
 			if (is_string($metadataValue)) {
-				$metadataArray[$metadataKey] = String::trimPunctuation($metadataValue);
+				$metadataArray[$metadataKey] = PKPString::trimPunctuation($metadataValue);
 			}
 
 			// All other value types (i.e. integers, composite values, etc.)
@@ -509,10 +515,9 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 	/**
 	 * Static method that returns a list of permitted
 	 * publication types.
-	 * NB: PHP4 workaround for static class member.
 	 * @return array
 	 */
-	function _allowedPublicationTypes() {
+	static function _allowedPublicationTypes() {
 		static $allowedPublicationTypes = array(
 			NLM30_PUBLICATION_TYPE_JOURNAL,
 			NLM30_PUBLICATION_TYPE_CONFPROC,
@@ -522,4 +527,5 @@ class Nlm30CitationSchemaFilter extends PersistableFilter {
 		return $allowedPublicationTypes;
 	}
 }
+
 ?>

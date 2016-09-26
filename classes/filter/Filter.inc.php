@@ -2,7 +2,8 @@
 /**
  * @file classes/filter/Filter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Filter
@@ -145,7 +146,7 @@ class Filter extends DataObject {
 	 * Set the sequence id
 	 * @param $seq integer
 	 */
-	function setSeq($seq) {
+	function setSequence($seq) {
 		$this->setData('seq', $seq);
 	}
 
@@ -153,7 +154,7 @@ class Filter extends DataObject {
 	 * Get the sequence id
 	 * @return integer
 	 */
-	function getSeq() {
+	function getSequence() {
 		return $this->getData('seq');
 	}
 
@@ -166,20 +167,20 @@ class Filter extends DataObject {
 	 * @see TypeDescriptionFactory::instantiateTypeDescription() for more details
 	 */
 	function setTransformationType(&$inputType, &$outputType) {
-		$typeDescriptionFactory =& TypeDescriptionFactory::getInstance();
+		$typeDescriptionFactory = TypeDescriptionFactory::getInstance();
 
 		// Instantiate the type descriptions if we got string input.
 		if (!is_a($inputType, 'TypeDescription')) {
 			assert(is_string($inputType));
-			$inputType =& $typeDescriptionFactory->instantiateTypeDescription($inputType);
+			$inputType = $typeDescriptionFactory->instantiateTypeDescription($inputType);
 		}
 		if (!is_a($outputType, 'TypeDescription')) {
 			assert(is_string($outputType));
-			$outputType =& $typeDescriptionFactory->instantiateTypeDescription($outputType);
+			$outputType = $typeDescriptionFactory->instantiateTypeDescription($outputType);
 		}
 
-		$this->_inputType =& $inputType;
-		$this->_outputType =& $outputType;
+		$this->_inputType = $inputType;
+		$this->_outputType = $outputType;
 	}
 
 
@@ -282,7 +283,7 @@ class Filter extends DataObject {
 		// for persistence.
 		$runtimeSettings = $this->supportedRuntimeEnvironmentSettings();
 		foreach($runtimeSettings as $runtimeSetting => $defaultValue) {
-			$methodName = 'get'.String::ucfirst($runtimeSetting);
+			$methodName = 'get'.PKPString::ucfirst($runtimeSetting);
 			$this->setData($runtimeSetting, $runtimeEnvironment->$methodName());
 		}
 	}
@@ -415,12 +416,14 @@ class Filter extends DataObject {
 	 * NB: sub-classes will not normally override
 	 * this method.
 	 *
-	 * @param mixed an input value that is supported
+	 * @param $input mixed an input value that is supported
 	 *  by this filter
+	 * @param $returnErrors boolean whether the value
+	 *  should be returned also if an error occurred
 	 * @return mixed a valid return value or null
 	 *  if an error occurred during processing
 	 */
-	function &execute(&$input) {
+	function &execute(&$input, $returnErrors = false) {
 		// Make sure that we don't destroy referenced
 		// data somewhere out there.
 		unset($this->_input, $this->_output);
@@ -446,7 +449,7 @@ class Filter extends DataObject {
 		$preliminaryOutput =& $this->process($input);
 
 		// Validate the filter output
-		if (!is_null($preliminaryOutput) && $this->supports($input, $preliminaryOutput)) {
+		if ((!is_null($preliminaryOutput) && $this->supports($input, $preliminaryOutput)) || $returnErrors) {
 			$this->_output =& $preliminaryOutput;
 		}
 
@@ -461,11 +464,9 @@ class Filter extends DataObject {
 	 * Returns a static array with supported runtime
 	 * environment settings and their default values.
 	 *
-	 * PHP4 workaround for missing static class members.
-	 *
 	 * @return array
 	 */
-	function supportedRuntimeEnvironmentSettings() {
+	static function supportedRuntimeEnvironmentSettings() {
 		static $runtimeEnvironmentSettings = array(
 			'phpVersionMin' => PHP_REQUIRED_VERSION,
 			'phpVersionMax' => null,
@@ -476,4 +477,5 @@ class Filter extends DataObject {
 		return $runtimeEnvironmentSettings;
 	}
 }
+
 ?>

@@ -3,7 +3,8 @@
 /**
  * @file classes/config/ConfigParser.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ConfigParser
@@ -30,7 +31,7 @@ class ConfigParser {
 	 * @param $file string full path to the config file
 	 * @return array the configuration data (same format as http://php.net/parse_ini_file)
 	 */
-	function &readConfig($file) {
+	static function &readConfig($file) {
 		$configData = array();
 		$currentSection = false;
 		$falseValue = false;

@@ -3,7 +3,8 @@
 /**
  * @file classes/xml/XMLCustomWriter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XMLCustomWriter
@@ -14,6 +15,7 @@
 
 
 import ('lib.pkp.classes.xml.XMLNode');
+import ('lib.pkp.classes.xml.XMLComment');
 
 class XMLCustomWriter {
 	/**
@@ -21,8 +23,12 @@ class XMLCustomWriter {
 	 * If $url is set, the DOCTYPE definition is treated as a PUBLIC
 	 * definition; $dtd should contain the ID, and $url should contain the
 	 * URL. Otherwise, $dtd should be the DTD name.
+	 * @param $type string
+	 * @param $dtd string
+	 * @param $url string
+	 * @return DOMDocument|XMLNode
 	 */
-	function &createDocument($type = null, $dtd = null, $url = null) {
+	static function &createDocument($type = null, $dtd = null, $url = null) {
 		$version = '1.0';
 		if (class_exists('DOMImplementation')) {
 			// Use the new (PHP 5.x) DOM
@@ -47,18 +53,47 @@ class XMLCustomWriter {
 		return $doc;
 	}
 
-	function &createElement(&$doc, $name) {
-		if (is_callable(array($doc, 'createElement'))) $element =& $doc->createElement($name);
+	/**
+	 * Create a new element.
+	 * @param $doc XMLNode|DOMDocument
+	 * @param $name string
+	 * @return XMLNode
+	 */
+	static function &createElement(&$doc, $name) {
+		if (is_callable(array($doc, 'createElement'))) $element = $doc->createElement($name);
 		else $element = new XMLNode($name);
 
 		return $element;
 	}
 
-	function &createTextNode(&$doc, $value) {
+	/**
+	 * Create a new comment.
+	 * @param $doc XMLNode|DOMDocument
+	 * @param $content string
+	 * @return XMLNode
+	 */
+	static function &createComment(&$doc, $content) {
+		if (is_callable(array($doc, 'createComment'))) {
+			$element =& $doc->createComment($content);
+		} else {
+			$element = new XMLComment();
+			$element->setValue($content);
+		}
+
+		return $element;
+	}
+
+	/**
+	 * Create a new text node.
+	 * @param $doc XMLNode|DOMDocument
+	 * @param $value string
+	 * @return XMLNode
+	 */
+	static function &createTextNode(&$doc, $value) {
 
 		$value = Core::cleanVar($value);
 
-		if (is_callable(array($doc, 'createTextNode'))) $element =& $doc->createTextNode($value);
+		if (is_callable(array($doc, 'createTextNode'))) $element = $doc->createTextNode($value);
 		else {
 			$element = new XMLNode();
 			$element->setValue($value);
@@ -67,8 +102,14 @@ class XMLCustomWriter {
 		return $element;
 	}
 
-	function &appendChild(&$parentNode, &$child) {
-		if (is_callable(array($parentNode, 'appendChild'))) $node =& $parentNode->appendChild($child);
+	/**
+	 * Add a child to the DOM tree.
+	 * @param $parentNode XMLNode
+	 * @param $child XMLNode $doc XMLNode
+	 * @return XMLNode
+	 */
+	static function &appendChild(&$parentNode, &$child) {
+		if (is_callable(array($parentNode, 'appendChild'))) $node = $parentNode->appendChild($child);
 		else {
 			$parentNode->addChild($child);
 			$child->setParent($parentNode);
@@ -78,11 +119,23 @@ class XMLCustomWriter {
 		return $node;
 	}
 
-	function &getAttribute(&$node, $name) {
+	/**
+	 * Get the value of an attribute from a node.
+	 * @param $node XMLNode
+	 * @param $name string
+	 * @return string
+	 */
+	static function &getAttribute(&$node, $name) {
 		return $node->getAttribute($name);
 	}
 
-	function &hasAttribute(&$node, $name) {
+	/**
+	 * Determine whether a node has a named attribute.
+	 * @param $node XMLNode
+	 * @param $name string
+	 * @return boolean
+	 */
+	static function &hasAttribute(&$node, $name) {
 		if (is_callable(array($node, 'hasAttribute'))) $value =& $node->hasAttribute($name);
 		else {
 			$attribute =& XMLCustomWriter::getAttribute($node, $name);
@@ -91,25 +144,52 @@ class XMLCustomWriter {
 		return $value;
 	}
 
-	function setAttribute(&$node, $name, $value, $appendIfEmpty = true) {
+	/**
+	 * Set an attribute on a node.
+	 * @param $node XMLNode
+	 * @param $name string
+	 * @param $value string
+	 * @param $appendIfEmpty boolean True iff empty attributes should be added anyway.
+	 * @return string
+	 */
+	static function setAttribute(&$node, $name, $value, $appendIfEmpty = true) {
 		if (!$appendIfEmpty && $value == '') return;
 		return $node->setAttribute($name, $value);
 	}
 
-	function &getXML(&$doc) {
-		if (is_callable(array($doc, 'saveXML'))) $xml =& $doc->saveXML();
+	/**
+	 * Get the serialized XML for a document.
+	 * @param $doc DOMDocument|XMLNode
+	 * @return string
+	 */
+	static function &getXML(&$doc) {
+		if (is_callable(array($doc, 'saveXML'))) $xml = $doc->saveXML();
 		else {
 			$xml = $doc->toXml();
 		}
 		return $xml;
 	}
 
-	function printXML(&$doc) {
+	/**
+	 * Print the serialized XML for a document.
+	 * @param $doc DOMDocument|XMLNode
+	 * @return string
+	 */
+	static function printXML(&$doc) {
 		if (is_callable(array($doc, 'saveXML'))) echo $doc->saveXML();
 		else $doc->toXml(true);
 	}
 
-	function &createChildWithText(&$doc, &$node, $name, $value, $appendIfEmpty = true) {
+	/**
+	 * Add a child node with the specified text contents.
+	 * @param $doc DOMDocument|XMLNode
+	 * @param $node XMLNode
+	 * @param $name string
+	 * @param $value string
+	 * @param $appendIfEmpty boolean True iff empty attributes should be added anyway.
+	 * @return XMLNode
+	 */
+	static function &createChildWithText(&$doc, &$node, $name, $value, $appendIfEmpty = true) {
 		$childNode = null;
 		if ($appendIfEmpty || $value != '') {
 			$childNode =& XMLCustomWriter::createElement($doc, $name);
@@ -118,15 +198,6 @@ class XMLCustomWriter {
 			XMLCustomWriter::appendChild($node, $childNode);
 		}
 		return $childNode;
-	}
-
-	function &createChildFromFile(&$doc, &$node, $name, $filename) {
-		$fileManager = new FileManager();
-		$contents =& $fileManager->readFile($filename);
-		if ($contents === false) {
-			$nullVar = null;
-			return $nullVar;
-		}
 	}
 }
 

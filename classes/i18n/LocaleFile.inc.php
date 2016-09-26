@@ -3,7 +3,8 @@
 /**
  * @file classes/i18n/LocaleFile.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class LocaleFile
@@ -14,13 +15,13 @@
 
 
 class LocaleFile {
-	/** @var $cache object Cache of this locale file */
+	/** @var object Cache of this locale file */
 	var $cache;
 
-	/** @var $locale string The identifier for this locale file */
+	/** @var string The identifier for this locale file */
 	var $locale;
 
-	/** @var $filename string The filename for this locale file */
+	/** @var string The filename for this locale file */
 	var $filename;
 
 	/**
@@ -36,12 +37,12 @@ class LocaleFile {
 	/**
 	 * Get the cache object for this locale file.
 	 */
-	function &_getCache($locale) {
+	function _getCache($locale) {
 		if (!isset($this->cache)) {
-			$cacheManager =& CacheManager::getManager();
+			$cacheManager = CacheManager::getManager();
 			$this->cache = $cacheManager->getFileCache(
 				'locale', md5($this->filename),
-				array(&$this, '_cacheMiss')
+				array($this, '_cacheMiss')
 			);
 
 			// Check to see if the cache is outdated.
@@ -60,7 +61,7 @@ class LocaleFile {
 	/**
 	 * Register a cache miss.
 	 */
-	function _cacheMiss(&$cache, $id) {
+	function _cacheMiss($cache, $id) {
 		return null; // It's not in this locale file.
 	}
 
@@ -81,30 +82,32 @@ class LocaleFile {
 	 * @return string
 	 */
 	function translate($key, $params = array(), $locale = null) {
-		$key = trim($key);
-		if (empty($key)) {
-			return '';
-		}
-
-		$cache =& $this->_getCache($this->locale);
-		$message = $cache->get($key);
-		if (!isset($message)) {
-			// Try to force loading the plugin locales.
-			$message = $this->_cacheMiss($cache, $key);
-		}
-
-		if (isset($message)) {
-			if (!empty($params)) {
-				// Substitute custom parameters
-				foreach ($params as $key => $value) {
-					$message = str_replace("{\$$key}", $value, $message);
-				}
+		if ($this->isValid()) {
+			$key = trim($key);
+			if (empty($key)) {
+				return '';
 			}
 
-			// if client encoding is set to iso-8859-1, transcode string from utf8 since we store all XML files in utf8
-			if (LOCALE_ENCODING == "iso-8859-1") $message = utf8_decode($message);
+			$cache = $this->_getCache($this->locale);
+			$message = $cache->get($key);
+			if (!isset($message)) {
+				// Try to force loading the plugin locales.
+				$message = $this->_cacheMiss($cache, $key);
+			}
 
-			return $message;
+			if (isset($message)) {
+				if (!empty($params)) {
+					// Substitute custom parameters
+					foreach ($params as $key => $value) {
+						$message = str_replace("{\$$key}", $value, $message);
+					}
+				}
+
+				// if client encoding is set to iso-8859-1, transcode string from utf8 since we store all XML files in utf8
+				if (LOCALE_ENCODING == "iso-8859-1") $message = utf8_decode($message);
+
+				return $message;
+			}
 		}
 		return null;
 	}
@@ -114,7 +117,7 @@ class LocaleFile {
 	 * @param $filename string Filename to locale XML to load
 	 * @param array
 	 */
-	function &load($filename) {
+	static function &load($filename) {
 		$localeData = array();
 
 		// Reload localization XML file

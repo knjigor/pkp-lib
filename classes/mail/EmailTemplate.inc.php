@@ -3,7 +3,8 @@
 /**
  * @file classes/mail/EmailTemplate.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class BaseEmailTemplate
@@ -43,7 +44,7 @@ class BaseEmailTemplate extends DataObject {
 	 * @param $assocType int
 	 */
 	function setAssocType($assocType) {
-		return $this->setData('assocType', $assocType);
+		$this->setData('assocType', $assocType);
 	}
 
 	/**
@@ -59,7 +60,7 @@ class BaseEmailTemplate extends DataObject {
 	 * @param $assocId int
 	 */
 	function setAssocId($assocId) {
-		return $this->setData('assocId', $assocId);
+		$this->setData('assocId', $assocId);
 	}
 
 	/**
@@ -79,14 +80,6 @@ class BaseEmailTemplate extends DataObject {
 	}
 
 	/**
-	 * Get sender role name.
-	 */
-	function &getFromRoleName() {
-		$roleDao =& DAORegistry::getDAO('RoleDAO');
-		return $roleDao->getRoleName($this->getFromRoleId());
-	}
-
-	/**
 	 * Set sender role ID.
 	 * @param $fromRoleId int
 	 */
@@ -99,14 +92,6 @@ class BaseEmailTemplate extends DataObject {
 	 */
 	function getToRoleId() {
 		return $this->getData('toRoleId');
-	}
-
-	/**
-	 * Get recipient role name.
-	 */
-	function &getToRoleName() {
-		$roleDao =& DAORegistry::getDAO('RoleDAO');
-		return $roleDao->getRoleName($this->getToRoleId());
 	}
 
 	/**
@@ -130,7 +115,7 @@ class BaseEmailTemplate extends DataObject {
 	 * @param $emailId int
 	 */
 	function setEmailId($emailId) {
-		return $this->setData('emailId', $emailId);
+		$this->setData('emailId', $emailId);
 	}
 
 	/**
@@ -146,7 +131,7 @@ class BaseEmailTemplate extends DataObject {
 	 * @param $emailKey string
 	 */
 	function setEmailKey($emailKey) {
-		return $this->setData('emailKey', $emailKey);
+		$this->setData('emailKey', $emailKey);
 	}
 
 	/**
@@ -162,7 +147,7 @@ class BaseEmailTemplate extends DataObject {
 	 * @param $enabled boolean
 	 */
 	function setEnabled($enabled) {
-		return $this->setData('enabled', $enabled);
+		$this->setData('enabled', $enabled);
 	}
 
 	/**
@@ -178,7 +163,7 @@ class BaseEmailTemplate extends DataObject {
 	 * @param $canDisable boolean
 	 */
 	function setCanDisable($canDisable) {
-		return $this->setData('canDisable', $canDisable);
+		$this->setData('canDisable', $canDisable);
 	}
 
 }
@@ -189,7 +174,7 @@ class BaseEmailTemplate extends DataObject {
  */
 class LocaleEmailTemplate extends BaseEmailTemplate {
 
-	/** @var $localeData array of localized email template data */
+	/** @var array of localized email template data */
 	var $localeData;
 
 	/**
@@ -337,7 +322,7 @@ class EmailTemplate extends BaseEmailTemplate {
 	 * @param $locale string
 	 */
 	function setLocale($locale) {
-		return $this->setData('locale', $locale);
+		$this->setData('locale', $locale);
 	}
 
 	/**
@@ -353,7 +338,7 @@ class EmailTemplate extends BaseEmailTemplate {
 	 * @param $subject string
 	 */
 	function setSubject($subject) {
-		return $this->setData('subject', $subject);
+		$this->setData('subject', $subject);
 	}
 
 	/**
@@ -369,7 +354,7 @@ class EmailTemplate extends BaseEmailTemplate {
 	 * @param $body string
 	 */
 	function setBody($body) {
-		return $this->setData('body', $body);
+		$this->setData('body', $body);
 	}
 
 }

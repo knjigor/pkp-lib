@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/filter/TypeDescriptionFactoryTest.inc.php
+ * @file tests/classes/filter/TypeDescriptionFactoryTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TypeDescriptionFactoryTest
@@ -23,7 +24,7 @@ class TypeDescriptionFactoryTest extends PKPTestCase {
 	 * @covers TypeDescriptionFactory
 	 */
 	public function testInstantiateTypeDescription() {
-		$typeDescriptionFactory =& TypeDescriptionFactory::getInstance();
+		$typeDescriptionFactory = TypeDescriptionFactory::getInstance();
 
 		// Instantiate a primitive type
 		$typeDescription = $typeDescriptionFactory->instantiateTypeDescription('primitive::string');

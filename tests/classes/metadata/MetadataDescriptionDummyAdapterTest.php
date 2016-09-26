@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/metadata/MetadataDescriptionDummyAdapterTest.inc.php
+ * @file tests/classes/metadata/MetadataDescriptionDummyAdapterTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class MetadataDescriptionDummyAdapterTest
@@ -14,7 +15,7 @@
  */
 
 
-require_mock_env('lib/pkp/tests/mock');
+require_mock_env('env1');
 
 import('lib.pkp.tests.PKPTestCase');
 import('lib.pkp.plugins.metadata.nlm30.schema.Nlm30CitationSchema');
@@ -54,7 +55,7 @@ class MetadataDescriptionDummyAdapterTest extends PKPTestCase {
 		self::assertEquals($expectedResult, $resultDescription->getStatements());
 
 		// Test meta-data extraction.
-		$extractedDescription =& $adapter->extractMetadataFromDataObject($originalDescription);
+		$extractedDescription = $adapter->extractMetadataFromDataObject($originalDescription);
 		self::assertEquals($originalDescription, $extractedDescription);
 
 		// Test meta-data field names (only test one field of each

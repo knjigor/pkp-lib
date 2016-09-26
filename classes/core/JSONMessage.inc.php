@@ -3,7 +3,8 @@
 /**
  * @file classes/core/JSONMessage.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class JSONMessage
@@ -29,9 +30,6 @@ class JSONMessage {
 
 	/** @var array Set of additional attributes for special cases. */
 	var $_additionalAttributes;
-
-	/** @var boolean An internal variable used for unit testing only. */
-	var $_simulatePhp4 = false;
 
 	/**
 	 * Constructor.
@@ -141,16 +139,6 @@ class JSONMessage {
 	}
 
 	/**
-	 * Set to simulate a PHP4 environment.
-	 * This is for internal use in unit tests only.
-	 * @param $simulatePhp4 boolean
-	 */
-	function setSimulatePhp4($simulatePhp4) {
-		assert(is_bool($simulatePhp4));
-		$this->_simulatePhp4 = $simulatePhp4;
-	}
-
-	/**
 	 * Construct a JSON string to use for AJAX communication
 	 * @return string
 	 */
@@ -171,9 +159,7 @@ class JSONMessage {
 		}
 
 		// Encode the object.
-		import('lib.pkp.classes.core.JSONManager');
-		$jsonManager = new JSONManager();
-		return $jsonManager->encode($jsonObject);
+		return json_encode($jsonObject);
 	}
 }
 

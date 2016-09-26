@@ -3,7 +3,8 @@
 /**
  * @file classes/cache/GenericCache.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GenericCache
@@ -59,7 +60,7 @@ class GenericCache {
 	function get($id) {
 		$result = $this->getCache($id);
 		if (is_object($result) && get_class($result) === 'generic_cache_miss') {
-			$result = call_user_func_array($this->fallback, array(&$this, $id));
+			$result = call_user_func_array($this->fallback, array($this, $id));
 		}
 		return $result;
 	}
@@ -83,7 +84,7 @@ class GenericCache {
 	 * by subclasses.
 	 * @param $array array of id -> value pairs
 	 */
-	function setEntireCache(&$contents) {
+	function setEntireCache($contents) {
 		$this->flush();
 		foreach ($contents as $id => $value) {
 			$this->setCache($id, $value);

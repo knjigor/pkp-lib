@@ -3,7 +3,8 @@
 /**
  * @file classes/reviewForm/ReviewFormResponseDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ReviewFormResponseDAO
@@ -34,7 +35,7 @@ class ReviewFormResponseDAO extends DAO {
 	function &getReviewFormResponse($reviewId, $reviewFormElementId) {
 		$sql = 'SELECT * FROM review_form_responses WHERE review_id = ? AND review_form_element_id = ?';
 		$params = array($reviewId, $reviewFormElementId);
-		$result =& $this->retrieve($sql, $params);
+		$result = $this->retrieve($sql, $params);
 
 		$returner = null;
 		if ($result->RecordCount() != 0) {
@@ -42,8 +43,6 @@ class ReviewFormResponseDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -60,7 +59,7 @@ class ReviewFormResponseDAO extends DAO {
 	 * @param $row array
 	 * @return ReviewFormResponse
 	 */
-	function &_returnReviewFormResponseFromRow(&$row) {
+	function &_returnReviewFormResponseFromRow($row) {
 		$responseValue = $this->convertFromDB($row['response_value'], $row['response_type']);
 		$reviewFormResponse = $this->newDataObject();
 
@@ -167,9 +166,9 @@ class ReviewFormResponseDAO extends DAO {
 	function &getReviewReviewFormResponseValues($reviewId) {
 		$returner = array();
 
-		$result =& $this->retrieveRange(
+		$result = $this->retrieveRange(
 			'SELECT * FROM review_form_responses WHERE review_id = ?',
-			$reviewId
+			(int) $reviewId
 		);
 
 		while (!$result->EOF) {
@@ -180,8 +179,6 @@ class ReviewFormResponseDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
 
@@ -198,49 +195,13 @@ class ReviewFormResponseDAO extends DAO {
 			$sql .= ' AND review_form_element_id = ?';
 			$params[] = $reviewFormElementId;
 		}
-		$result =& $this->retrieve($sql, $params);
+		$result = $this->retrieve($sql, $params);
 
 		$returner = isset($result->fields[0]) && $result->fields[0] > 0 ? true : false;
 
 		$result->Close();
-		unset($result);
-
 		return $returner;
 	}
-
-	/** DEPRECATED **/
-
-	function insertReviewFormResponse(&$reviewFormResponse) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		$this->insertObject($reviewFormResponse);
-	}
-
-	function updateReviewFormResponse(&$reviewFormResponse) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		$this->updateObject($reviewFormResponse);
-	}
-
-	function deleteReviewFormResponse(&$reviewFormResponse) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		$this->deleteObject($reviewFormResponse);
-	}
-
-	function deleteReviewFormResponseById($reviewId, $reviewFormElementId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->deleteById($reviewId, $reviewFormElementId);
-	}
-
-	function deleteReviewFormResponseByReviewId($reviewId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->deleteByReviewId($reviewId);
-	}
-
-	function deleteReviewFormResponseByReviewFormElementId($reviewFormElementId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->deleteByReviewFormElementId($reviewFormElementId);
-	}
-
-
 }
 
 ?>

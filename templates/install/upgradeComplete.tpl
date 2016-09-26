@@ -1,40 +1,35 @@
 {**
  * upgradeComplete.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Display confirmation of successful upgrade.
  * If necessary, will also display new config file contents if config file could not be written.
- *
  *}
-{strip}
-{include file="common/header.tpl"}
-{/strip}
+{include file="common/header.tpl" pageTitle="installer.upgradeApplication"}
 
-{translate key="installer.upgradeComplete" version=$newVersion->getVersionString()}
+<div class="pkp_page_content pkp_page_upgrade_complete">
+	{translate key="installer.upgradeComplete" version=$newVersion->getVersionString(false)}
 
-{if !empty($notes)}
-<div id="releaseNotes">
-<h4>{translate key="installer.releaseNotes"}</h4>
-{foreach from=$notes item=note}
-<p><pre style="font-size: 125%">{$note|escape}</pre></p>
-{/foreach}
-</div>
-{/if}
+	{if !empty($notes)}
+		<h4>{translate key="installer.releaseNotes"}</h4>
+		{foreach from=$notes item=note}
+			<p><pre style="font-size: 125%">{$note|escape}</pre></p>
+		{/foreach}
+	{/if}
 
-{if $writeConfigFailed}
-<div id="writeConfigFailed">
-{translate key="installer.overwriteConfigFileInstructions"}
+	{if $writeConfigFailed}
+		{translate key="installer.overwriteConfigFileInstructions"}
 
-<form class="pkp_form" action="#">
-<p>
-{translate key="installer.contentsOfConfigFile"}:<br />
-<textarea name="config" cols="80" rows="20" class="textArea" style="font-family: Courier,'Courier New',fixed-width">{$configFileContents|escape}</textarea>
-</p>
-</form>
-</div>
-{/if}
+		<form class="pkp_form" action="#">
+			<p>
+				{translate key="installer.contentsOfConfigFile"}:<br />
+				<textarea name="config" cols="80" rows="20" class="textArea" style="font-family: Courier,'Courier New',fixed-width">{$configFileContents|escape}</textarea>
+			</p>
+		</form>
+	{/if}
+</div><!-- .pkp_page_upgrade_complete -->
 
 {include file="common/footer.tpl"}
-

@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_citationParser_freecite_filter
+ * @defgroup plugins_citationParser_freecite_filter FreeCite Citation Filter
  */
 
 /**
  * @file plugins/citationParser/freecite/filter/FreeciteRawCitationNlm30CitationSchemaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FreeciteRawCitationNlm30CitationSchemaFilter
@@ -23,11 +23,11 @@ import('lib.pkp.plugins.metadata.nlm30.filter.Nlm30CitationSchemaFilter');
 define('FREECITE_WEBSERVICE', 'http://freecite.library.brown.edu/citations/create');
 
 class FreeciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFilter {
-	/*
+	/**
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function FreeciteRawCitationNlm30CitationSchemaFilter(&$filterGroup) {
+	function FreeciteRawCitationNlm30CitationSchemaFilter($filterGroup) {
 		$this->setDisplayName('FreeCite');
 
 		parent::Nlm30CitationSchemaFilter($filterGroup);
@@ -37,7 +37,7 @@ class FreeciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationParser.freecite.filter.FreeciteRawCitationNlm30CitationSchemaFilter';
@@ -48,11 +48,12 @@ class FreeciteRawCitationNlm30CitationSchemaFilter extends Nlm30CitationSchemaFi
 	// Implement template methods from Filter
 	//
 	/**
-	 * @see Filter::process()
-	 * @param $citationString string
+	 * @copydoc Filter::process()
+	 * @param $input string
 	 * @return MetadataDescription
 	 */
-	function &process($citationString) {
+	function &process(&$input) {
+		$citationString =& $input;
 		$nullVar = null;
 
 		// Freecite requires a post request

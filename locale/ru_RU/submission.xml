@@ -4,10 +4,11 @@
 <!--
   * locale/ru_RU/submission.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the ru_RU (Russian) locale.
+  * Localization strings for the ru_RU (Русский) locale.
   *
   -->
 
@@ -131,7 +132,7 @@
 	<message key="submission.page.review">#{$id} Рецензии</message>
 	<message key="submission.page.summary">#{$id} Резюме</message>
 	<message key="submission.peerReview">Рецензия</message>
-	<message key="submission.recommendation">Рекомендации</message>
+	<message key="submission.recommendation">Рекомендации: {$recommendation}</message>
 	<message key="submission.rejected">Отказ</message>
 	<message key="submission.request">Запросы</message>
 	<message key="submission.response">Ответ</message>
@@ -167,4 +168,33 @@
 	
 	<!-- Author Submission --> 
 	<message key="author.submit.submissionCitations">Дайте форматированный список ссылок на работы, использованные в данной рукописи.</message>	
+	<message key="metadata.property.displayName.author">Авторы</message>
+	<message key="metadata.property.displayName.editor">Редакторы</message>
+	<message key="metadata.property.displayName.date">Дата публикации</message>
+	<message key="metadata.property.validationMessage.date">Пожалуйста, введите корректную дату публикации (формат: ГГГГ-ММ-ДД).</message>
+	<message key="metadata.property.displayName.access-date">Дата доступа</message>
+	<message key="metadata.property.validationMessage.access-date">Пожалуйста, введите корректную дату доступа (формат: ГГГГ-ММ-ДД).</message>
+	<message key="metadata.property.displayName.issue">Выпуск</message>
+	<message key="metadata.property.validationMessage.issue">Пожалуйста, корректно укажите выпуск.</message>
+	<message key="metadata.property.displayName.volume">Том</message>
+	<message key="metadata.property.validationMessage.volume">Пожалуйста, корректно укажите том.</message>
+	<message key="metadata.property.displayName.chapter-title">Название раздела</message>
+	<message key="metadata.property.validationMessage.chapter-title">Пожалуйста, корректно укажите название раздела.</message>
+	<message key="metadata.property.displayName.edition">Редакция</message>
+	<message key="metadata.property.validationMessage.edition">Пожалуйста, корректно укажите редакцию.</message>
+	<message key="metadata.property.displayName.series">Серии</message>
+	<message key="metadata.property.validationMessage.series">Пожалуйста, корректно укажите серии.</message>
+	<message key="metadata.property.displayName.conf-date">Дата конференции</message>
+	<message key="metadata.property.validationMessage.conf-date">Пожалуйста, введите корректную дату конференции (формат: ГГГГ-ММ-ДД).</message>
+	<message key="metadata.property.displayName.conf-name">Название конференции</message>
+	<message key="metadata.property.validationMessage.conf-name">Пожалуйста, корректно укажите название конференции.</message>
+	<message key="submission.citations.editor.details.googleScholar">Google Scholar</message>
+	<message key="submission.citations.editor.details.queryGoogleScholar">Поиск в Google Scholar</message>
+	<message key="submission.indexingInformation">Индексная информация</message>
+	<message key="submission.uploadSuccessful">Ваш файл был выгружен.</message>
+	<message key="submission.loadMessage">Пожалуйста, подождите пока Ваш файл выгрузится на сервер.</message>
+	<message key="submission.date.mmdd">ММ-ДД</message>
+	<message key="submission.date.yyyymmdd">ГГГГ-ММ-ДД</message>
+	<message key="submission.form.replaceExisting">Заменить существующий файл?</message>
+	<message key="submission.reviewForm">Форма Рецензента</message>
 </locale>

@@ -3,7 +3,8 @@
 /**
  * @file includes/functions.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @ingroup index
@@ -20,49 +21,8 @@
  */
 if (!function_exists('import')) {
 	function import($class) {
-		static $deprecationWarning = null;
-
-		// Try to bypass include path for best performance
 		$filePath = str_replace('.', '/', $class) . '.inc.php';
-		if((@include_once BASE_SYS_DIR.'/'.$filePath) === false) {
-			// Oops, we found a legacy include statement,
-			// let's try the include path then.
-			require_once($filePath);
-			if (is_null($deprecationWarning) && class_exists('Config')) {
-				$deprecationWarning = (boolean)Config::getVar('debug', 'deprecation_warnings');
-			}
-			if ($deprecationWarning) trigger_error('Deprecated import of a partially qualified class name.');
-		}
-	}
-}
-
-if (!function_exists('file_get_contents')) {
-	// For PHP < 4.3.0
-	function file_get_contents($file) {
-		return join('', file($file));
-	}
-}
-
-if (!function_exists('stream_get_contents')) {
-	function stream_get_contents($fp) {
-		fflush($fp);
-	}
-}
-
-if (!function_exists('array_combine')) {
-	// For PHP 4
-	function array_combine($keys, $values) {
-		if (count($keys) != count($values)) return false;
-		if (empty($keys)) return false;
-
-		$out = array();
-		while(count($keys)) {
-			$key = array_shift($keys);
-			$value = array_shift($values);
-			if (!is_integer($key) && !is_string($key)) $key = (string) $key;
-			$out[$key] = $value;
-		}
-		return $out;
+		require_once(BASE_SYS_DIR.'/'.$filePath);
 	}
 }
 
@@ -81,9 +41,9 @@ function fatalError($reason) {
 		$isErrorCondition = false;
 	}
 
-	echo "<h1>$reason</h1>";
+	echo "<h1>" . htmlspecialchars($reason) . "</h1>";
 
-	if ($showStackTrace && checkPhpVersion('4.3.0')) {
+	if ($showStackTrace) {
 		echo "<h4>Stack Trace:</h4>\n";
 		$trace = debug_backtrace();
 
@@ -174,24 +134,6 @@ function checkPhpVersion($version) {
 }
 
 /**
- * Create a PHP4/5 compatible shallow
- * copy of the given object.
- * @param $object object
- * @return object the cloned object
- */
-function &cloneObject(&$object) {
-	if (checkPhpVersion('5.0.0')) {
-		// We use the PHP5 clone() syntax so that PHP4 doesn't
-		// raise a parse error.
-		$clonedObject = clone($object);
-	} else {
-		// PHP4 always clones objects on assignment
-		$clonedObject = $object;
-	}
-	return $clonedObject;
-}
-
-/**
  * Instantiates an object for a given fully qualified
  * class name after executing several checks on the class.
  *
@@ -224,7 +166,7 @@ function &instantiate($fullyQualifiedClassName, $expectedTypes = null, $expected
 	$errorFlag = false;
 
 	// Validate the class name
-	if (!String::regexp_match('/^[a-zA-Z0-9.]+$/', $fullyQualifiedClassName)) {
+	if (!preg_match('/^[a-zA-Z0-9.]+$/', $fullyQualifiedClassName)) {
 		return $errorFlag;
 	}
 
@@ -269,19 +211,11 @@ function &instantiate($fullyQualifiedClassName, $expectedTypes = null, $expected
 		fatalError('Cannot instantiate class. Class "'.$className.'" is not declared in "'.$fullyQualifiedClassName.'".');
 	}
 
-	// Check that the expected operation exists for the class.
-	if (!is_null($expectedMethods)) {
-		if (is_scalar($expectedMethods)) $expectedMethods = array($expectedMethods);
-		// Lower case comparison for PHP4 compatibility.
-		// We don't need the String class here as method names are
-		// always US-ASCII.
-		$declaredMethods = array_map('strtolower', get_class_methods($className));
-		foreach($expectedMethods as $expectedMethod) {
-			$requiredMethod = strtolower($expectedMethod);
-			if (!in_array($requiredMethod, $declaredMethods)) {
-				return $errorFlag;
-			}
-		}
+	// Ensure all expected methods are declared.
+	$expectedMethods = (array) $expectedMethods; // Possibly scalar or null; ensure array
+	$declaredMethods = get_class_methods($className);
+	if (count(array_intersect($expectedMethods, $declaredMethods)) != count($expectedMethods)) {
+		return $errorFlag;
 	}
 
 	// Instantiate the requested class
@@ -332,5 +266,30 @@ function stripAssocArray($values) {
 		}
 	}
 	return $values;
+}
+
+/**
+ * Perform a code-safe strtolower, i.e. one that doesn't behave differently
+ * based on different locales. (tr_TR, I'm looking at you.)
+ * @param $str string Input string
+ * @return string
+ */
+function strtolower_codesafe($str) {
+	return strtr($str, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+}
+
+/**
+ * Convert a Windows path to a cygwin path.
+ * @param string $path Windows path
+ * @return string Cygwin path.
+ */
+function cygwinConversion($path) {
+	$path = str_replace('\\', '/', $path);
+	$matches = null;
+	PKPString::regexp_match_get('/^([A-Z]):/i', $path, $matches);
+	if (isset($matches[1]) && strlen($matches[1]) === 1) {
+		$path = PKPString::regexp_replace('/^[A-Z]:/i', '/cygdrive/' . strtolower($matches[1]), $path);
+	}
+	return $path;
 }
 ?>

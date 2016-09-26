@@ -3,7 +3,8 @@
 /**
  * @file classes/controllers/listbuilder/ListbuilderList.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ListbuilderList
@@ -15,13 +16,13 @@
 
 class ListbuilderList {
 
-	/** @var $_id mixed List id. */
+	/** @var mixed List id. */
 	var $_id;
 
-	/** @var $_title string Locale key. */
+	/** @var string Locale key. */
 	var $_title;
 
-	/** @var $_data array */
+	/** @var array */
 	var $_data;
 
 	/**

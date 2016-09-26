@@ -1,7 +1,8 @@
 /**
  * @file js/classes/features/OrderListbuilderItemsFeature.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class OrderListbuilderItemsFeature
@@ -15,6 +16,7 @@
 	/**
 	 * @constructor
 	 * @inheritDoc
+	 * @extends $.pkp.classes.features.OrderItemsFeature
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature =
 			function(gridHandler, options) {
@@ -33,11 +35,20 @@
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.addFeatureHtml =
 			function($gridElement, options) {
+
+		var $itemSequenceInput, $gridRows, index, limit, $gridRow,
+				$itemSequenceInputClone;
+
 		this.parent('addFeatureHtml', $gridElement, options);
 
-		var $itemSequenceInput = this.getSequenceInput_();
-		var $gridRows = this.gridHandler_.getRows();
-		$gridRows.append($itemSequenceInput);
+		$itemSequenceInput = this.getSequenceInput_();
+		$gridRows = this.gridHandler.getRows();
+		for (index = 0, limit = $gridRows.length; index < limit; index++) {
+			$gridRow = $($gridRows[index]);
+			$itemSequenceInputClone = $itemSequenceInput.clone();
+
+			$('td.first_column', $gridRow).append($itemSequenceInputClone);
+		}
 	};
 
 
@@ -79,10 +90,12 @@
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.storeRowOrder =
 			function(index, $row) {
-		var seq = index + 1;
-		var $orderableInput = $row.find('.itemSequence');
+		var seq = index + 1,
+				$orderableInput = $row.find('.itemSequence'),
+				$modifiedInput;
+
 		$orderableInput.attr('value', seq);
-		var $modifiedInput = $row.find('.isModified');
+		$modifiedInput = $row.find('.isModified');
 		$modifiedInput.attr('value', 1);
 	};
 
@@ -94,6 +107,7 @@
 			function() {
 		this.parent('saveOrderHandler');
 		this.toggleState(false);
+
 		return false;
 	};
 
@@ -103,8 +117,10 @@
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.
 			updateOrderCallback = function(contextElement, event, ui) {
+
+		var $rows;
 		this.parent('updateOrderCallback');
-		var $rows = this.gridHandler_.getRows();
+		$rows = this.gridHandler.getRows();
 		this.storeOrder($rows);
 	};
 
@@ -114,15 +130,15 @@
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.
 			clickOrderHandler = function() {
-		var $selects = $('select:visible', this.getGridHtmlElement());
+		var $selects = $('select:visible', this.getGridHtmlElement()),
+				index, limit;
 		if ($selects.length > 0) {
-			var index, limit;
 			for (index = 0, limit = $selects.length; index < limit; index++) {
-				this.gridHandler_.saveRow($($selects[index]).parents('.gridRow'));
+				this.gridHandler.saveRow($($selects[index]).parents('.gridRow'));
 			}
 		}
 
-		this.parent('clickOrderHandler');
+		return /** @type {boolean} */ (this.parent('clickOrderHandler'));
 	};
 
 
@@ -132,20 +148,22 @@
 	/**
 	 * @inheritDoc
 	 */
-	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.appendRow =
-			function($newRow) {
-		this.parent('appendRow', $newRow);
-		this.formatAndStoreNewRow_($newRow);
+	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.addElement =
+			function($newElement) {
+		this.parent('addElement', $newElement);
+		this.formatAndStoreNewRow_($newElement);
+		return false;
 	};
 
 
 	/**
 	 * @inheritDoc
 	 */
-	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.replaceRow =
+	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.replaceElement =
 			function($newContent) {
-		this.parent('replaceRow', $newContent);
+		this.parent('replaceElement', $newContent);
 		this.formatAndStoreNewRow_($newContent);
+		return false;
 	};
 
 
@@ -155,7 +173,7 @@
 	/**
 	 * Get the sequence input html element.
 	 * @private
-	 * @return {jQuery} Sequence input.
+	 * @return {jQueryObject} Sequence input.
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.
 			getSequenceInput_ = function() {
@@ -170,14 +188,14 @@
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.
 			toggleContentHandlers_ = function() {
-		var $rows = this.gridHandler_.getRows();
-		var index, limit;
+		var $rows = this.gridHandler.getRows(),
+				index, limit, $row;
 		for (index = 0, limit = $rows.length; index < limit; index++) {
-			var $row = $($rows[index]);
-			if (this.isOrdering_) {
+			$row = $($rows[index]);
+			if (this.isOrdering) {
 				$row.find('.gridCellDisplay').unbind('click');
 			} else {
-				this.gridHandler_.attachContentHandlers_($row);
+				this.gridHandler.attachContentHandlers_($row);
 			}
 		}
 	};
@@ -186,16 +204,18 @@
 	/**
 	 * Format and store new row.
 	 * @private
-	 * @param {jQuery} $row The new row element.
+	 * @param {jQueryObject} $row The new row element.
 	 */
 	$.pkp.classes.features.OrderListbuilderItemsFeature.prototype.
 			formatAndStoreNewRow_ = function($row) {
-		var $sequenceInput = this.getSequenceInput_();
-		$row.append($sequenceInput);
-		var $rows = this.gridHandler_.getRows();
+
+		var $rows;
+
+		$row.children().after(this.getSequenceInput_());
+		$rows = this.gridHandler.getRows();
 		this.storeOrder($rows);
 	};
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

@@ -1,7 +1,8 @@
 {**
  * templates/controllers/listbuilder/multipleListsListbuilder.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Displays a MultipleListsListbuilder object
@@ -15,7 +16,7 @@
 {elseif count($lists) == 3}
 	{assign var=widthClass value="pkp_helpers_third"}
 {/if}
-<script type="text/javascript">
+<script>
 	$(function() {ldelim}
 		$('#{$gridId|escape}').pkpHandler(
 			'$.pkp.controllers.listbuilder.MultipleListsListbuilderHandler',
@@ -40,13 +41,13 @@
 		{include file="controllers/grid/gridHeader.tpl"}
 		{foreach from=$lists item=list}
 			{assign var=listId value=$list->getId()}
-			<div class="list_wrapper {$widthClass}">
+			<div class="list_wrapper {$widthClass} list_{$listId|escape}">
 				{if $grid->getActions($smarty.const.GRID_ACTION_POSITION_ABOVE)}
 					{include file="controllers/grid/gridActionsAbove.tpl" actions=$grid->getActions($smarty.const.GRID_ACTION_POSITION_ABOVE) gridId=$gridId}
 				{/if}
 				{if $list->getTitle()}
-					<div class="pkp_helpers_align_left pkp_helpers_full">
-						<span class="h4 no_border pkp_helpers_align_left">{$list->getTitle()|translate}</span>
+					<div class="list_header">
+						{$list->getTitle()|translate}
 					</div>
 				{/if}
 				{assign var=gridTableId value=$staticId|concat:"-table-":$listId}

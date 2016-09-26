@@ -1,7 +1,8 @@
 {**
  * templates/controllers/listbuilder/listbuilder.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Displays a Listbuilder object
@@ -12,7 +13,7 @@
 {assign var=gridTableId value=$gridId|concat:"-table"}
 {assign var=gridActOnId value=$gridTableId|concat:">tbody:first"}
 
-<script type="text/javascript">
+<script>
 	$(function() {ldelim}
 		$('#{$gridId|escape}').pkpHandler(
 			'$.pkp.controllers.listbuilder.ListbuilderHandler',
@@ -31,10 +32,9 @@
 
 	<div class="wrapper">
 		{include file="controllers/grid/gridHeader.tpl"}
-		{include file="controllers/listbuilder/listbuilderTable.tpl}
+		{include file="controllers/listbuilder/listbuilderTable.tpl"}
 		{if $hasOrderLink}
 			{include file="controllers/grid/gridOrderFinishControls.tpl" gridId=$staticId}
 		{/if}
 	</div>
 </div>
-

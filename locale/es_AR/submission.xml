@@ -2,9 +2,10 @@
 <!DOCTYPE locale SYSTEM "../../dtd/locale.dtd">
 
 <!--
-  * ../pkp//locale/es_AR/submission.xml
+  * locale/es_AR/submission.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
   * Localization strings for the es_AR (Español (Argentina)) locale.
@@ -128,7 +129,7 @@
 	<message key="submission.page.review">#{$id} Revisión</message>
 	<message key="submission.page.summary">#{$id} Resumen</message>
 	<message key="submission.peerReview">Peer&amp;nbsp;Review</message>
-	<message key="submission.recommendation">Recomendación</message>
+	<message key="submission.recommendation">Recomendación: {$recommendation}</message>
 	<message key="submission.rejected">Rechazado</message>
 	<message key="submission.request">Pedir</message>
 	<message key="submission.response">Respuesta</message>
@@ -164,7 +165,7 @@
 	<message key="submission.layout.galleyLanguageRequired">Un lenguaje de galera es requerido.</message>
 	<message key="submission.layout.galleyLocaleRequired">Una configuración regional para la galerada es requerida</message>
 	<message key="submission.citations">Referencias</message>
-	<message key="submission.citations.jQueryRequired"><![CDATA[La edicion de citas requiere que jQuery esté habilitado. Por favor diríjase a la <a target="_new" href="{$genericPluginsUrl}"> página de plugins genéricos </a> y habilite el plugin de jQuery allí]]></message>
+	<message key="submission.citations.jQueryRequired"><![CDATA[La edicion de citas requiere que jQuery esté habilitado. Por favor diríjase a la <a target="_blank" href="{$genericPluginsUrl}"> página de plugins genéricos </a> y habilite el plugin de jQuery allí]]></message>
 	<message key="submission.citations.editor.citationlist.title">Editar Citaciones</message>
 	<message key="submission.citations.grid.importCitations">Importar Citaciones</message>
 	<message key="submission.citations.grid.parseCitation">Parsear</message>

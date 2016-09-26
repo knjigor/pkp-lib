@@ -4,10 +4,11 @@
 <!--
   * locale/el_GR/common.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the el_GR (Greek) locale.
+  * Localization strings for the el_GR (ελληνικά) locale.
   *
   -->
 
@@ -15,7 +16,6 @@
 	<message key="about.aboutSite">Σχετικά με τον ιστότοπο</message>
 	<message key="about.contact">Επικοινωνία</message>
 	<message key="about.contact.email">Διεύθυνση ηλεκτρονικού ταχυδρομείου</message>
-	<message key="about.contact.fax">Φαξ</message>
 	<message key="about.contact.phone">Τηλέφωνο</message>
 	<message key="about.contact.principalContact">Υπεύθυνος Επικοινωνίας</message>
 	<message key="about.contact.supportContact">Τεχνική Υποστήριξη</message>
@@ -34,6 +34,7 @@
 	<message key="common.preview">Επισκόπηση</message>
 	<message key="common.activate">Ενεργοποίηση</message>
 	<message key="common.deactivate">Απενεργοποίηση</message>
+	<message key="common.designation">Designation</message>
 	<message key="common.action">Ενέργεια</message>
 	<message key="common.active">Ενεργό</message>
 	<message key="common.add">Προσθήκη</message>
@@ -90,6 +91,8 @@
 	<message key="common.fileName">Όνομα αρχείου</message>
 	<message key="common.fileSize">Μέγεθος αρχείου</message>
 	<message key="common.fileType">Τύπος αρχείου</message>
+	<message key="common.file.namingPattern">{$username}, {$userGroup}, {$originalFilename}</message>
+	<message key="common.file.anonymousNamingPattern">{$userGroup}, {$originalFilename}</message>
 	<message key="common.height">Ύψος</message>
 	<message key="common.homePageHeaderLogo.altText">Logo Επικεφαλίδας Αρχικής Σελίδας</message>
 	<message key="common.hour">Ώρα</message>
@@ -246,7 +249,7 @@
 	<message key="navigation.userHome">Αρχική Σελίδα Χρήστη</message>
 	<message key="navigation.user">Χρήστης</message>
 	<message key="search.abstract">Περίληψη</message>
-	<message key="search.allFields">Όλα</message>
+	<message key="search.author">Συγγραφείς</message>
 	<message key="search.coverage">Κάλυψη</message>
 	<message key="search.date">Ημερομηνία</message>
 	<message key="search.dateFrom">Από</message>
@@ -269,20 +272,23 @@
 	<message key="search.title">Τίτλος</message>
 	<message key="search.typeMethodApproach">Τύπος (μέθοδος/προσέγγιση)</message>
 	<message key="common.ccLicense"><![CDATA[<br /><br />
-		<a target="_new" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
-			<img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png"/>
+		<a target="_blank" rel="license" href="http://creativecommons.org/licenses/by/3.0/">
+			<img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png"/>
 		</a>
 		<br/>
-		Η χρήση του περιεχομένου καθορίζεται από την άδεια <a rel="license" target="_new" href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0  License</a>.]]></message>
+		Η χρήση του περιεχομένου καθορίζεται από την άδεια <a rel="license" target="_blank" href="http://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0  License</a>.]]></message>
 	<message key="common.ccLicense.rt"><![CDATA[<div class="rtBlock">
 		<br />
-		<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/80x15.png" /></a>
+		<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="//i.creativecommons.org/l/by/3.0/80x15.png" /></a>
 		<br />
-		Η χρήση του περιεχομένου καθορίζεται από την άδεια <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_new">Creative Commons Attribution 3.0 License</a>.
+		Η χρήση του περιεχομένου καθορίζεται από την άδεια <a rel="license" href="http://creativecommons.org/licenses/by/3.0/" target="_blank">Creative Commons Attribution 3.0 License</a>.
 	</div>]]></message>
 	<message key="common.manage">Διαχείριση</message>
 	<message key="common.noComments">Κανένα Σχόλιο</message>
 	<message key="form.startsWith">αρχίζει από</message>
+	<message key="notification.addedAuditor">Ο Ελγκτής (Autidor) έχει προστεθεί.</message>
+	<message key="notification.removedAuditor">Ο Ελγκτής (Autidor) έχει αφαιρεθεί.</message>
+	<message key="notification.reviewAcknowledged">Ο αξιολογητής επισημάνθηκε ως άγνωστος. Το Email δεν αποστέλλεται.</message>
 	<message key="notification.allow">Εμφάνιση αυτών των τύπων ειδοποιήσεων στην προσωπική μου ροή ειδοποιήσεων</message>
 	<message key="notification.confirmError">Παρουσίαστηκε ένα σφάλμα κατά την επιβεβαίωση της συνδρομής σας.</message>
 	<message key="notification.confirmSuccess">Η συνδρομή σας δημιουργήθηκε επιτυχώς.</message>
@@ -310,6 +316,7 @@
 	<message key="notification.unsubscribe">Διαγραφή από τη λίστα</message>
 	<message key="notification.unsubscribeError">Παρουσιάστηκε ένα σφάλμα κατά την διαγραφή σας από τη λίστα. Παρακαλούμε επιβεβαιωθείτε ότι η διεύθυση και ο κωδικός που εισάγατε είναι σωστά.</message>
 	<message key="notification.unsubscribeSuccess">Διαγραφήκατε με επιτυχία.</message>
+	<message key="notification.savedSubmissionMetadata">Τα μεταδεδομένα της υποβολής έχουν αποθηκευτεί.</message>
 	<message key="common.re">Re:</message>
 	<message key="common.disable">Απενεργοποίηση</message>
 	<message key="common.enable">Ενεργοποίηση</message>
@@ -324,4 +331,36 @@
 	<message key="common.uploadFailed">Το αρχείο δεν ανέβηκε. Σας παρακαλούμε προσπαθήστε ξανά ή επικοινωνήστε με τον διαχειριστή αν το πρόβλημα επιμείνει.</message>
 	<message key="common.loading">Φόρτωση...</message>
 	<message key="navigation.dashboard">Ταμπλό</message>
+	<message key="reviewer.submission.reviewSchedule">Πρόγραμμα Αξιολόγησης</message>
+	<message key="reviewer.submission.reviewRequestDate">Αίτημα υπεύθυνου έκδοσης</message>
+	<message key="reviewer.submission.responseDueDate">Ημερομηνία Προθεσμίας Απάντησης</message>
+	<message key="reviewer.submission.reviewDueDate">Ημερομηνία Προθεσμίας Αξιολόγησης</message>
+
+	<!-- Information Center -->
+	<message key="informationCenter.informationCenter">Κέντρο Πληροφόρησης</message>
+	<message key="informationCenter.composeNote">Σύνταξη Σημειώματος</message>
+	<message key="informationCenter.addFileNote">Προσθήκη στο Αρχείο</message>
+	<message key="informationCenter.addSubmissionNote">Προσθήκη σημειώματος στην Υποβολή</message>
+	<message key="informationCenter.noNotes">Δεν υπάρχουν σημειώσεις για εμφάνιση.</message>
+	<message key="informationCenter.currentNotes">Τρέχουσα Αναθεώρηση</message>
+	<message key="informationCenter.pastNotes">Προηγούμενες Αναθεωρήσεις</message>
+	<message key="informationCenter.lastUpdated">Τελευταία Ενημέρωση</message>
+	<message key="informationCenter.deleteConfirm">Είστε σίγουροι ότι επιθυμείτε να διαγράψετε αυτό το σημείωμα;</message>
+	<message key="informationCenter.currentHistory">Τρέχουσα Αναθεώρηση</message>
+	<message key="informationCenter.pastHistory">Προηγούμενες Αναθεωρήσεις</message>
+	<message key="informationCenter.history.noItems">Δεν υπάρχουν καταχωρίσεις στο Ιστορικό.</message>
+	<message key="informationCenter.history.notePosted">Αναστήστε νέες σημειώσεις.</message>
+	<message key="informationCenter.history.messageSent">Ειδοποίηση να αποστέλλεται στους χρήστες.</message>
+	<message key="informationCenter.notify.chooseMessage">Επιλέξτε ένα προκαθορισμένο μήνυμα ή συμπληρώστε την παρακάτω φόρμα.</message>
+	<message key="informationCenter.notify.message">Μήνυμα</message>
+	<message key="informationCenter.notify.warning">Παρακαλούμε σιγουρευτείτε ότι έχετε συμπληρώσει το πεδίο μηνύματος και επιλέξτε τουλάχιστον έναν παραλήπτη του μηνύματος.</message>
+	<message key="navigation.goBack">Επιστροφή</message>
+	<message key="notification.type.allReviewsIn">Όλες οι ανθεωρήσεις και μια απόφαση χρειάζονται στο {$stage}.</message>
+	<message key="notification.type.allRevisionsIn">Ένα αναθεωρημένο αρχείο έχει μεταφορτωθεί για εξέταση από εσας ως Επιμελητής στο {$stage}.</message>
+	<message key="notification.type.pendingRevisions">Απαιτούνται αναθεωρήσεις στο {$stage}.</message>
+	<message key="notification.type.pendingRevisions.title">Ανθεωρήσεις έχουν υποβληθεί στο {$stage}.</message>
+	<message key="notification.signedFile">Το αρχείο έχει θεωρηθεί.</message>
+	<message key="notification.type.auditorRequest">Έχετε κληθεί για τον έλεγχο του αρχείου "{$file}"</message>
+	<message key="notification.type.roundStatusTitle">Κατάσταση γύρου {$round}.</message>
+	<message key="user.authorization.authorRoleMissing">Δεν σας έχουν δωθεί πρόσφατα τα ανάλογα δικαιώματα για να δείτε την υποβολή. Παρακαλούμε επεξεργαστείτε το προφίλ σας για να βεβαιωθείτε ότι σας έχουν εκχωρηθεί οι κατάλληλοι ρόλοι μέσω του "Σύνδεση Ως".</message>
 </locale>

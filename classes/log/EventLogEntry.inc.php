@@ -3,7 +3,8 @@
 /**
  * @file classes/log/EventLogEntry.inc.php
  *
- * Copyright (c) 2003-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2003-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class EventLogEntry
@@ -13,6 +14,9 @@
  * @brief Describes an entry in the event log.
  */
 
+// Information Center events
+define('SUBMISSION_LOG_NOTE_POSTED',			0x01000000);
+define('SUBMISSION_LOG_MESSAGE_SENT',			0x01000001);
 
 class EventLogEntry extends DataObject {
 	/**
@@ -40,7 +44,7 @@ class EventLogEntry extends DataObject {
 	 * @param $userId int
 	 */
 	function setUserId($userId) {
-		return $this->setData('userId', $userId);
+		$this->setData('userId', $userId);
 	}
 
 	/**
@@ -56,7 +60,7 @@ class EventLogEntry extends DataObject {
 	 * @param $dateLogged datestamp
 	 */
 	function setDateLogged($dateLogged) {
-		return $this->setData('dateLogged', $dateLogged);
+		$this->setData('dateLogged', $dateLogged);
 	}
 
 	/**
@@ -72,7 +76,7 @@ class EventLogEntry extends DataObject {
 	 * @param $ipAddress string
 	 */
 	function setIPAddress($ipAddress) {
-		return $this->setData('ipAddress', $ipAddress);
+		$this->setData('ipAddress', $ipAddress);
 	}
 
 	/**
@@ -88,7 +92,7 @@ class EventLogEntry extends DataObject {
 	 * @param $eventType int
 	 */
 	function setEventType($eventType) {
-		return $this->setData('eventType', $eventType);
+		$this->setData('eventType', $eventType);
 	}
 
 	/**
@@ -104,7 +108,7 @@ class EventLogEntry extends DataObject {
 	 * @param $assocType int
 	 */
 	function setAssocType($assocType) {
-		return $this->setData('assocType', $assocType);
+		$this->setData('assocType', $assocType);
 	}
 
 	/**
@@ -120,7 +124,7 @@ class EventLogEntry extends DataObject {
 	 * @param $assocId int
 	 */
 	function setAssocId($assocId) {
-		return $this->setData('assocId', $assocId);
+		$this->setData('assocId', $assocId);
 	}
 
 	/**
@@ -136,7 +140,7 @@ class EventLogEntry extends DataObject {
 	 * @param $message string
 	 */
 	function setMessage($message) {
-		return $this->setData('message', $message);
+		$this->setData('message', $message);
 	}
 
 	/**
@@ -152,7 +156,7 @@ class EventLogEntry extends DataObject {
 	 * @param $isTranslated int
 	 */
 	function setIsTranslated($isTranslated) {
-		return $this->setData('isTranslated', $isTranslated);
+		$this->setData('isTranslated', $isTranslated);
 	}
 
 	/**
@@ -166,7 +170,10 @@ class EventLogEntry extends DataObject {
 
 		// Otherwise, translate it and include parameters.
 		if ($locale === null) $locale = AppLocale::getLocale();
-		return __($message, array_merge($this->_data, $this->getParams()), $locale);
+
+		$params = array_merge($this->_data, $this->getParams());
+		unset($params['params']); // Clean up for translate call
+		return __($message, $params, $locale);
 	}
 
 	/**
@@ -182,7 +189,7 @@ class EventLogEntry extends DataObject {
 	 * @param $params array
 	 */
 	function setParams($params) {
-		return $this->setData('params', $params);
+		$this->setData('params', $params);
 	}
 
 	/**
@@ -192,7 +199,7 @@ class EventLogEntry extends DataObject {
 	function getUserFullName() {
 		$userFullName =& $this->getData('userFullName');
 		if(!isset($userFullName)) {
-			$userDao =& DAORegistry::getDAO('UserDAO');
+			$userDao = DAORegistry::getDAO('UserDAO');
 			$userFullName = $userDao->getUserFullName($this->getUserId(), true);
 		}
 
@@ -207,7 +214,7 @@ class EventLogEntry extends DataObject {
 		$userEmail =& $this->getData('userEmail');
 
 		if(!isset($userEmail)) {
-			$userDao =& DAORegistry::getDAO('UserDAO');
+			$userDao = DAORegistry::getDAO('UserDAO');
 			$userEmail = $userDao->getUserEmail($this->getUserId(), true);
 		}
 

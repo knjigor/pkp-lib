@@ -1,13 +1,16 @@
 <?php
 
 /**
- * @defgroup search
+ * @defgroup search Search
+ * Implements search tools, such as file parsers, workflow integration,
+ * indexing, querying, etc.
  */
 
 /**
  * @file classes/search/SearchFileParser.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class SearchFileParser
@@ -19,10 +22,10 @@
 
 class SearchFileParser {
 
-	/** @var $filePath string the complete path to the file */
+	/** @var string the complete path to the file */
 	var $filePath;
 
-	/** @var $fp int file handle */
+	/** @var int file handle */
 	var $fp;
 
 	/**

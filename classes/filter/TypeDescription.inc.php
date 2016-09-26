@@ -2,7 +2,8 @@
 /**
  * @file classes/filter/TypeDescription.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class TypeDescription
@@ -116,7 +117,7 @@ class TypeDescription {
 	 * @param $object mixed
 	 * @return boolean
 	 */
-	function isCompatible(&$object) {
+	function isCompatible($object) {
 		// Null is never compatible
 		if (is_null($object)) return false;
 
@@ -197,7 +198,7 @@ class TypeDescription {
 				break;
 
 			case 2:
-				// This is an array, identify it's cardinality
+				// This is an array, identify its cardinality
 				$typeName = $typeNameParts[0];
 				$cardinality = trim($typeNameParts[1], ']');
 				if($cardinality === '') {

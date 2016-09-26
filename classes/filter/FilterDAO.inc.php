@@ -3,7 +3,8 @@
 /**
  * @file classes/filter/FilterDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FilterDAO
@@ -68,17 +69,15 @@ class FilterDAO extends DAO {
 	 * @param $persist boolean whether to actually persist the filter
 	 * @return PersistableFilter|boolean the new filter if installation successful, otherwise 'false'.
 	 */
-	function &configureObject($filterClassName, $filterGroupSymbolic, $settings = array(), $asTemplate = false, $contextId = 0, $subFilters = array(), $persist = true) {
-		$falseVar = false;
-
+	function configureObject($filterClassName, $filterGroupSymbolic, $settings = array(), $asTemplate = false, $contextId = 0, $subFilters = array(), $persist = true) {
 		// Retrieve the filter group from the database.
-		$filterGroupDao =& DAORegistry::getDAO('FilterGroupDAO'); /* @var $filterGroupDao FilterGroupDAO */
+		$filterGroupDao = DAORegistry::getDAO('FilterGroupDAO'); /* @var $filterGroupDao FilterGroupDAO */
 		$filterGroup =& $filterGroupDao->getObjectBySymbolic($filterGroupSymbolic);
-		if (!is_a($filterGroup, 'FilterGroup')) return $falseVar;
+		if (!is_a($filterGroup, 'FilterGroup')) return false;
 
 		// Instantiate the filter.
 		$filter =& instantiate($filterClassName, 'PersistableFilter', null, 'execute', $filterGroup); /* @var $filter PersistableFilter */
-		if (!is_object($filter)) return $falseVar;
+		if (!is_object($filter)) return false;
 
 		// Is this a template?
 		$filter->setIsTemplate((boolean)$asTemplate);
@@ -102,7 +101,7 @@ class FilterDAO extends DAO {
 		// Persist the filter.
 		if ($persist) {
 			$filterId = $this->insertObject($filter, $contextId);
-			if (!is_integer($filterId) || $filterId == 0) return $falseVar;
+			if (!is_integer($filterId) || $filterId == 0) return false;
 		}
 
 		return $filter;
@@ -115,8 +114,8 @@ class FilterDAO extends DAO {
 	 * @param $contextId integer
 	 * @return integer the new filter id
 	 */
-	function insertObject(&$filter, $contextId = CONTEXT_ID_NONE) {
-		$filterGroup =& $filter->getFilterGroup();
+	function insertObject($filter, $contextId = CONTEXT_ID_NONE) {
+		$filterGroup = $filter->getFilterGroup();
 		assert($filterGroup->getSymbolic() != FILTER_GROUP_TEMPORARY_ONLY);
 
 		$this->update(
@@ -130,7 +129,7 @@ class FilterDAO extends DAO {
 				$filter->getClassName(),
 				$filter->getIsTemplate()?1:0,
 				(int) $filter->getParentFilterId(),
-				(int) $filter->getSeq()
+				(int) $filter->getSequence()
 			)
 		);
 		$filter->setId((int)$this->getInsertId());
@@ -161,7 +160,7 @@ class FilterDAO extends DAO {
 	 * @return PersistableFilter
 	 */
 	function &getObjectById($filterId, $allowSubfilter = false) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM filters
 			 WHERE '.($allowSubfilter ? '' : 'parent_filter_id = 0 AND '). '
 			 filter_id = ?',
@@ -170,12 +169,10 @@ class FilterDAO extends DAO {
 
 		$filter = null;
 		if ($result->RecordCount() != 0) {
-			$filter =& $this->_fromRow($result->GetRowAssoc(false));
+			$filter = $this->_fromRow($result->GetRowAssoc(false));
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $filter;
 	}
 
@@ -190,7 +187,7 @@ class FilterDAO extends DAO {
 	 * @return DAOResultFactory
 	 */
 	function &getObjectsByClass($className, $contextId = CONTEXT_ID_NONE, $getTemplates = false, $allowSubfilters = false) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT	* FROM filters
 			 WHERE	context_id = ? AND
 				class_name = ? AND
@@ -216,7 +213,7 @@ class FilterDAO extends DAO {
 	 * @return DAOResultFactory
 	 */
 	function &getObjectsByGroupAndClass($groupSymbolic, $className, $contextId = CONTEXT_ID_NONE, $getTemplates = false, $allowSubfilters = false) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT f.* FROM filters f'.
 			' INNER JOIN filter_groups fg ON f.filter_group_id = fg.filter_group_id'.
 			' WHERE fg.symbolic = ? AND f.context_id = ? AND f.class_name = ?'.
@@ -252,7 +249,7 @@ class FilterDAO extends DAO {
 		$filterCacheKey = md5($inputTypeDescription.'=>'.$outputTypeDescription);
 		if (!isset($filterCache[$filterCacheKey])) {
 			// Get all adapter filters.
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT f.*'.
 				' FROM filters f'.
 				'  INNER JOIN filter_groups fg ON f.filter_group_id = fg.filter_group_id'.
@@ -308,7 +305,7 @@ class FilterDAO extends DAO {
 	 */
 	function &getObjectsByGroup($groupSymbolic, $contextId = CONTEXT_ID_NONE, $getTemplates = false, $checkRuntimeEnvironment = true) {
 		// 1) Get all available transformations in the group.
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT f.* FROM filters f'.
 			' INNER JOIN filter_groups fg ON f.filter_group_id = fg.filter_group_id'.
 			' WHERE fg.symbolic = ? AND '.($getTemplates ? 'f.is_template = 1' : 'f.is_template = 0').
@@ -323,7 +320,7 @@ class FilterDAO extends DAO {
 		//    environment.
 		$matchingFilters = array();
 		foreach($result->GetAssoc() as $filterRow) {
-			$filterInstance =& $this->_fromRow($filterRow);
+			$filterInstance = $this->_fromRow($filterRow);
 			if (!$checkRuntimeEnvironment || $filterInstance->isCompatibleWithRuntimeEnvironment()) {
 				$matchingFilters[$filterInstance->getId()] =& $filterInstance;
 			}
@@ -341,7 +338,7 @@ class FilterDAO extends DAO {
 		$filterGroup =& $filter->getFilterGroup();
 		assert($filterGroup->getSymbolic() != FILTER_GROUP_TEMPORARY_ONLY);
 
-		$returner = $this->update(
+		$this->update(
 			'UPDATE	filters
 			SET	filter_group_id = ?,
 				display_name = ?,
@@ -356,7 +353,7 @@ class FilterDAO extends DAO {
 				$filter->getClassName(),
 				$filter->getIsTemplate()?1:0,
 				(int) $filter->getParentFilterId(),
-				(int) $filter->getSeq(),
+				(int) $filter->getSequence(),
 				(int) $filter->getId()
 			)
 		);
@@ -450,7 +447,7 @@ class FilterDAO extends DAO {
 	 * @return int
 	 */
 	function getInsertId() {
-		return parent::getInsertId('filters', 'filter_id');
+		return parent::_getInsertId('filters', 'filter_id');
 	}
 
 
@@ -465,7 +462,7 @@ class FilterDAO extends DAO {
 	 */
 	function &_newDataObject($filterClassName, $filterGroupId) {
 		// Instantiate the filter group.
-		$filterGroupDao =& DAORegistry::getDAO('FilterGroupDAO'); /* @var $filterGroupDao FilterGroupDAO */
+		$filterGroupDao = DAORegistry::getDAO('FilterGroupDAO'); /* @var $filterGroupDao FilterGroupDAO */
 		$filterGroup =& $filterGroupDao->getObjectById($filterGroupId);
 		assert(is_a($filterGroup, 'FilterGroup'));
 
@@ -483,7 +480,7 @@ class FilterDAO extends DAO {
 	 * @param $row array
 	 * @return PersistableFilter
 	 */
-	function &_fromRow(&$row) {
+	function _fromRow($row) {
 		static $lockedFilters = array();
 		$filterId = $row['filter_id'];
 
@@ -497,14 +494,14 @@ class FilterDAO extends DAO {
 		$lockedFilters[$filterId] = true;
 
 		// Instantiate the filter.
-		$filter =& $this->_newDataObject($row['class_name'], (integer)$row['filter_group_id']);
+		$filter = $this->_newDataObject($row['class_name'], (integer)$row['filter_group_id']);
 
 		// Configure the filter instance
 		$filter->setId((int)$row['filter_id']);
 		$filter->setDisplayName($row['display_name']);
 		$filter->setIsTemplate((boolean)$row['is_template']);
 		$filter->setParentFilterId((int)$row['parent_filter_id']);
-		$filter->setSeq((int)$row['seq']);
+		$filter->setSequence((int)$row['seq']);
 		$this->getDataObjectSettings('filter_settings', 'filter_id', $row['filter_id'], $filter);
 
 		// Recursively retrieve sub-filters of this filter.
@@ -530,7 +527,7 @@ class FilterDAO extends DAO {
 
 		// Retrieve the sub-filters from the database.
 		$parentFilterId = $parentFilter->getId();
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM filters WHERE parent_filter_id = ? ORDER BY seq',
 			(int) $parentFilterId
 		);
@@ -541,12 +538,11 @@ class FilterDAO extends DAO {
 			// Retrieve the sub filter.
 			// NB: This recursively loads sub-filters
 			// of this filter via _fromRow().
-			$subFilter =& $daoResultFactory->next();
+			$subFilter = $daoResultFactory->next();
 
 			// Add the sub-filter to the filter list
 			// of its parent filter.
 			$parentFilter->addFilter($subFilter);
-			unset($subFilter);
 		}
 	}
 
@@ -575,11 +571,11 @@ class FilterDAO extends DAO {
 	 * the given parent filter.
 	 * @param $parentFilterId integer
 	 */
-	function _deleteSubFiltersByParentFilterId(&$parentFilterId) {
+	function _deleteSubFiltersByParentFilterId($parentFilterId) {
 		$parentFilterId = (int)$parentFilterId;
 
 		// Identify sub-filters.
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM filters WHERE parent_filter_id = ?',
 			(int) $parentFilterId
 		);

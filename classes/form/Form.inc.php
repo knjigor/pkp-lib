@@ -1,13 +1,17 @@
 <?php
 
 /**
- * @defgroup form
+ * @defgroup form Form
+ * Implements a toolkit for the server-side implementation of forms, including
+ * initializing forms with presets, reading submitted content, validating
+ * content, and saving the results.
  */
 
 /**
  * @file classes/form/Form.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Form
@@ -20,24 +24,28 @@ import('lib.pkp.classes.form.FormError');
 import('lib.pkp.classes.form.FormBuilderVocabulary');
 
 // Import all form validators for convenient use in sub-classes
-import('lib.pkp.classes.form.validation.FormValidatorAlphaNum');
+import('lib.pkp.classes.form.validation.FormValidatorUsername');
 import('lib.pkp.classes.form.validation.FormValidatorArray');
 import('lib.pkp.classes.form.validation.FormValidatorArrayCustom');
+import('lib.pkp.classes.form.validation.FormValidatorBoolean');
 import('lib.pkp.classes.form.validation.FormValidatorControlledVocab');
 import('lib.pkp.classes.form.validation.FormValidatorCustom');
-import('lib.pkp.classes.form.validation.FormValidatorCaptcha');
 import('lib.pkp.classes.form.validation.FormValidatorReCaptcha');
+import('lib.pkp.classes.form.validation.FormValidatorDate');
 import('lib.pkp.classes.form.validation.FormValidatorEmail');
 import('lib.pkp.classes.form.validation.FormValidatorInSet');
 import('lib.pkp.classes.form.validation.FormValidatorLength');
 import('lib.pkp.classes.form.validation.FormValidatorListbuilder');
 import('lib.pkp.classes.form.validation.FormValidatorLocale');
 import('lib.pkp.classes.form.validation.FormValidatorLocaleEmail');
+import('lib.pkp.classes.form.validation.FormValidatorCSRF');
 import('lib.pkp.classes.form.validation.FormValidatorPost');
 import('lib.pkp.classes.form.validation.FormValidatorRegExp');
 import('lib.pkp.classes.form.validation.FormValidatorUri');
 import('lib.pkp.classes.form.validation.FormValidatorUrl');
 import('lib.pkp.classes.form.validation.FormValidatorLocaleUrl');
+import('lib.pkp.classes.form.validation.FormValidatorISSN');
+import('lib.pkp.classes.form.validation.FormValidatorORCID');
 
 class Form {
 
@@ -65,10 +73,10 @@ class Form {
 	/** Client-side validation rules **/
 	var $cssValidation;
 
-	/** @var $requiredLocale string Symbolic name of required locale */
+	/** @var string Symbolic name of required locale */
 	var $requiredLocale;
 
-	/** @var $supportedLocales array Set of supported locales */
+	/** @var array Set of supported locales */
 	var $supportedLocales;
 
 	/**
@@ -95,7 +103,7 @@ class Form {
 			// this method is only called by a subclass. Results
 			// in hook calls named e.g. "papergalleyform::Constructor"
 			// Note that class names are always lower case.
-			HookRegistry::call(strtolower(get_class($this)) . '::Constructor', array(&$this, &$template));
+			HookRegistry::call(strtolower_codesafe(get_class($this)) . '::Constructor', array($this, &$template));
 		}
 	}
 
@@ -149,36 +157,36 @@ class Form {
 	 * @param $display boolean
 	 * @return string the rendered form
 	 */
-	function fetch(&$request, $template = null, $display = false) {
+	function fetch($request, $template = null, $display = false) {
 		// Set custom template.
 		if (!is_null($template)) $this->_template = $template;
 
-		$returner = null;
+
 		// Call hooks based on the calling entity, assuming
 		// this method is only called by a subclass. Results
 		// in hook calls named e.g. "papergalleyform::display"
 		// Note that class names are always lower case.
-		if (HookRegistry::call(strtolower(get_class($this)) . '::display', array(&$this, &$returner))) {
+		$returner = null;
+		if (HookRegistry::call(strtolower_codesafe(get_class($this)) . '::display', array($this, &$returner))) {
 			return $returner;
 		}
 
-		$templateMgr =& TemplateManager::getManager($request);
+		$templateMgr = TemplateManager::getManager($request);
 		$templateMgr->setCacheability(CACHEABILITY_NO_STORE);
 
 
 		// Attach this form object to the Form Builder Vocabulary for validation to work
-		$fbv =& $templateMgr->getFBV();
+		$fbv = $templateMgr->getFBV();
 		$fbv->setForm($this);
 
 		$templateMgr->assign($this->_data);
 		$templateMgr->assign('isError', !$this->isValid());
 		$templateMgr->assign('errors', $this->getErrorsArray());
 
-		$templateMgr->register_function('form_language_chooser', array(&$this, 'smartyFormLanguageChooser'));
+		$templateMgr->register_function('form_language_chooser', array($this, 'smartyFormLanguageChooser'));
 		$templateMgr->assign('formLocales', $this->supportedLocales);
 
 		// Determine the current locale to display fields with
-		$formLocale = $this->getFormLocale();
 		$templateMgr->assign('formLocale', $this->getFormLocale());
 
 		// N.B: We have to call $templateMgr->display instead of ->fetch($display)
@@ -220,7 +228,7 @@ class Form {
 		// in hook calls named e.g. "papergalleyform::initData"
 		// Note that class and function names are always lower
 		// case.
-		HookRegistry::call(strtolower(get_class($this) . '::initData'), array(&$this));
+		HookRegistry::call(strtolower_codesafe(get_class($this) . '::initData'), array($this));
 	}
 
 	/**
@@ -240,13 +248,6 @@ class Form {
 		}
 
 		foreach ($this->_checks as $check) {
-			// WARNING: This line is for PHP4 compatibility when
-			// instantiating forms without reference. Should not
-			// be removed or otherwise used.
-			// See http://pkp.sfu.ca/wiki/index.php/Information_for_Developers#Use_of_.24this_in_the_constructor
-			// for an explanation why we have to replace the reference to $this here.
-			$check->setForm($this);
-
 			if (!isset($this->errorsArray[$check->getField()]) && !$check->isValid()) {
 				if (method_exists($check, 'getErrorFields') && method_exists($check, 'isArray') && call_user_func(array(&$check, 'isArray'))) {
 					$errorFields = call_user_func(array(&$check, 'getErrorFields'));
@@ -268,15 +269,15 @@ class Form {
 			// Note that class and function names are always lower
 			// case.
 			$value = null;
-			if (HookRegistry::call(strtolower(get_class($this) . '::validate'), array(&$this, &$value))) {
+			if (HookRegistry::call(strtolower_codesafe(get_class($this) . '::validate'), array($this, &$value))) {
 				return $value;
 			}
 		}
 
 		if (!defined('SESSION_DISABLE_INIT')) {
-			$application =& PKPApplication::getApplication();
-			$request =& $application->getRequest();
-			$user =& $request->getUser();
+			$application = PKPApplication::getApplication();
+			$request = $application->getRequest();
+			$user = $request->getUser();
 
 			if (!$this->isValid() && $user) {
 				// Create a form error notification.
@@ -294,15 +295,17 @@ class Form {
 	/**
 	 * Execute the form's action.
 	 * (Note that it is assumed that the form has already been validated.)
+	 * @param $object object The object edited by this form.
+	 * @return $object The same object, potentially changed via hook.
 	 */
-	function execute() {
+	function execute($object = null) {
 		// Call hooks based on the calling entity, assuming
 		// this method is only called by a subclass. Results
 		// in hook calls named e.g. "papergalleyform::execute"
 		// Note that class and function names are always lower
 		// case.
-		$value = null;
-		HookRegistry::call(strtolower(get_class($this) . '::execute'), array(&$this, &$vars));
+		HookRegistry::call(strtolower_codesafe(get_class($this) . '::execute'), array($this, &$object));
+		return $object;
 	}
 
 	/**
@@ -310,15 +313,13 @@ class Form {
 	 * @return array
 	 */
 	function getLocaleFieldNames() {
-		$returner = array();
 		// Call hooks based on the calling entity, assuming
 		// this method is only called by a subclass. Results
 		// in hook calls named e.g. "papergalleyform::getLocaleFieldNames"
 		// Note that class and function names are always lower
 		// case.
-		$value = null;
-		HookRegistry::call(strtolower(get_class($this) . '::getLocaleFieldNames'), array(&$this, &$returner));
-
+		$returner = array();
+		HookRegistry::call(strtolower_codesafe(get_class($this) . '::getLocaleFieldNames'), array($this, &$returner));
 		return $returner;
 	}
 
@@ -337,7 +338,7 @@ class Form {
 	 * @return string
 	 */
 	function getDefaultFormLocale() {
-		if (empty($formLocale)) $formLocale = AppLocale::getLocale();
+		$formLocale = AppLocale::getLocale();
 		if (!isset($this->supportedLocales[$formLocale])) $formLocale = $this->requiredLocale;
 		return $formLocale;
 	}
@@ -364,9 +365,7 @@ class Form {
 		// in hook calls named e.g. "papergalleyform::readUserVars"
 		// Note that class and function names are always lower
 		// case.
-		$value = null;
-		HookRegistry::call(strtolower(get_class($this) . '::readUserVars'), array(&$this, &$vars));
-
+		HookRegistry::call(strtolower_codesafe(get_class($this) . '::readUserVars'), array($this, &$vars));
 		foreach ($vars as $k) {
 			$this->setData($k, Request::getUserVar($k));
 		}
@@ -382,9 +381,7 @@ class Form {
 		// in hook calls named e.g. "papergalleyform::readUserDateVars"
 		// Note that class and function names are always lower
 		// case.
-		$value = null;
-		HookRegistry::call(strtolower(get_class($this) . '::readUserDateVars'), array(&$this, &$vars));
-
+		HookRegistry::call(strtolower_codesafe(get_class($this) . '::readUserDateVars'), array($this, &$vars));
 		foreach ($vars as $k) {
 			$this->setData($k, Request::getUserDateVar($k));
 		}

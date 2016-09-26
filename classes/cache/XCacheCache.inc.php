@@ -3,7 +3,8 @@
 /**
  * @file classes/cache/XCacheCache.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class XCacheCache
@@ -76,7 +77,7 @@ class XCacheCache extends GenericCache {
 	 * Set the entire contents of the cache.
 	 * WARNING: THIS DOES NOT FLUSH THE CACHE FIRST!
 	 */
-	function setEntireCache(&$contents) {
+	function setEntireCache($contents) {
 		foreach ($contents as $id => $value) {
 			$this->setCache($id, $value);
 		}

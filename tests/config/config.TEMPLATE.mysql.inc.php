@@ -11,7 +11,6 @@ debug = Off
 [general]
 installed = On
 base_url = "http://pkp.sfu.ca/ojs"
-registry_dir = lib/pkp/tests/registry
 session_cookie_name = OJSSID
 session_lifetime = 30
 scheduled_tasks = Off
@@ -45,7 +44,7 @@ charset_normalization = On
 [files]
 files_dir = files
 public_files_dir = public
-umask = 0002
+umask = 0022
 
 [finfo]
 mime_database_path = /etc/magic.mime
@@ -76,7 +75,6 @@ allowed_html = "<a> <em> <strong> <cite> <code> <ul> <ol> <li> <dl> <dt> <dd> <b
 ; smtp_password = password
 ; allow_envelope_sender = Off
 ; default_envelope_sender = my_address@my_host.com
-enable_attachments = On
 time_between_emails = 3600
 max_recipients = 10
 require_validation = Off
@@ -115,5 +113,4 @@ font_location = /usr/share/fonts/truetype/freefont/FreeSerif.ttf
 ; proxy_password = password
 
 [debug]
-show_stats =  Off
-show_stacktrace = Off
+show_stacktrace = On

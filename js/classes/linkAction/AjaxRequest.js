@@ -1,7 +1,8 @@
 /**
  * @file js/classes/linkAction/AjaxRequest.js
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class AjaxRequest
@@ -17,9 +18,11 @@
 	 *
 	 * @extends $.pkp.classes.linkAction.LinkActionRequest
 	 *
-	 * @param {jQuery} $linkActionElement The element the link
+	 * @param {jQueryObject} $linkActionElement The element the link
 	 *  action was attached to.
-	 * @param {Object} options Configuration of the link action
+	 * @param {{
+	 *  requestType: string
+	 *  }} options Configuration of the link action
 	 *  request.
 	 */
 	$.pkp.classes.linkAction.AjaxRequest =
@@ -41,21 +44,18 @@
 	$.pkp.classes.linkAction.AjaxRequest.prototype.activate =
 			function(element, event) {
 
-		var returnValue = this.parent('activate', element, event),
-				options = this.getOptions();
-
-		var responseHandler = $.pkp.classes.Helper.curry(
-				this.handleResponse, this);
+		var returnValue = /** @type {boolean} */ (
+				this.parent('activate', element, event)),
+				options = this.getOptions(),
+				responseHandler = $.pkp.classes.Helper.curry(
+						this.handleResponse, this);
 		switch (options.requestType) {
 			case 'get':
-				$.getJSON(options.url,
-						responseHandler);
+				$.getJSON(options.url, responseHandler);
 				break;
 
 			case 'post':
-				$.post(options.url,
-						responseHandler,
-						'json');
+				$.post(options.url, responseHandler, 'json');
 				break;
 		}
 		return returnValue;
@@ -76,4 +76,4 @@
 
 
 /** @param {jQuery} $ jQuery closure. */
-})(jQuery);
+}(jQuery));

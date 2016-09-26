@@ -3,7 +3,8 @@
 /**
  * @file classes/citation/CitationDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CitationDAO
@@ -36,10 +37,10 @@ class CitationDAO extends DAO {
 	 * @return integer the new citation id
 	 */
 	function insertObject(&$citation) {
-		$seq = $citation->getSeq();
+		$seq = $citation->getSequence();
 		if (!(is_numeric($seq) && $seq > 0)) {
 			// Find the latest sequence number
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT MAX(seq) AS lastseq FROM citations
 				 WHERE assoc_type = ? AND assoc_id = ?',
 				array(
@@ -49,12 +50,12 @@ class CitationDAO extends DAO {
 			);
 
 			if ($result->RecordCount() != 0) {
-				$row =& $result->GetRowAssoc(false);
+				$row = $result->GetRowAssoc(false);
 				$seq = $row['lastseq'] + 1;
 			} else {
 				$seq = 1;
 			}
-			$citation->setSeq($seq);
+			$citation->setSequence($seq);
 		}
 
 		$this->update(
@@ -82,13 +83,13 @@ class CitationDAO extends DAO {
 	 * @return Citation
 	 */
 	function &getObjectById($citationId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT * FROM citations WHERE citation_id = ?', $citationId
 		);
 
 		$citation = null;
 		if ($result->RecordCount() != 0) {
-			$citation =& $this->_fromRow($result->GetRowAssoc(false));
+			$citation = $this->_fromRow($result->GetRowAssoc(false));
 		}
 		$result->Close();
 
@@ -104,7 +105,7 @@ class CitationDAO extends DAO {
 	 * @param $rawCitationList string
 	 * @return integer the number of spawned citation checking processes
 	 */
-	function importCitations(&$request, $assocType, $assocId, $rawCitationList) {
+	function importCitations($request, $assocType, $assocId, $rawCitationList) {
 		assert(is_numeric($assocType) && is_numeric($assocId));
 		$assocType = (int) $assocType;
 		$assocId = (int) $assocId;
@@ -131,16 +132,15 @@ class CitationDAO extends DAO {
 			$citation->setAssocId($assocId);
 
 			// Set the counter
-			$citation->setSeq($seq+1);
+			$citation->setSequence($seq+1);
 
 			$this->insertObject($citation);
 			$citations[$citation->getId()] = $citation;
-			unset($citation);
 		}
 
 		// Check new citations in parallel.
 		$noOfProcesses = (int)Config::getVar('general', 'citation_checking_max_processes');
-		$processDao =& DAORegistry::getDAO('ProcessDAO');
+		$processDao = DAORegistry::getDAO('ProcessDAO');
 		return $processDao->spawnProcesses($request, 'api.citation.CitationApiHandler', 'checkAllCitations', PROCESS_TYPE_CITATION_CHECKING, $noOfProcesses);
 	}
 
@@ -157,7 +157,7 @@ class CitationDAO extends DAO {
 	 *  was not successful then the original citation
 	 *  will be returned unchanged.
 	 */
-	function &checkCitation(&$request, &$originalCitation, $filterIds = array()) {
+	function &checkCitation($request, &$originalCitation, $filterIds = array()) {
 		assert(is_a($originalCitation, 'Citation'));
 
 		// Only parse the citation if it has not been parsed before.
@@ -165,14 +165,14 @@ class CitationDAO extends DAO {
 		$filteredCitation =& $originalCitation;
 		if ($filteredCitation->getCitationState() < CITATION_PARSED) {
 			// Parse the requested citation
-			$filterCallback = array(&$this, '_instantiateParserFilters');
+			$filterCallback = array($this, '_instantiateParserFilters');
 			$filteredCitation =& $this->_filterCitation($request, $filteredCitation, $filterCallback, CITATION_PARSED, $filterIds);
 		}
 
 		// Always re-lookup the citation even if it's been looked-up
 		// before. The user asked us to re-check so there's probably
 		// additional manual information in the citation fields.
-		$filterCallback = array(&$this, '_instantiateLookupFilters');
+		$filterCallback = array($this, '_instantiateLookupFilters');
 		$filteredCitation =& $this->_filterCitation($request, $filteredCitation, $filterCallback, CITATION_LOOKED_UP, $filterIds);
 
 		// Return the filtered citation.
@@ -190,7 +190,7 @@ class CitationDAO extends DAO {
 	 * @return boolean true if a citation was found and checked, otherwise
 	 *  false.
 	 */
-	function checkNextRawCitation(&$request, $lockId) {
+	function checkNextRawCitation($request, $lockId) {
 		// NB: We implement an atomic locking strategy to make
 		// sure that no two parallel background processes can claim the
 		// same citation.
@@ -201,7 +201,7 @@ class CitationDAO extends DAO {
 			// with ANSI SQL.
 
 			// Get the ID of the next raw citation.
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT citation_id
 				FROM citations
 				WHERE citation_state = ?
@@ -217,7 +217,6 @@ class CitationDAO extends DAO {
 				return false;
 			}
 			$result->Close();
-			unset($result);
 
 			// Lock the citation.
 			$this->update(
@@ -230,14 +229,14 @@ class CitationDAO extends DAO {
 			// Make sure that no other concurring process
 			// has claimed this citation before we could
 			// lock it.
-			$result =& $this->retrieve(
+			$result = $this->retrieve(
 				'SELECT *
 				FROM citations
 				WHERE lock_id = ?',
 				$lockId
 			);
 			if ($result->RecordCount() > 0) {
-				$rawCitation =& $this->_fromRow($result->GetRowAssoc(false));
+				$rawCitation = $this->_fromRow($result->GetRowAssoc(false));
 				break;
 			}
 		}
@@ -264,8 +263,8 @@ class CitationDAO extends DAO {
 	 * @param $dbResultRange DBResultRange the desired range
 	 * @return DAOResultFactory containing matching Citations
 	 */
-	function &getObjectsByAssocId($assocType, $assocId, $minCitationState = 0, $maxCitationState = CITATION_APPROVED, $rangeInfo = null) {
-		$result =& $this->retrieveRange(
+	function getObjectsByAssocId($assocType, $assocId, $minCitationState = 0, $maxCitationState = CITATION_APPROVED, $rangeInfo = null) {
+		$result = $this->retrieveRange(
 			'SELECT *
 			FROM citations
 			WHERE assoc_type = ? AND assoc_id = ? AND citation_state >= ? AND citation_state <= ?
@@ -274,8 +273,7 @@ class CitationDAO extends DAO {
 			$rangeInfo
 		);
 
-		$returner = new DAOResultFactory($result, $this, '_fromRow', array('id'));
-		return $returner;
+		return new DAOResultFactory($result, $this, '_fromRow', array('id'));
 	}
 
 	/**
@@ -295,7 +293,7 @@ class CitationDAO extends DAO {
 	 * @return array an array of PersistableFilters
 	 */
 	function &getCitationFilterInstances($contextId, $filterGroups, $fromFilterIds = array(), $includeOptionalFilters = false) {
-		$filterDao =& DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
+		$filterDao = DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
 		$filterList = array();
 
 		// Retrieve the requested filter group(s).
@@ -316,16 +314,14 @@ class CitationDAO extends DAO {
 			} else {
 				// Only return default filters.
 				foreach($filterList as $filter) {
-					if (!$filter->getData('isOptional')) $finalFilterList[] =& $filter;
-					unset($filter);
+					if (!$filter->getData('isOptional')) $finalFilterList[] = $filter;
 				}
 			}
 		// 2) If specific filter ids are given then only filters in that
 		//    list will be returned (even if they are non-default filters).
 		} else {
 			foreach($filterList as $filter) {
-				if (in_array($filter->getId(), $fromFilterIds)) $finalFilterList[] =& $filter;
-				unset($filter);
+				if (in_array($filter->getId(), $fromFilterIds)) $finalFilterList[] = $filter;
 			}
 		}
 
@@ -353,7 +349,7 @@ class CitationDAO extends DAO {
 				(integer)$citation->getAssocId(),
 				(integer)$citation->getCitationState(),
 				$citation->getRawCitation(),
-				(integer)$citation->getSeq(),
+				(integer)$citation->getSequence(),
 				(integer)$citation->getId()
 			)
 		);
@@ -379,7 +375,7 @@ class CitationDAO extends DAO {
 		assert(!empty($citationId));
 
 		// Delete citation sources
-		$metadataDescriptionDao =& DAORegistry::getDAO('MetadataDescriptionDAO');
+		$metadataDescriptionDao = DAORegistry::getDAO('MetadataDescriptionDAO');
 		$metadataDescriptionDao->deleteObjectsByAssocId(ASSOC_TYPE_CITATION, $citationId);
 
 		// Delete citation
@@ -395,10 +391,9 @@ class CitationDAO extends DAO {
 	 * @return boolean
 	 */
 	function deleteObjectsByAssocId($assocType, $assocId) {
-		$citations =& $this->getObjectsByAssocId($assocType, $assocId);
-		while (($citation =& $citations->next())) {
+		$citations = $this->getObjectsByAssocId($assocType, $assocId);
+		while ($citation = $citations->next()) {
 			$this->deleteObjectById($citation->getId());
-			unset($citation);
 		}
 		return true;
 	}
@@ -409,7 +404,7 @@ class CitationDAO extends DAO {
 	 * @param $citation Citation
 	 */
 	function updateCitationSourceDescriptions(&$citation) {
-		$metadataDescriptionDao =& DAORegistry::getDAO('MetadataDescriptionDAO');
+		$metadataDescriptionDao = DAORegistry::getDAO('MetadataDescriptionDAO');
 
 		// Clear all existing citation sources first
 		$citationId = $citation->getId();
@@ -440,7 +435,7 @@ class CitationDAO extends DAO {
 			// Retrieve the currently selected citation output
 			// filter from the database.
 			$citationOutputFilterId = $context->getSetting('metaCitationOutputFilterId');
-			$filterDao =& DAORegistry::getDAO('FilterDAO');
+			$filterDao = DAORegistry::getDAO('FilterDAO');
 			$citationOutputFilter =& $filterDao->getObjectById($citationOutputFilterId);
 			assert(is_a($citationOutputFilter, 'PersistableFilter'));
 
@@ -460,7 +455,7 @@ class CitationDAO extends DAO {
 	 * @return int
 	 */
 	function getInsertId() {
-		return parent::getInsertId('citations', 'citation_id');
+		return parent::_getInsertId('citations', 'citation_id');
 	}
 
 
@@ -471,9 +466,8 @@ class CitationDAO extends DAO {
 	 * Construct a new citation object.
 	 * @return Citation
 	 */
-	function &_newDataObject() {
-		$citation = new Citation();
-		return $citation;
+	function _newDataObject() {
+		return new Citation();
 	}
 
 	/**
@@ -482,20 +476,20 @@ class CitationDAO extends DAO {
 	 * @param $row array
 	 * @return Citation
 	 */
-	function &_fromRow(&$row) {
-		$citation =& $this->_newDataObject();
+	function _fromRow($row) {
+		$citation = $this->_newDataObject();
 		$citation->setId((integer)$row['citation_id']);
 		$citation->setAssocType((integer)$row['assoc_type']);
 		$citation->setAssocId((integer)$row['assoc_id']);
 		$citation->setCitationState($row['citation_state']);
 		$citation->setRawCitation($row['raw_citation']);
-		$citation->setSeq((integer)$row['seq']);
+		$citation->setSequence((integer)$row['seq']);
 
 		$this->getDataObjectSettings('citation_settings', 'citation_id', $row['citation_id'], $citation);
 
 		// Add citation source descriptions
-		$sourceDescriptions =& $this->_getCitationSourceDescriptions($citation->getId());
-		while ($sourceDescription =& $sourceDescriptions->next()) {
+		$sourceDescriptions = $this->_getCitationSourceDescriptions($citation->getId());
+		while ($sourceDescription = $sourceDescriptions->next()) {
 			$citation->addSourceDescription($sourceDescription);
 		}
 
@@ -519,9 +513,8 @@ class CitationDAO extends DAO {
 	 * @return array an array of MetadataDescriptions
 	 */
 	function _getCitationSourceDescriptions($citationId) {
-		$metadataDescriptionDao =& DAORegistry::getDAO('MetadataDescriptionDAO');
-		$sourceDescriptions =& $metadataDescriptionDao->getObjectsByAssocId(ASSOC_TYPE_CITATION, $citationId);
-		return $sourceDescriptions;
+		$metadataDescriptionDao = DAORegistry::getDAO('MetadataDescriptionDAO');
+		return $metadataDescriptionDao->getObjectsByAssocId(ASSOC_TYPE_CITATION, $citationId);
 	}
 
 	/**
@@ -586,20 +579,20 @@ class CitationDAO extends DAO {
 	 * @param $fromFilterIds only use filters with the given ids
 	 * @return Citation the filtered citation or null if an error occurred
 	 */
-	function &_filterCitation(&$request, &$citation, &$filterCallback, $citationStateAfterFiltering, $fromFilterIds = array()) {
+	function &_filterCitation($request, &$citation, &$filterCallback, $citationStateAfterFiltering, $fromFilterIds = array()) {
 		// Get the context.
-		$router =& $request->getRouter();
-		$context =& $router->getContext($request);
+		$router = $request->getRouter();
+		$context = $router->getContext($request);
 		assert(is_object($context));
 
 		// Make sure that the citation implements only one
 		// meta-data schema.
-		$supportedMetadataSchemas =& $citation->getSupportedMetadataSchemas();
+		$supportedMetadataSchemas = $citation->getSupportedMetadataSchemas();
 		assert(count($supportedMetadataSchemas) == 1);
-		$metadataSchema =& $supportedMetadataSchemas[0];
+		$metadataSchema = $supportedMetadataSchemas[0];
 
 		// Extract the meta-data description from the citation.
-		$originalDescription =& $citation->extractMetadata($metadataSchema);
+		$originalDescription = $citation->extractMetadata($metadataSchema);
 
 		// Let the callback configure the transformation.
 		$transformationDefinition = call_user_func_array($filterCallback, array(&$citation, &$originalDescription, $context->getId(), $fromFilterIds));
@@ -634,7 +627,6 @@ class CitationDAO extends DAO {
 			foreach($filterList as $citationFilter) {
 				if ($citationFilter->supports($muxInputData, $nullVar)) {
 					$citationMultiplexer->addFilter($citationFilter);
-					unset($citationFilter);
 				}
 			}
 
@@ -672,7 +664,7 @@ class CitationDAO extends DAO {
 		} else {
 			// Copy data from the original citation to the filtered citation.
 			$filteredCitation->setId($citation->getId());
-			$filteredCitation->setSeq($citation->getSeq());
+			$filteredCitation->setSequence($citation->getSequence());
 			$filteredCitation->setRawCitation($citation->getRawCitation());
 			$filteredCitation->setAssocId($citation->getAssocId());
 			$filteredCitation->setAssocType($citation->getAssocType());
@@ -681,7 +673,6 @@ class CitationDAO extends DAO {
 			}
 			foreach($citation->getSourceDescriptions() as $sourceDescription) {
 				$filteredCitation->addSourceDescription($sourceDescription);
-				unset($sourceDescription);
 			}
 		}
 
@@ -695,7 +686,6 @@ class CitationDAO extends DAO {
 			if (is_array($lastOutput)) {
 				foreach($lastOutput as $sourceDescription) {
 					$filteredCitation->addSourceDescription($sourceDescription);
-					unset($sourceDescription);
 				}
 			}
 		}

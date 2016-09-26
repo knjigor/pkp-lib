@@ -3,7 +3,8 @@
 /**
  * @file classes/site/VersionCheck.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class VersionCheck
@@ -12,7 +13,6 @@
  *
  * @brief Provides methods to check for the latest version of OJS.
  */
-
 
 define('VERSION_CODE_PATH', 'dbscripts/xml/version.xml');
 
@@ -25,49 +25,56 @@ class VersionCheck {
 	 * Return information about the latest available version.
 	 * @return array
 	 */
-	function &getLatestVersion() {
-		$application =& PKPApplication::getApplication();
-		$returner =& VersionCheck::parseVersionXML(
-			$application->getVersionDescriptorUrl()
+	function getLatestVersion() {
+		$application = PKPApplication::getApplication();
+		$includeId = Config::getVar('general', 'installed') &&
+			!defined('RUNNING_UPGRADE') &&
+			Config::getVar('general', 'enable_beacon', true);
+
+		if ($includeId) {
+			$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO');
+			$uniqueSiteId = $pluginSettingsDao->getSetting(CONTEXT_SITE, 'UsageEventPlugin', 'uniqueSiteId');
+		} else $uniqueSiteId = null;
+
+		$request = $application->getRequest();
+		return VersionCheck::parseVersionXML(
+			$application->getVersionDescriptorUrl() .
+			($includeId?'?id=' . urlencode($uniqueSiteId) .
+				'&oai=' . urlencode($request->url('index', 'oai'))
+			:'')
 		);
-		return $returner;
 	}
 
 	/**
 	 * Return the currently installed database version.
 	 * @return Version
 	 */
-	function &getCurrentDBVersion() {
-		$versionDao =& DAORegistry::getDAO('VersionDAO');
-		$dbVersion =& $versionDao->getCurrentVersion();
-		return $dbVersion;
+	function getCurrentDBVersion() {
+		$versionDao = DAORegistry::getDAO('VersionDAO');
+		return $versionDao->getCurrentVersion();
 	}
 
 	/**
 	 * Return the current code version.
-	 * @return Version
+	 * @return Version|false
 	 */
-	function &getCurrentCodeVersion() {
+	function getCurrentCodeVersion() {
 		$versionInfo = VersionCheck::parseVersionXML(VERSION_CODE_PATH);
 		if ($versionInfo) {
-			$version = $versionInfo['version'];
-		} else {
-			$version = false;
+			return $versionInfo['version'];
 		}
-		return $version;
+		return false;
 	}
 
 	/**
 	 * Parse information from a version XML file.
+	 * @param $url string
 	 * @return array
 	 */
-	function &parseVersionXML($url) {
+	static function parseVersionXML($url) {
 		$xmlDao = new XMLDAO();
 		$data = $xmlDao->parseStruct($url, array());
-		if (!$data) {
-			$result = false;
-			return $result;
-		}
+		if (!$data) return false;
 
 		// FIXME validate parsed data?
 		$versionInfo = array();
@@ -92,13 +99,13 @@ class VersionCheck {
 				$versionInfo['patch'][$patch['attributes']['from']] = $patch['value'];
 			}
 		}
-		if(isset($data['class'][0]['value']))
-			$versionInfo['class'] = (string) $data['class'][0]['value'];
+		if (isset($data['class'][0]['value'])) $versionInfo['class'] = (string) $data['class'][0]['value'];
+
 		$versionInfo['lazy-load'] = (isset($data['lazy-load'][0]['value']) ? (int) $data['lazy-load'][0]['value'] : 0);
 		$versionInfo['sitewide'] = (isset($data['sitewide'][0]['value']) ? (int) $data['sitewide'][0]['value'] : 0);
 
 		if(isset($data['release'][0]['value']) && isset($data['application'][0]['value'])) {
-			$version =& Version::fromString(
+			$versionInfo['version'] = Version::fromString(
 				$data['release'][0]['value'],
 				isset($data['type'][0]['value']) ? $data['type'][0]['value'] : null,
 				$data['application'][0]['value'],
@@ -106,7 +113,6 @@ class VersionCheck {
 				$versionInfo['lazy-load'],
 				$versionInfo['sitewide']
 			);
-			$versionInfo['version'] =& $version;
 		}
 
 		return $versionInfo;
@@ -118,9 +124,9 @@ class VersionCheck {
 	 * @param $codeVersion as returned by getCurrentCodeVersion()
 	 * @return string
 	 */
-	function getPatch(&$versionInfo, $codeVersion = null) {
+	function getPatch($versionInfo, $codeVersion = null) {
 		if (!isset($codeVersion)) {
-			$codeVersion =& VersionCheck::getCurrentCodeVersion();
+			$codeVersion = VersionCheck::getCurrentCodeVersion();
 		}
 		if (isset($versionInfo['patch'][$codeVersion->getVersionString()])) {
 			return $versionInfo['patch'][$codeVersion->getVersionString()];
@@ -138,12 +144,11 @@ class VersionCheck {
 	 * @param $returnErrorMesg boolean
 	 * @return Version or null/string if invalid or missing version file
 	 */
-	function &getValidPluginVersionInfo($versionFile, $returnErrorMsg = false) {
-		$nullVar = null;
+	function getValidPluginVersionInfo($versionFile, $returnErrorMsg = false) {
 		$errorMsg = null;
 		$fileManager = new FileManager();
 		if ($fileManager->fileExists($versionFile)) {
-			$versionInfo =& VersionCheck::parseVersionXML($versionFile);
+			$versionInfo = VersionCheck::parseVersionXML($versionFile);
 		} else {
 			$errorMsg = 'manager.plugins.versionFileNotFound';
 		}
@@ -157,10 +162,10 @@ class VersionCheck {
 		}
 
 		if (is_null($errorMsg)) {
-			$pluginVersion =& $versionInfo['version'];
+			$pluginVersion = $versionInfo['version'];
 			$namesToValidate = array($pluginVersion->getProduct(), $productType[1]);
 			foreach($namesToValidate as $nameToValidate) {
-				if (!String::regexp_match('/[a-z][a-zA-Z0-9]+/', $nameToValidate)) {
+				if (!PKPString::regexp_match('/[a-z][a-zA-Z0-9]+/', $nameToValidate)) {
 					$errorMsg = 'manager.plugins.versionFileInvalid';
 					break;
 				}
@@ -171,13 +176,27 @@ class VersionCheck {
 			if ($returnErrorMsg) {
 				return $errorMsg;
 			} else {
-				$templateMgr =& TemplateManager::getManager();
+				$templateMgr = TemplateManager::getManager();
 				$templateMgr->assign('message', $errorMsg);
-				return $nullVar;
+				return null;
 			}
 		} else {
 			return $pluginVersion;
 		}
+	}
+
+	/**
+	 * Checks the application's version against the latest version 
+	 * on the PKP servers.
+	 * @return string|false Version description or false if no newer version
+	 */
+	function checkIfNewVersionExists() {
+		$versionInfo = VersionCheck::getLatestVersion();
+		$latestVersion = $versionInfo['release'];
+
+		$currentVersion = VersionCheck::getCurrentDBVersion();
+		if ($currentVersion->compare($latestVersion) < 0) return $latestVersion;
+		return false;
 	}
 }
 

@@ -3,7 +3,8 @@
 /**
  * @file classes/i18n/CountryDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CountryDAO
@@ -38,10 +39,10 @@ class CountryDAO extends DAO {
 		if (!isset($locale)) $locale = AppLocale::getLocale();
 
 		if (!isset($caches[$locale])) {
-			$cacheManager =& CacheManager::getManager();
+			$cacheManager = CacheManager::getManager();
 			$caches[$locale] = $cacheManager->getFileCache(
 				'country', $locale,
-				array(&$this, '_countryCacheMiss')
+				array($this, '_countryCacheMiss')
 			);
 
 			// Check to see if the data is outdated
@@ -53,7 +54,7 @@ class CountryDAO extends DAO {
 		return $caches[$locale];
 	}
 
-	function _countryCacheMiss(&$cache, $id) {
+	function _countryCacheMiss($cache, $id) {
 		$countries =& Registry::get('allCountriesData', true, array());
 
 		if (!isset($countries[$id])) {

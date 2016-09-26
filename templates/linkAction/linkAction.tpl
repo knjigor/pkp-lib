@@ -1,7 +1,8 @@
 {**
  * lib/pkp/templates/linkAction/linkAction.tpl
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * Create a link action
@@ -11,6 +12,7 @@
  *  contextId: The name of the context in which the link
  *   action is being placed. This is required to disambiguate
  *   actions with the same id on one page.
+ *  anyhtml: True iff arbitrary HTML is permitted in the link action title (i.e. escaping handled elsewhere)
  *}
 
 {* Generate the link action's button. *}
@@ -21,9 +23,9 @@
 {/if}
 
 {assign var=buttonId value=$staticId|concat:"-"|uniqid}
-{include file="linkAction/linkActionButton.tpl" action=$action buttonId=$buttonId}
+{include file="linkAction/linkActionButton.tpl" action=$action buttonId=$buttonId anyhtml=$anyhtml}
 
-<script type="text/javascript">
+<script>
 	{* Attach the action handler to the button. *}
 	$(function() {ldelim}
 		$('#{$buttonId}').pkpHandler(

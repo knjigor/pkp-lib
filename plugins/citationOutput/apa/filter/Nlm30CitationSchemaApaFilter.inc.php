@@ -1,13 +1,13 @@
 <?php
-
 /**
- * @defgroup plugins_citationOutput_apa_filter
+ * @defgroup plugins_citationOutput_apa_filter APA Citation Format Filter
  */
 
 /**
  * @file plugins/citationOutput/apa/filter/Nlm30CitationSchemaApaFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Nlm30CitationSchemaApaFilter
@@ -24,7 +24,7 @@ class Nlm30CitationSchemaApaFilter extends Nlm30CitationSchemaCitationOutputForm
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function Nlm30CitationSchemaApaFilter(&$filterGroup) {
+	function Nlm30CitationSchemaApaFilter($filterGroup) {
 		$this->setDisplayName('APA Citation Output');
 
 		parent::Nlm30CitationSchemaCitationOutputFormatFilter($filterGroup);
@@ -34,7 +34,7 @@ class Nlm30CitationSchemaApaFilter extends Nlm30CitationSchemaCitationOutputForm
 	// Implement template methods from PersistableFilter
 	//
 	/**
-	 * @see PersistableFilter::getClassName()
+	 * @copydoc PersistableFilter::getClassName()
 	 */
 	function getClassName() {
 		return 'lib.pkp.plugins.citationOutput.apa.filter.Nlm30CitationSchemaApaFilter';
@@ -45,7 +45,7 @@ class Nlm30CitationSchemaApaFilter extends Nlm30CitationSchemaCitationOutputForm
 	// Implement abstract template methods from TemplateBasedFilter
 	//
 	/**
-	 * @see TemplateBasedFilter::getBasePath()
+	 * @copydoc TemplateBasedFilter::getBasePath()
 	 */
 	function getBasePath() {
 		return dirname(__FILE__);

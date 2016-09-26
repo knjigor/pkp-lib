@@ -1,13 +1,15 @@
 <?php
 
 /**
- * @defgroup mail
+ * @defgroup mail Mail
+ * Mail delivery code.
  */
 
 /**
  * @file classes/mail/Mail.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Mail
@@ -16,8 +18,6 @@
  * @brief Class defining basic operations for handling and sending emails.
  */
 
-
-define('MAIL_EOL', Core::isWindows() ? "\r\n" : "\n");
 define('MAIL_WRAP', 76);
 
 class Mail extends DataObject {
@@ -63,7 +63,7 @@ class Mail extends DataObject {
 		}
 		array_push($recipients, array('name' => $name, 'email' => $email));
 
-		return $this->setData('recipients', $recipients);
+		$this->setData('recipients', $recipients);
 	}
 
 	/**
@@ -77,11 +77,17 @@ class Mail extends DataObject {
 
 	/**
 	 * Get the envelope sender (bounce address) for the message, if set.
+	 * Override any set envelope sender if force_default_envelope_sender config option is in effect.
 	 * @return string
 	 */
 	function getEnvelopeSender() {
-		return $this->getData('envelopeSender');
+		if (Config::getVar('email', 'force_default_envelope_sender') && Config::getVar('email', 'default_envelope_sender')) {
+			return Config::getVar('email', 'default_envelope_sender');
+		} else {
+			return $this->getData('envelopeSender');
+		}
 	}
+
 
 	/**
 	 * Get the message content type (MIME)
@@ -96,7 +102,7 @@ class Mail extends DataObject {
 	 * @param $contentType string
 	 */
 	function setContentType($contentType) {
-		return $this->setData('content_type', $contentType);
+		$this->setData('content_type', $contentType);
 	}
 
 	/**
@@ -112,7 +118,7 @@ class Mail extends DataObject {
 	 * @param $recipients array
 	 */
 	function setRecipients($recipients) {
-		return $this->setData('recipients', $recipients);
+		$this->setData('recipients', $recipients);
 	}
 
 	/**
@@ -126,7 +132,7 @@ class Mail extends DataObject {
 		}
 		array_push($ccs, array('name' => $name, 'email' => $email));
 
-		return $this->setData('ccs', $ccs);
+		$this->setData('ccs', $ccs);
 	}
 
 	/**
@@ -142,7 +148,7 @@ class Mail extends DataObject {
 	 * @param $ccs array
 	 */
 	function setCcs($ccs) {
-		return $this->setData('ccs', $ccs);
+		$this->setData('ccs', $ccs);
 	}
 
 	/**
@@ -156,7 +162,7 @@ class Mail extends DataObject {
 		}
 		array_push($bccs, array('name' => $name, 'email' => $email));
 
-		return $this->setData('bccs', $bccs);
+		$this->setData('bccs', $bccs);
 	}
 
 	/**
@@ -172,7 +178,7 @@ class Mail extends DataObject {
 	 * @param $bccs array
 	 */
 	function setBccs($bccs) {
-		return $this->setData('bccs', $bccs);
+		$this->setData('bccs', $bccs);
 	}
 
 	/**
@@ -213,7 +219,7 @@ class Mail extends DataObject {
 		}
 
 		foreach ($headers as $key => $value) {
-			if ($headers[$key]['name'] == $name) {
+			if ($value['name'] == $name) {
 				$headers[$key]['content'] = $content;
 				$updated = true;
 			}
@@ -223,7 +229,7 @@ class Mail extends DataObject {
 			array_push($headers, array('name' => $name,'content' => $content));
 		}
 
-		return $this->setData('headers', $headers);
+		$this->setData('headers', $headers);
 	}
 
 	/**
@@ -239,7 +245,7 @@ class Mail extends DataObject {
 	 * @param $headers array
 	 */
 	function setHeaders(&$headers) {
-		return $this->setData('headers', $headers);
+		$this->setData('headers', $headers);
 	}
 
 	/**
@@ -261,31 +267,17 @@ class Mail extends DataObject {
 		}
 
 		if (empty($contentType)) {
-			$contentType = String::mime_content_type($filePath);
+			$contentType = PKPString::mime_content_type($filePath);
 			if (empty($contentType)) $contentType = 'application/x-unknown-content-type';
 		}
 
-		// Open the file and read contents into $attachment
-		if (is_readable($filePath) && is_file($filePath)) {
-			$fp = fopen($filePath, 'rb');
-			if ($fp) {
-				$content = '';
-				while (!feof($fp)) {
-					$content .= fread($fp, 4096);
-				}
-				fclose($fp);
-			}
-		}
+		array_push($attachments, array(
+			'path' => $filePath,
+			'filename' => $fileName,
+			'content-type' => $contentType
+		));
 
-		if (isset($content)) {
-			/* Encode the contents in base64. */
-			$content = chunk_split(base64_encode($content), MAIL_WRAP, MAIL_EOL);
-			array_push($attachments, array('filename' => $fileName, 'content-type' => $contentType, 'disposition' => $contentDisposition, 'content' => $content));
-
-			return $this->setData('attachments', $attachments);
-		} else {
-			return false;
-		}
+		$this->setData('attachments', $attachments);
 	}
 
 	/**
@@ -312,7 +304,7 @@ class Mail extends DataObject {
 	 * @param $name string optional
 	 */
 	function setFrom($email, $name = '') {
-		return $this->setData('from', array('name' => $name, 'email' => $email));
+		$this->setData('from', array('name' => $name, 'email' => $email));
 	}
 
 	/**
@@ -324,11 +316,42 @@ class Mail extends DataObject {
 	}
 
 	/**
+	 * Set the reply-to of the message.
+	 * @param $email string or null to clear
+	 * @param $name string optional
+	 */
+	function setReplyTo($email, $name = '') {
+		if ($email === null) $this->setData('replyTo', null);
+		$this->setData('replyTo', array('name' => $name, 'email' => $email));
+	}
+
+	/**
+	 * Get the reply-to of the message.
+	 * @return array
+	 */
+	function getReplyTo() {
+		return $this->getData('replyTo');
+	}
+
+	/**
+	 * Return a string containing the reply-to address.
+	 * @return string
+	 */
+	function getReplyToString($send = false) {
+		$replyTo = $this->getReplyTo();
+		if (!array_key_exists('email', $replyTo) || $replyTo['email'] == null) {
+			return null;
+		} else {
+			return (Mail::encodeDisplayName($replyTo['name'], $send) . ' <'.$replyTo['email'].'>');
+		}
+	}
+
+	/**
 	 * Set the subject of the message.
 	 * @param $subject string
 	 */
 	function setSubject($subject) {
-		return $this->setData('subject', $subject);
+		$this->setData('subject', $subject);
 	}
 
 	/**
@@ -344,7 +367,7 @@ class Mail extends DataObject {
 	 * @param $body string
 	 */
 	function setBody($body) {
-		return $this->setData('body', $body);
+		$this->setData('body', $body);
 	}
 
 	/**
@@ -357,15 +380,15 @@ class Mail extends DataObject {
 
 	/**
 	 * Return a string containing the from address.
+	 * Override any from address if force_default_envelope_sender config option is in effect.
 	 * @return string
 	 */
 	function getFromString($send = false) {
 		$from = $this->getFrom();
 		if ($from == null) {
 			return null;
-		} else {
-			return (Mail::encodeDisplayName($from['name'], $send) . ' <'.$from['email'].'>');
-		}
+		} 
+		return (Mail::encodeDisplayName($from['name'], $send) . ' <'.$from['email'].'>');
 	}
 
 	/**
@@ -427,136 +450,87 @@ class Mail extends DataObject {
 	 * @return boolean
 	 */
 	function send() {
-		$recipients = $this->getAddressArrayString($this->getRecipients(), true, true);
-		$from = $this->getFromString(true);
-
-		$subject = String::encode_mime_header($this->getSubject());
-		$body = $this->getBody();
-
-		// FIXME Some *nix mailers won't work with CRLFs
-		if (Core::isWindows()) {
-			// Convert LFs to CRLFs for Windows
-			$body = String::regexp_replace("/([^\r]|^)\n/", "\$1\r\n", $body);
-		} else {
-			// Convert CRLFs to LFs for *nix
-			$body = String::regexp_replace("/\r\n/", "\n", $body);
-		}
-
-		if ($this->getContentType() != null) {
-			$this->addHeader('Content-Type', $this->getContentType());
-		} elseif ($this->hasAttachments()) {
-			// Only add MIME headers if sending an attachment
-			$mimeBoundary = '==boundary_'.md5(microtime());
-
-			/* Add MIME-Version and Content-Type as headers. */
-			$this->addHeader('MIME-Version', '1.0');
-			$this->addHeader('Content-Type', 'multipart/mixed; boundary="'.$mimeBoundary.'"');
-
-		} else {
-			$this->addHeader('Content-Type', 'text/plain; charset="'.Config::getVar('i18n', 'client_charset').'"');
-		}
-
-		$this->addHeader('X-Mailer', 'Public Knowledge Project Suite v2');
-
-		$remoteAddr = Request::getRemoteAddr();
-		if ($remoteAddr != '') $this->addHeader('X-Originating-IP', $remoteAddr);
-
-		$this->addHeader('Date', date('D, d M Y H:i:s O'));
-
-		/* Add $from, $ccs, and $bccs as headers. */
-		if ($from != null) {
-			$this->addHeader('From', $from);
-		}
-
-		$ccs = $this->getAddressArrayString($this->getCcs(), true, true);
-		if ($ccs != null) {
-			$this->addHeader('Cc', $ccs);
-		}
-
-		$bccs = $this->getAddressArrayString($this->getBccs(), false, true);
-		if ($bccs != null) {
-			$this->addHeader('Bcc', $bccs);
-		}
-
-		$headers = '';
-		foreach ($this->getHeaders() as $header) {
-			if (!empty($headers)) {
-				$headers .= MAIL_EOL;
-			}
-			$headers .= $header['name'].': '. str_replace(array("\r", "\n"), '', $header['content']);
-		}
-
-		if ($this->hasAttachments()) {
-			// Add the body
-			$mailBody = 'This message is in MIME format and requires a MIME-capable mail client to view.'.MAIL_EOL.MAIL_EOL;
-			$mailBody .= '--'.$mimeBoundary.MAIL_EOL;
-			$mailBody .= sprintf('Content-Type: text/plain; charset=%s', Config::getVar('i18n', 'client_charset')) . MAIL_EOL.MAIL_EOL;
-			$mailBody .= wordwrap($body, MAIL_WRAP, MAIL_EOL).MAIL_EOL.MAIL_EOL;
-
-			// Add the attachments
-			$attachments = $this->getAttachments();
-			foreach ($attachments as $attachment) {
-				$mailBody .= '--'.$mimeBoundary.MAIL_EOL;
-				$mailBody .= 'Content-Type: '.$attachment['content-type'].'; name="'.str_replace('"', '', $attachment['filename']).'"'.MAIL_EOL;
-				$mailBody .= 'Content-transfer-encoding: base64'.MAIL_EOL;
-				$mailBody .= 'Content-disposition: '.$attachment['disposition'].MAIL_EOL.MAIL_EOL;
-				$mailBody .= $attachment['content'].MAIL_EOL.MAIL_EOL;
-			}
-
-			$mailBody .= '--'.$mimeBoundary.'--';
-
-		} else {
-			// Just add the body
-			$mailBody = wordwrap($body, MAIL_WRAP, MAIL_EOL);
-		}
-
-		if ($this->getEnvelopeSender() != null) {
-			$additionalParameters = '-f ' . $this->getEnvelopeSender();
-		} else {
-			$additionalParameters = null;
-		}
-
-		if (HookRegistry::call('Mail::send', array(&$this, &$recipients, &$subject, &$mailBody, &$headers, &$additionalParameters))) return;
+		if (HookRegistry::call('Mail::send', array($this))) return;
 
 		// Replace all the private parameters for this message.
+		$mailBody = $this->getBody();
 		if (is_array($this->privateParams)) {
 			foreach ($this->privateParams as $name => $value) {
 				$mailBody = str_replace($name, $value, $mailBody);
 			}
 		}
 
+		require_once('lib/pkp/lib/vendor/phpmailer/phpmailer/class.phpmailer.php');
+		$mailer = new PHPMailer();
+		$mailer->IsHTML(true);
 		if (Config::getVar('email', 'smtp')) {
-			$smtp =& Registry::get('smtpMailer', true, null);
-			if ($smtp === null) {
-				import('lib.pkp.classes.mail.SMTPMailer');
-				$smtp = new SMTPMailer();
+			$mailer->IsSMTP();
+			$mailer->Port = Config::getVar('email', 'smtp_port');
+			if (($s = Config::getVar('email', 'smtp_auth')) != '') {
+				$mailer->SMTPSecure = $s;
+				$mailer->SMTPAuth = true;
 			}
-			$sent = $smtp->mail($this, $recipients, $subject, $mailBody, $headers);
-		} else {
-			$sent = String::mail($recipients, $subject, $mailBody, $headers, $additionalParameters);
+			$mailer->Host = Config::getVar('email', 'smtp_server');
+			$mailer->Username = Config::getVar('email', 'smtp_username');
+			$mailer->Password = Config::getVar('email', 'smtp_password');
+		}
+		$mailer->CharSet = Config::getVar('i18n', 'client_charset');
+		if (($t = $this->getContentType()) != null) $mailer->ContentType = $t;
+		$mailer->XMailer = 'Public Knowledge Project Suite v2';
+		$mailer->WordWrap = MAIL_WRAP;
+		foreach ((array) $this->getHeaders() as $header) {
+			$mailer->AddCustomHeader($header['key'], $mailer->SecureHeader($header['content']));
+		}
+		if (($s = $this->getEnvelopeSender()) != null) $mailer->Sender = $s;
+		if (($f = $this->getFrom()) != null) {
+			$mailer->SetFrom($f['email'], $f['name']);
+		}
+		if (($r = $this->getReplyTo()) != null) {
+			$mailer->AddReplyTo($r['email'], $r['name']);
+		}
+		foreach ((array) $this->getRecipients() as $recipientInfo) {
+			$mailer->AddAddress($recipientInfo['email'], $recipientInfo['name']);
+		}
+		foreach ((array) $this->getCcs() as $ccInfo) {
+			$mailer->AddCC($ccInfo['email'], $ccInfo['name']);
+		}
+		foreach ((array) $this->getBccs() as $bccInfo) {
+			$mailer->AddBCC($bccInfo['email'], $bccInfo['name']);
+		}
+		$mailer->Subject = $this->getSubject();
+		$mailer->Body = $mailBody;
+		$mailer->AltBody = PKPString::html2text($mailBody);
+
+		$remoteAddr = $mailer->SecureHeader(Request::getRemoteAddr());
+		if ($remoteAddr != '') $mailer->AddCustomHeader("X-Originating-IP: $remoteAddr");
+
+		foreach ((array) $this->getAttachments() as $attachmentInfo) {
+			$mailer->AddAttachment(
+				$attachmentInfo['path'],
+				$attachmentInfo['filename'],
+				'base64',
+				$attachmentInfo['content-type']
+			);
 		}
 
-		if (!$sent) {
-			if (Config::getVar('debug', 'display_errors')) {
-				if (Config::getVar('email', 'smtp')) {
-					fatalError("There was an error sending this email.  Please check your PHP error log for more information.");
-					return false;
-				} else {
-					fatalError("There was an error sending this email.  Please check your mail log (/var/log/maillog).");
-					return false;
-				}
-			} else return false;
-		} else return true;
+		try {
+			$mailer->Send();
+		} catch (phpmailerException $e) {
+			error_log($mailer->ErrorInfo);
+			return false;
+		}
+		return true;
 	}
 
 	/**
 	 * Encode a display name for proper inclusion with an email address.
 	 * @param $displayName string
+	 * @param $send boolean True to encode the results for sending
 	 * @return string
 	 */
 	function encodeDisplayName($displayName, $send = false) {
-		if (String::regexp_match('!^[-A-Za-z0-9\!#\$%&\'\*\+\/=\?\^_\`\{\|\}~]+$!', $displayName)) return $displayName;
-		return ('"' . ($send ? String::encode_mime_header(str_replace(
+		if (PKPString::regexp_match('!^[-A-Za-z0-9\!#\$%&\'\*\+\/=\?\^_\`\{\|\}~]+$!', $displayName)) return $displayName;
+		return ('"' . ($send ? PKPString::encode_mime_header(str_replace(
 			array('"', '\\'),
 			'',
 			$displayName

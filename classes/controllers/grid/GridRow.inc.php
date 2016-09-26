@@ -3,32 +3,33 @@
 /**
  * @file classes/controllers/grid/GridRow.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class GridRow
  * @ingroup controllers_grid
  *
- * @brief Class defining basic operations for handling HTML gridRows.
+ * @brief GridRow implements a row of a Grid. See GridHandler for general
+ *  information about grids.
  *
- * NB: If you want row-level refresh then you must override the getData() method
- *  so that it fetches data (e.g. from the database) when called. The data to be
- *  fetched can be determined from the id (=row id) which is always set.
+ * Each Grid is populated with data that is displayed in a series of rows. Each
+ * row is implemented using a GridRow, which knows how to describe the data it
+ * represents, and can present and manage row actions such as Edit and Delete
+ * operations.
+ *
+ * For general information on grids, see GridHandler.
  */
 
 define('GRID_ACTION_POSITION_ROW_CLICK', 'row-click');
 define('GRID_ACTION_POSITION_ROW_LEFT', 'row-left');
 
-class GridRow {
+import('lib.pkp.classes.controllers.grid.GridBodyElement');
+
+class GridRow extends GridBodyElement {
 
 	/** @var array */
 	var $_requestArgs;
-
-	/**
-	 * @var string identifier of the row instance - must be unique
-	 *  among all row instances within a grid.
-	 */
-	var $_id;
 
 	/** @var the grid this row belongs to */
 	var $_gridId;
@@ -36,7 +37,7 @@ class GridRow {
 	/** @var mixed the row's data source */
 	var $_data;
 
-	/** @var $isModified boolean true if the row has been modified */
+	/** @var boolean true if the row has been modified */
 	var $_isModified;
 
 	/**
@@ -54,6 +55,8 @@ class GridRow {
 	 * Constructor.
 	 */
 	function GridRow() {
+		parent::GridBodyElement();
+
 		$this->_isModified = false;
 	}
 
@@ -61,22 +64,6 @@ class GridRow {
 	//
 	// Getters/Setters
 	//
-	/**
-	 * Set the grid id
-	 * @param $id string
-	 */
-	function setId($id) {
-		$this->_id = $id;
-	}
-
-	/**
-	 * Get the grid id
-	 * @return string
-	 */
-	function getId() {
-		return $this->_id;
-	}
-
 	/**
 	 * Set the grid id
 	 * @param $gridId string
@@ -144,9 +131,22 @@ class GridRow {
 	}
 
 	/**
+	 * Get whether this row has any actions or not.
+	 * @return boolean
+	 */
+	function hasActions() {
+		$allActions = array();
+		foreach($this->_actions as $actions) {
+			$allActions = array_merge($allActions, $actions);
+		}
+
+		return !empty($allActions);
+	}
+
+	/**
 	 * Get all actions for a given position within the controller
 	 * @param $position string the position of the actions
-	 * @return array the LegacyLinkActions for the given position
+	 * @return array the LinkActions for the given position
 	 */
 	function getActions($position = GRID_ACTION_POSITION_DEFAULT) {
 		if(!isset($this->_actions[$position])) return array();
@@ -191,7 +191,8 @@ class GridRow {
 	 * @param $request Request
 	 * @param $template string
 	 */
-	function initialize($request, $template = 'controllers/grid/gridRow.tpl') {
+	function initialize($request, $template = null) {
+		if ($template === null) $template = 'controllers/grid/gridRow.tpl';
 		// Set the template.
 		$this->setTemplate($template);
 	}

@@ -1,12 +1,16 @@
 <?php
 /**
- * @defgroup process
+ * @defgroup process Process
+ * Implements process management tools, used e.g. to manage background tasks
+ * that can be spawned by web requests to handle expensive operations behind
+ * the scenes.
  */
 
 /**
  * @file classes/process/Process.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Process
@@ -61,7 +65,7 @@ class Process extends DataObject {
 	 * Get the starting time of the process
 	 * @return integer unix timestamp
 	 */
-	function &getTimeStarted() {
+	function getTimeStarted() {
 		return $this->getData('timeStarted');
 	}
 
@@ -79,6 +83,22 @@ class Process extends DataObject {
 	 */
 	function getObliterated() {
 		return $this->getData('obliterated');
+	}
+
+	/**
+	 * Set additional data to store with the process entry.
+	 * @param $additionalData mixed
+	 */
+	function setAdditionalData($additionalData) {
+		$this->setData('additionalData', $additionalData);
+	}
+
+	/**
+	 * Get the additional data stored with the process entry.
+	 * @return mixed
+	 */
+	function getAdditionalData() {
+		return $this->getData('additionalData');
 	}
 }
 

@@ -3,7 +3,8 @@
 /**
  * @file lib/pkp/tests/functional/plugins/importexport/FunctionalImportExportBaseTestCase.inc.php
  *
- * Copyright (c) 2000-2011 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class FunctionalImportExportBaseTestCase
@@ -32,10 +33,14 @@ class FunctionalImportExportBaseTestCase extends WebTestCase {
 		curl_setopt($curlCh, CURLOPT_POST, true);
 
 		// Create a cookie file (required for log-in).
-		$cookies = tempnam ('/tmp', 'curlcookies');
+		$cookies = tempnam (sys_get_temp_dir(), 'curlcookies');
 
 		// Log in.
 		$loginUrl = $this->baseUrl.'/index.php/test/login/signIn';
+
+		// Bug #8518 safety work-around
+		if ($this->password[0] == '@') die('CURL parameters may not begin with @.');
+
 		$loginParams = array(
 			'username' => 'admin',
 			'password' => $this->password
@@ -49,6 +54,12 @@ class FunctionalImportExportBaseTestCase extends WebTestCase {
 		$exportUrl = $this->baseUrl.'/index.php/test/manager/importexport/plugin/'
 			.$pluginUrl;
 		curl_setopt($curlCh, CURLOPT_URL, $exportUrl);
+
+		// Bug #8518 safety work-around
+		foreach ($postParams as $paramValue) {
+			if ($paramValue[0] == '@') die('CURL parameters may not begin with @.');
+		}
+
 		curl_setopt($curlCh, CURLOPT_POSTFIELDS, $postParams);
 		curl_setopt($curlCh, CURLOPT_HTTPHEADER, array('Accept: application/xml, application/x-gtar, */*'));
 		curl_setopt($curlCh, CURLOPT_RETURNTRANSFER, true);
@@ -57,10 +68,10 @@ class FunctionalImportExportBaseTestCase extends WebTestCase {
 
 		do {
 			list($header, $response) = explode("\r\n\r\n", $response, 2);
-		} while (String::regexp_match('#HTTP/.*100#', $header));
+		} while (PKPString::regexp_match('#HTTP/.*100#', $header));
 
 		// Check whether we got a tar file.
-		if (String::regexp_match('#Content-Type: application/x-gtar#', $header)) {
+		if (PKPString::regexp_match('#Content-Type: application/x-gtar#', $header)) {
 			// Save the data to a temporary file.
 			$tempfile = tempnam(sys_get_temp_dir(), 'tst');
 			file_put_contents($tempfile, $response);
@@ -70,7 +81,7 @@ class FunctionalImportExportBaseTestCase extends WebTestCase {
 			unlink($tempfile);
 		} else {
 			$matches = null;
-			String::regexp_match_get('#filename="([^"]+)"#', $header, $matches);
+			PKPString::regexp_match_get('#filename="([^"]+)"#', $header, $matches);
 			self::assertTrue(isset($matches[1]));
 			$result = array($matches[1] => $response);
 		}
@@ -148,24 +159,32 @@ class FunctionalImportExportBaseTestCase extends WebTestCase {
 	 * @return array
 	 */
 	protected function extractTarFile($tarFile) {
-		// Make sure we got the tar binary installed.
 		$tarBinary = Config::getVar('cli', 'tar');
-		self::assertTrue(!empty($tarBinary) && is_executable($tarBinary), 'tar must be installed');
+
+		// Cygwin compat.
+		$cygwin = Config::getVar('cli', 'cygwin');
+
+		// Make sure we got the tar binary installed.
+		self::assertTrue((!empty($tarBinary) && is_executable($tarBinary)) || is_executable($cygwin), 'tar must be installed');
 
 		// Create a temporary directory.
 		do {
-			$tempdir = sys_get_temp_dir() . '/' . md5(time().mt_rand());
+			$tempdir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . md5(time().mt_rand());
 		} while(file_exists($tempdir));
 		$fileManager = new FileManager();
 		$fileManager->mkdir($tempdir);
 
 		// Extract the tar to the temporary directory.
-		$tarCommand = $tarBinary . ' -C ' . escapeshellarg($tempdir) . ' -xzf ' . escapeshellarg($tarFile);
+		if ($cygwin) {
+			$tarCommand = $cygwin . " --login -c '" . $tarBinary . ' -C ' . escapeshellarg(cygwinConversion($tempdir)) . ' -xzf ' . escapeshellarg(cygwinConversion($tarFile)) . "'";
+		} else {
+			$tarCommand = $tarBinary . ' -C ' . escapeshellarg($tempdir) . ' -xzf ' . escapeshellarg($tarFile);
+		}
 		exec($tarCommand);
 
 		// Read the results into an array.
 		$result = array();
-		foreach(glob($tempdir . '/*.{tar.gz,xml}', GLOB_BRACE) as $extractedFile) {
+		foreach(glob($tempdir . DIRECTORY_SEPARATOR . '*.{tar.gz,xml}', GLOB_BRACE) as $extractedFile) {
 			if (substr($extractedFile, -4) == '.xml') {
 				// Read the XML file into the result array.
 				$result[basename($extractedFile)] = file_get_contents($extractedFile);

@@ -1,13 +1,14 @@
 <?php
-
 /**
- * @defgroup user
+ * @defgroup user User
+ * Implements data objects and DAOs concerned with managing user accounts.
  */
 
 /**
  * @file classes/user/PKPUser.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class PKPUser
@@ -17,35 +18,19 @@
  * @brief Basic class describing users existing in the system.
  */
 
-class PKPUser extends DataObject {
+import('lib.pkp.classes.identity.Identity');
+
+class PKPUser extends Identity {
 	/**
 	 * Constructor
 	 */
 	function PKPUser() {
-		parent::DataObject();
+		parent::Identity();
 	}
 
 	//
 	// Get/set methods
 	//
-
-	/**
-	 * Get the ID of the user. DEPRECATED in favour of getId.
-	 * @return int
-	 */
-	function getUserId() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getId();
-	}
-
-	/**
-	 * Set the ID of the user. DEPRECATED in favour of setId.
-	 * @param $userId int
-	 */
-	function setUserId($userId) {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->setId($userId);
-	}
 
 	/**
 	 * Get username.
@@ -60,7 +45,7 @@ class PKPUser extends DataObject {
 	 * @param $username string
 	 */
 	function setUsername($username) {
-		return $this->setData('username', $username);
+		$this->setData('username', $username);
 	}
 
 	/**
@@ -76,7 +61,7 @@ class PKPUser extends DataObject {
 	 * @param $authStr string
 	 */
 	function setAuthStr($authStr) {
-		return $this->setData('authStr', $authStr);
+		$this->setData('authStr', $authStr);
 	}
 
 	/**
@@ -84,11 +69,6 @@ class PKPUser extends DataObject {
 	 */
 	function getLocalizedSignature() {
 		return $this->getLocalizedData('signature');
-	}
-
-	function getUserSignature() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedSignature();
 	}
 
 	/**
@@ -106,7 +86,7 @@ class PKPUser extends DataObject {
 	 * @param $locale string
 	 */
 	function setSignature($signature, $locale) {
-		return $this->setData('signature', $signature, $locale);
+		$this->setData('signature', $signature, $locale);
 	}
 
 	/**
@@ -122,104 +102,7 @@ class PKPUser extends DataObject {
 	 * @param $password string
 	 */
 	function setPassword($password) {
-		return $this->setData('password', $password);
-	}
-
-	/**
-	 * Get first name.
-	 * @return string
-	 */
-	function getFirstName() {
-		return $this->getData('firstName');
-	}
-
-	/**
-	 * Set first name.
-	 * @param $firstName string
-	 */
-	function setFirstName($firstName)
-	{
-		return $this->setData('firstName', $firstName);
-	}
-
-	/**
-	 * Get middle name.
-	 * @return string
-	 */
-	function getMiddleName() {
-		return $this->getData('middleName');
-	}
-
-	/**
-	 * Set middle name.
-	 * @param $middleName string
-	 */
-	function setMiddleName($middleName) {
-		return $this->setData('middleName', $middleName);
-	}
-
-	/**
-	 * Get initials.
-	 * @return string
-	 */
-	function getInitials() {
-		return $this->getData('initials');
-	}
-
-	/**
-	 * Set initials.
-	 * @param $initials string
-	 */
-	function setInitials($initials) {
-		return $this->setData('initials', $initials);
-	}
-
-	/**
-	 * Get last name.
-	 * @return string
-	 */
-	function getLastName() {
-		return $this->getData('lastName');
-	}
-
-	/**
-	 * Set last name.
-	 * @param $lastName string
-	 */
-	function setLastName($lastName) {
-		return $this->setData('lastName', $lastName);
-	}
-
-	/**
-	 * Get name suffix.
-	 * @return string
-	 */
-	function getSuffix() {
-		return $this->getData('suffix');
-	}
-
-	/**
-	 * Set suffix.
-	 * @param $suffix string
-	 */
-	function setSuffix($suffix) {
-		return $this->setData('suffix', $suffix);
-	}
-
-	/**
-	 * Get user salutation.
-	 * @return string
-	 */
-	function getSalutation() {
-		return $this->getData('salutation');
-	}
-
-	/**
-	 * Set user salutation.
-	 * @param $salutation string
-	 */
-	function setSalutation($salutation) {
-		return $this->setData('salutation', $salutation);
+		$this->setData('password', $password);
 	}
 
 	/**
@@ -235,64 +118,7 @@ class PKPUser extends DataObject {
 	 * @param $gender string
 	 */
 	function setGender($gender) {
-		return $this->setData('gender', $gender);
-	}
-
-	/**
-	 * Get affiliation (position, institution, etc.).
-	 * @param $locale string
-	 * @return string
-	 */
-	function getAffiliation($locale) {
-		return $this->getData('affiliation', $locale);
-	}
-
-	/**
-	 * Set affiliation.
-	 * @param $affiliation string
-	 * @param $locale string
-	 */
-	function setAffiliation($affiliation, $locale) {
-		return $this->setData('affiliation', $affiliation, $locale);
-	}
-
-	/**
-	 * Get localized user affiliation.
-	 */
-	function getLocalizedAffiliation() {
-		return $this->getLocalizedData('affiliation');
-	}
-
-	/**
-	 * Get email address.
-	 * @return string
-	 */
-	function getEmail() {
-		return $this->getData('email');
-	}
-
-	/**
-	 * Set email address.
-	 * @param $email string
-	 */
-	function setEmail($email) {
-		return $this->setData('email', $email);
-	}
-
-	/**
-	 * Get URL.
-	 * @return string
-	 */
-	function getUrl() {
-		return $this->getData('url');
-	}
-
-	/**
-	 * Set URL.
-	 * @param $url string
-	 */
-	function setUrl($url) {
-		return $this->setData('url', $url);
+		$this->setData('gender', $gender);
 	}
 
 	/**
@@ -308,23 +134,7 @@ class PKPUser extends DataObject {
 	 * @param $phone string
 	 */
 	function setPhone($phone) {
-		return $this->setData('phone', $phone);
-	}
-
-	/**
-	 * Get fax number.
-	 * @return string
-	 */
-	function getFax() {
-		return $this->getData('fax');
-	}
-
-	/**
-	 * Set fax number.
-	 * @param $fax string
-	 */
-	function setFax($fax) {
-		return $this->setData('fax', $fax);
+		$this->setData('phone', $phone);
 	}
 
 	/**
@@ -340,7 +150,7 @@ class PKPUser extends DataObject {
 	 * @param $mailingAddress string
 	 */
 	function setMailingAddress($mailingAddress) {
-		return $this->setData('mailingAddress', $mailingAddress);
+		$this->setData('mailingAddress', $mailingAddress);
 	}
 
 	/**
@@ -356,53 +166,7 @@ class PKPUser extends DataObject {
 	 * @param $billingAddress string
 	 */
 	function setBillingAddress($billingAddress) {
-		return $this->setData('billingAddress', $billingAddress);
-	}
-
-	/**
-	 * Get country.
-	 * @return string
-	 */
-	function getCountry() {
-		return $this->getData('country');
-	}
-
-	/**
-	 * Set country.
-	 * @param $country string
-	 */
-	function setCountry($country) {
-		return $this->setData('country', $country);
-	}
-
-	/**
-	 * Get localized user biography.
-	 */
-	function getLocalizedBiography() {
-		return $this->getLocalizedData('biography');
-	}
-
-	function getUserBiography() {
-		if (Config::getVar('debug', 'deprecation_warnings')) trigger_error('Deprecated function.');
-		return $this->getLocalizedBiography();
-	}
-
-	/**
-	 * Get user biography.
-	 * @param $locale string
-	 * @return string
-	 */
-	function getBiography($locale) {
-		return $this->getData('biography', $locale);
-	}
-
-	/**
-	 * Set user biography.
-	 * @param $biography string
-	 * @param $locale string
-	 */
-	function setBiography($biography, $locale) {
-		return $this->setData('biography', $biography, $locale);
+		$this->setData('billingAddress', $billingAddress);
 	}
 
 	/**
@@ -448,7 +212,7 @@ class PKPUser extends DataObject {
 	 * @param $locale string
 	 */
 	function setGossip($gossip, $locale) {
-		return $this->setData('gossip', $gossip, $locale);
+		$this->setData('gossip', $gossip, $locale);
 	}
 
 	/**
@@ -465,7 +229,7 @@ class PKPUser extends DataObject {
 	 * @param $locales array
 	 */
 	function setLocales($locales) {
-		return $this->setData('locales', $locales);
+		$this->setData('locales', $locales);
 	}
 
 	/**
@@ -481,7 +245,7 @@ class PKPUser extends DataObject {
 	 * @param $dateLastEmail datestamp (YYYY-MM-DD HH:MM:SS)
 	 */
 	function setDateLastEmail($dateLastEmail) {
-		return $this->setData('dateLastEmail', $dateLastEmail);
+		$this->setData('dateLastEmail', $dateLastEmail);
 	}
 
 	/**
@@ -497,7 +261,7 @@ class PKPUser extends DataObject {
 	 * @param $dateRegistered datestamp (YYYY-MM-DD HH:MM:SS)
 	 */
 	function setDateRegistered($dateRegistered) {
-		return $this->setData('dateRegistered', $dateRegistered);
+		$this->setData('dateRegistered', $dateRegistered);
 	}
 
 	/**
@@ -513,7 +277,7 @@ class PKPUser extends DataObject {
 	 * @param $dateValidated datestamp (YYYY-MM-DD HH:MM:SS)
 	 */
 	function setDateValidated($dateValidated) {
-		return $this->setData('dateValidated', $dateValidated);
+		$this->setData('dateValidated', $dateValidated);
 	}
 
 	/**
@@ -529,7 +293,7 @@ class PKPUser extends DataObject {
 	 * @param $dateLastLogin datestamp
 	 */
 	function setDateLastLogin($dateLastLogin) {
-		return $this->setData('dateLastLogin', $dateLastLogin);
+		$this->setData('dateLastLogin', $dateLastLogin);
 	}
 
 	/**
@@ -545,7 +309,7 @@ class PKPUser extends DataObject {
 	 * @param $mustChangePassword boolean
 	 */
 	function setMustChangePassword($mustChangePassword) {
-		return $this->setData('mustChangePassword', $mustChangePassword);
+		$this->setData('mustChangePassword', $mustChangePassword);
 	}
 
 	/**
@@ -561,7 +325,7 @@ class PKPUser extends DataObject {
 	 * @param $disabled boolean
 	 */
 	function setDisabled($disabled) {
-		return $this->setData('disabled', $disabled);
+		$this->setData('disabled', $disabled);
 	}
 
 	/**
@@ -577,7 +341,7 @@ class PKPUser extends DataObject {
 	 * @param $reasonDisabled string
 	 */
 	function setDisabledReason($reasonDisabled) {
-		return $this->setData('disabled_reason', $reasonDisabled);
+		$this->setData('disabled_reason', $reasonDisabled);
 	}
 
 	/**
@@ -593,35 +357,31 @@ class PKPUser extends DataObject {
 	 * @param $authId int
 	 */
 	function setAuthId($authId) {
-		return $this->setData('authId', $authId);
+		$this->setData('authId', $authId);
 	}
 
 	/**
-	 * Get the user's complete name.
-	 * Includes first name, middle name (if applicable), and last name.
-	 * The suffix is only included when the name is not reversed with $lastFirst
-	 * @param $lastFirst boolean return in "LastName, FirstName" format
-	 * @return string
+	 * Get the inline help display status for this user.
+	 * @return int
 	 */
-	function getFullName($lastFirst = false) {
-		$salutation = $this->getData('salutation');
-		$firstName = $this->getData('firstName');
-		$middleName = $this->getData('middleName');
-		$lastName = $this->getData('lastName');
-		$suffix = $this->getData('suffix');
-		if ($lastFirst) {
-			return "$lastName, " . ($salutation != ''?"$salutation ":'') . "$firstName" . ($middleName != ''?" $middleName":'');
-		} else {
-			return ($salutation != ''?"$salutation ":'') . "$firstName " . ($middleName != ''?"$middleName ":'') . $lastName . ($suffix != ''?", $suffix":'');
-		}
+	function getInlineHelp() {
+		return $this->getData('inlineHelp');
+	}
+
+	/**
+	 * Set the inline help display status for this user.
+	 * @param $inlineHelp int
+	 */
+	function setInlineHelp($inlineHelp) {
+		$this->setData('inlineHelp', $inlineHelp);
 	}
 
 	function getContactSignature() {
-		$signature = $this->getFullName();
-		if ($a = $this->getLocalizedAffiliation()) $signature .= "\n" . $a;
-		if ($p = $this->getPhone()) $signature .= "\n" . __('user.phone') . ' ' . $p;
-		if ($f = $this->getFax()) $signature .= "\n" . __('user.fax') . ' ' . $f;
-		$signature .= "\n" . $this->getEmail();
+		$signature = htmlspecialchars($this->getFullName());
+		AppLocale::requireComponents(LOCALE_COMPONENT_PKP_USER);
+		if ($a = $this->getLocalizedAffiliation()) $signature .= '<br/>' . htmlspecialchars($a);
+		if ($p = $this->getPhone()) $signature .= '<br/>' . __('user.phone') . ' ' . htmlspecialchars($p);
+		$signature .= '<br/>' . htmlspecialchars($this->getEmail());
 		return $signature;
 	}
 }

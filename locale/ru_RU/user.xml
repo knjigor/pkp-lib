@@ -4,10 +4,11 @@
 <!--
   * locale/ru_RU/user.xml
   *
-  * Copyright (c) 2000-2012 John Willinsky
+  * Copyright (c) 2014-2016 Simon Fraser University Library
+  * Copyright (c) 2000-2016 John Willinsky
   * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
   *
-  * Localization strings for the ru_RU (Russian) locale.
+  * Localization strings for the ru_RU (Русский) locale.
   *
   -->
 
@@ -22,7 +23,6 @@
 	<message key="user.dateRegistered">Дата регистрации</message>
 	<message key="user.editMyProfile">Изменить профиль</message>
 	<message key="user.email">E-mail адрес</message>
-	<message key="user.fax">Факс</message>
 	<message key="user.feminine">Ж</message>
 	<message key="user.firstName">Имя</message>
 	<message key="user.gender">Пол</message>
@@ -78,7 +78,6 @@
 	<message key="user.register.completeForm">Заполните эту форму, чтобы получить доступ к этому журналу.</message>
 	<message key="user.register.form.emailExists">Выбранный мейл используется другим членом сайта.</message>
 	<message key="user.register.form.passwordsDoNotMatch">Пароли не совпадают</message>
-	<message key="user.register.form.usernameAlphaNumeric">Имя пользователя может содержать буквы, цифры, дефис, но должно начинаться и заканчиваться буквой.</message>
 	<message key="user.register.form.usernameExists">Выбранное имя пользователя уже зарегистрировано другим членом сайта.</message>
 	<message key="user.register.passwordLengthRestriction">Пароль должен содержать не менее {$length} знаков.</message>
 	<message key="user.register.registerAs">Зарегистрироваться как</message>
@@ -103,4 +102,13 @@
 	<message key="user.register.completeForm">Заполните, пожалуйста, форму регистрации в этом журнале.</message>
 	<message key="user.affiliations">Организации</message>
 	<message key="user.profile.form.openAccessNotifications">Уведомлять по электронной почте об открытии доступа</message>
+	<message key="user.affiliation.description">(Ваше место работы, например, Московский государственный университет имени М.В. Ломоносова)</message>
+	<message key="user.authorization.accessDenied">Доступ запрещен.</message>
+	<message key="user.authorization.loginRequired">Необходимо указать имя пользователя.</message>
+	<message key="user.gossip">Личные примечания</message>
+	<message key="user.hello">Приветствуем,</message>
+	<message key="user.profile.form.countryRequired">Необходимо указать страну.</message>
+	<message key="user.profile.form.affiliationRequired">Необходимо указать место работы.</message>
+	<message key="user.profile.form.mailingAddressRequired">Необходимо указать почтовый адрес.</message>
+	<message key="user.profile.form.passwordSameAsOld">Новый пароль совпадает со старым.</message>
 </locale>

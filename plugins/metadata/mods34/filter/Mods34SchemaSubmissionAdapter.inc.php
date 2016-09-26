@@ -3,7 +3,8 @@
 /**
  * @file plugins/metadata/mods34/filter/Mods34SchemaSubmissionAdapter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class Mods34SchemaSubmissionAdapter
@@ -24,7 +25,7 @@ class Mods34SchemaSubmissionAdapter extends MetadataDataObjectAdapter {
 	 * Constructor
 	 * @param $filterGroup FilterGroup
 	 */
-	function Mods34SchemaSubmissionAdapter(&$filterGroup) {
+	function Mods34SchemaSubmissionAdapter($filterGroup) {
 		parent::MetadataDataObjectAdapter($filterGroup);
 	}
 
@@ -113,8 +114,8 @@ class Mods34SchemaSubmissionAdapter extends MetadataDataObjectAdapter {
 								}
 
 								// Add the author to the submission.
-								$authorDao =& DAORegistry::getDAO('AuthorDAO'); /* @var $authorDao AuthorDAO */
-								$authorDao->insertAuthor($author);
+								$authorDao = DAORegistry::getDAO('AuthorDAO'); /* @var $authorDao AuthorDAO */
+								$authorDao->insertObject($author);
 								unset($author);
 							}
 							break;
@@ -165,21 +166,7 @@ class Mods34SchemaSubmissionAdapter extends MetadataDataObjectAdapter {
 		// distinguish them within a list of MODS topic elements. Can we use several subject
 		// statements with different authorities instead?
 
-		// Geographical coverage
-		$localizedCoverageGeos = $mods34Description->getStatementTranslations('subject/geographic');
-		if (is_array($localizedCoverageGeos)) {
-			foreach($localizedCoverageGeos as $locale => $localizedCoverageGeo) {
-				$submission->setCoverageGeo($localizedCoverageGeo, $locale);
-			}
-		}
-
-		// Chronological coverage
-		$localizedCoverageChrons = $mods34Description->getStatementTranslations('subject/temporal');
-		if (is_array($localizedCoverageChrons)) {
-			foreach($localizedCoverageChrons as $locale => $localizedCoverageChron) {
-				$submission->setCoverageChron($localizedCoverageChron, $locale);
-			}
-		}
+		// FIXME: We do not include coverage information at the moment.
 
 		// Record identifier
 		// NB: We currently don't override the submission id with the record identifier in MODS
@@ -198,9 +185,9 @@ class Mods34SchemaSubmissionAdapter extends MetadataDataObjectAdapter {
 	 *  for submission authors.
 	 * @return MetadataDescription
 	 */
-	function &extractMetadataFromDataObject(&$submission, $authorMarcrelatorRole = 'aut') {
+	function extractMetadataFromDataObject(&$submission, $authorMarcrelatorRole = 'aut') {
 		assert(is_a($submission, 'Submission'));
-		$mods34Description =& $this->instantiateMetadataDescription();
+		$mods34Description = $this->instantiateMetadataDescription();
 
 		// Retrieve the primary locale.
 		$catalogingLocale = AppLocale::getPrimaryLocale();
@@ -211,12 +198,12 @@ class Mods34SchemaSubmissionAdapter extends MetadataDataObjectAdapter {
 		$mods34Description->setAssocId($submission->getId());
 
 		// Title
-		$localizedTitles =& $submission->getTitle(null); // Localized
+		$localizedTitles = $submission->getTitle(null); // Localized
 		$this->addLocalizedStatements($mods34Description, 'titleInfo/title', $localizedTitles);
 
 		// Authors
 		// FIXME: Move this to a dedicated adapter in the Author class.
-		$authors =& $submission->getAuthors();
+		$authors = $submission->getAuthors();
 		foreach($authors as $author) { /* @var $author Author */
 			// Create a new name description.
 			$authorDescription = new MetadataDescription('lib.pkp.plugins.metadata.mods34.schema.Mods34NameSchema', ASSOC_TYPE_AUTHOR);
@@ -310,21 +297,11 @@ class Mods34SchemaSubmissionAdapter extends MetadataDataObjectAdapter {
 		$localizedDisciplines = $submission->getDiscipline(null); // Localized
 		$this->addLocalizedStatements($mods34Description, 'subject/topic', $localizedDisciplines);
 
-		// Subject class
-		$localizedSubjectClasses = $submission->getSubjectClass(null); // Localized
-		$this->addLocalizedStatements($mods34Description, 'subject/topic', $localizedSubjectClasses);
-
 		// Subject
 		$localizedSubjects = $submission->getSubject(null); // Localized
 		$this->addLocalizedStatements($mods34Description, 'subject/topic', $localizedSubjects);
 
-		// Geographical coverage
-		$localizedCoverageGeo = $submission->getCoverageGeo(null); // Localized
-		$this->addLocalizedStatements($mods34Description, 'subject/geographic', $localizedCoverageGeo);
-
-		// Chronological coverage
-		$localizedCoverageChron = $submission->getCoverageChron(null); // Localized
-		$this->addLocalizedStatements($mods34Description, 'subject/temporal', $localizedCoverageChron);
+		// FIXME: Coverage not included
 
 		// Record creation date
 		$recordCreationDate = date('Y-m-d');

@@ -2,7 +2,8 @@
 /**
  * @file classes/filter/CompositeFilter.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class CompositeFilter
@@ -50,7 +51,7 @@ class CompositeFilter extends PersistableFilter {
 		assert(is_a($filter, 'Filter'));
 
 		// Identify an appropriate sequence number.
-		$seq = $filter->getSeq();
+		$seq = $filter->getSequence();
 		if (is_numeric($seq) && $seq > 0) {
 			// This filter has a pre-set sequence number
 			if (isset($this->_filters[$seq])) return null;
@@ -59,7 +60,7 @@ class CompositeFilter extends PersistableFilter {
 			// We'll create a sequence number for the filter
 			$this->_maxSeq++;
 			$seq = $this->_maxSeq;
-			$filter->setSeq($seq);
+			$filter->setSequence($seq);
 		}
 
 		// Add the filter to the list.
@@ -253,7 +254,7 @@ class CompositeFilter extends PersistableFilter {
 	/**
 	 * @see DataObject::getData()
 	 */
-	function getData($key, $locale = null) {
+	function &getData($key, $locale = null) {
 		// Directly read local settings.
 		if (in_array($key, $this->getInternalSettings()) || in_array($key, $this->getSettingNames())) return parent::getData($key, $locale);
 

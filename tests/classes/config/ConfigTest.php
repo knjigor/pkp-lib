@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @file tests/classes/config/ConfigTest.inc.php
+ * @file tests/classes/config/ConfigTest.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class ConfigTest
@@ -21,7 +22,7 @@ class ConfigTest extends PKPTestCase {
 	 * @covers Config::getConfigFileName
 	 */
 	public function testGetDefaultConfigFileName() {
-		$expectedResult = dirname(INDEX_FILE_LOCATION). DIRECTORY_SEPARATOR. 'config.inc.php';
+		$expectedResult = Core::getBaseDir(). DIRECTORY_SEPARATOR. 'config.inc.php';
 		self::assertEquals($expectedResult, Config::getConfigFileName());
 	}
 
@@ -49,12 +50,12 @@ class ConfigTest extends PKPTestCase {
 	 * @covers Config::reloadData
 	 */
 	public function testReloadDataAndGetData() {
+		$this->markTestSkipped();
 		Config::setConfigFileName('lib/pkp/tests/config/config.mysql.inc.php');
 		$result = Config::reloadData();
 		$expectedResult = array(
 			'installed' => true,
 			'base_url' => 'http://pkp.sfu.ca/ojs',
-			'registry_dir' => 'registry',
 			'session_cookie_name' => 'OJSSID',
 			'session_lifetime' => 30,
 			'scheduled_tasks' => false,

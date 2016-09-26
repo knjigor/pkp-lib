@@ -3,7 +3,8 @@
 /**
  * @file classes/notification/NotificationSubscriptionSettingsDAO.inc.php
  *
- * Copyright (c) 2000-2012 John Willinsky
+ * Copyright (c) 2014-2016 Simon Fraser University Library
+ * Copyright (c) 2000-2016 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class NotificationSubscriptionSettingsDAO
@@ -49,7 +50,7 @@ class NotificationSubscriptionSettingsDAO extends DAO {
 	 * @return array
 	 */
 	function &getNotificationSubscriptionSettings($settingName, $userId, $contextId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT setting_value FROM notification_subscription_settings WHERE user_id = ? AND setting_name = ? AND context = ?',
 			array((int) $userId, $settingName, (int) $contextId)
 		);
@@ -62,8 +63,6 @@ class NotificationSubscriptionSettingsDAO extends DAO {
 		}
 
 		$result->Close();
-		unset($result);
-
 		return $settings;
 	}
 
@@ -103,17 +102,15 @@ class NotificationSubscriptionSettingsDAO extends DAO {
 	 * @return int
 	 */
 	function getUserIdByRSSToken($token, $contextId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT user_id FROM notification_subscription_settings WHERE setting_value = ? AND setting_name = ? AND context = ?',
-				array($token, 'token', (int) $contextId)
+			array($token, 'token', (int) $contextId)
 		);
 
 		$row = $result->GetRowAssoc(false);
 		$userId = $row['user_id'];
 
 		$result->Close();
-		unset($result);
-
 		return $userId;
 	}
 
@@ -124,7 +121,7 @@ class NotificationSubscriptionSettingsDAO extends DAO {
 	 * @return int
 	 */
 	function getRSSTokenByUserId($userId, $contextId) {
-		$result =& $this->retrieve(
+		$result = $this->retrieve(
 			'SELECT setting_value FROM notification_subscription_settings WHERE user_id = ? AND setting_name = ? AND context = ?',
 				array((int) $userId, 'token', (int) $contextId)
 		);
@@ -133,8 +130,6 @@ class NotificationSubscriptionSettingsDAO extends DAO {
 		$tokenId = $row['setting_value'];
 
 		$result->Close();
-		unset($result);
-
 		return $tokenId;
 	}
 
@@ -152,9 +147,9 @@ class NotificationSubscriptionSettingsDAO extends DAO {
 
 		$this->update(
 			'INSERT INTO notification_subscription_settings
-				(setting_name, setting_value, user_id, context)
+				(setting_name, setting_value, user_id, context, setting_type)
 				VALUES
-				(?, ?, ?, ?)',
+				(?, ?, ?, ?, ?)',
 			array(
 				'token',
 				$token,
